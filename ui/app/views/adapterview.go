@@ -14,7 +14,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"go.uber.org/atomic"
 
-	"github.com/darkhz/bluetuith/ui/theme"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 // adapterView holds the adapter view, which contains the displays of:

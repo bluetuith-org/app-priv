@@ -7,8 +7,8 @@ import (
 
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 
-	"github.com/darkhz/bluetuith/ui/keybindings"
-	"github.com/darkhz/bluetuith/ui/theme"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 // Values describes the possible configuration values that a user can

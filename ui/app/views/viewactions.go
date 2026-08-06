@@ -6,7 +6,7 @@ import (
 
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
-	"github.com/darkhz/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 )
 
 // viewActions holds an instance of a view actions manager,

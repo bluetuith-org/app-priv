@@ -13,8 +13,8 @@ import (
 	"github.com/darkhz/tview"
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/darkhz/bluetuith/ui/keybindings"
-	"github.com/darkhz/bluetuith/ui/theme"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 // mediaPlayer holds the media player view.

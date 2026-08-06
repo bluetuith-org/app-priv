@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/darkhz/bluetuith/cmd"
+	"github.com/bluetuith-org/bluetuith/cmd"
 )
 
 func main() {

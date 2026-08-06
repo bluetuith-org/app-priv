@@ -7,8 +7,8 @@ import (
 
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetooth-classic/api/optional"
-	"github.com/darkhz/bluetuith/ui/keybindings"
-	"github.com/darkhz/bluetuith/ui/theme"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 	"github.com/darkhz/tview"
 	"github.com/gdamore/tcell/v2"
 )

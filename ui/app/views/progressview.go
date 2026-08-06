@@ -17,8 +17,8 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/schollz/progressbar/v3"
 
-	"github.com/darkhz/bluetuith/ui/keybindings"
-	"github.com/darkhz/bluetuith/ui/theme"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 const progressPage viewName = "progressview"

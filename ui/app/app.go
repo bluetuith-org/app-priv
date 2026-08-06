@@ -8,8 +8,8 @@ import (
 	"github.com/darkhz/tview"
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/darkhz/bluetuith/ui/app/views"
-	"github.com/darkhz/bluetuith/ui/config"
+	"github.com/bluetuith-org/bluetuith/ui/app/views"
+	"github.com/bluetuith-org/bluetuith/ui/config"
 )
 
 // Application holds an application with its views.

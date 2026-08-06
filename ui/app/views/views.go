@@ -6,9 +6,9 @@ import (
 	"github.com/darkhz/tview"
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/darkhz/bluetuith/ui/config"
-	"github.com/darkhz/bluetuith/ui/keybindings"
-	"github.com/darkhz/bluetuith/ui/theme"
+	"github.com/bluetuith-org/bluetuith/ui/config"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 // AppData holds all the necessary layout and event handling data for the root application to initialize.

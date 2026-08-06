@@ -1,7 +1,7 @@
 package views
 
 import (
-	"github.com/darkhz/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 	"github.com/darkhz/tview"
 	"go.uber.org/atomic"
 )
