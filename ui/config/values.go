@@ -6,9 +6,6 @@ import (
 	"strings"
 
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
-
-	"github.com/bluetuith-org/bluetuith/ui/keybindings"
-	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 // Values describes the possible configuration values that a user can
@@ -23,13 +20,13 @@ type Values struct {
 	NoWarning     bool              `koanf:"no-warning"`
 	NoHelpDisplay bool              `koanf:"no-help-display"`
 	ConfirmOnQuit bool              `koanf:"confirm-on-quit"`
-	Theme         map[string]string `koanf:"theme"`
 	Keybindings   map[string]string `koanf:"keybindings"`
 
 	AdapterStatesMap      map[string]string
 	SelectedAdapter       *bluetooth.AdapterData
 	AutoConnectDeviceAddr bluetooth.MacAddress
-	Kb                    *keybindings.Keybindings
+
+	config *Config
 }
 
 // validateValues validates all configuration values.
@@ -126,14 +123,10 @@ func (v *Values) validateDeviceExists(session bluetooth.Session) error {
 	return fmt.Errorf("no device with address %s found on adapters %s", deviceAddr.String(), strings.Join(adapterlist, ", "))
 }
 
+// TODO: Keybindings
 // validateKeybindings validates the keybindings.
 func (v *Values) validateKeybindings() error {
-	v.Kb = keybindings.NewKeybindings()
-	if len(v.Keybindings) == 0 {
-		return nil
-	}
-
-	return v.Kb.Validate(v.Keybindings)
+	return nil
 }
 
 // validateAdapterStates validates the adapter states to be set on application launch.
@@ -259,11 +252,8 @@ func (v *Values) validateGsm() error {
 	return nil
 }
 
+// TODO: Theme
 // validateTheme validates the theme configuration.
 func (v *Values) validateTheme() error {
-	if len(v.Theme) == 0 {
-		return nil
-	}
-
-	return theme.ParseThemeConfig(v.Theme)
+	return nil
 }

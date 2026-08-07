@@ -18,8 +18,8 @@ import (
 
 // These values are set at compile-time.
 var (
-	Version  = ""
-	Revision = ""
+	Version  = "v0.0.1-alpha"
+	Revision = "testing"
 )
 
 // Run runs the commandline application.
@@ -167,7 +167,7 @@ func newApp() *cli.App {
 			// required for koanf to merge all global flags under the root namespace.
 			cliCtx.Command.Name = "global"
 
-			k, cfg := koanf.New("."), config.NewConfig()
+			k, cfg := koanf.New("."), config.NewConfig().SetVersion(Version, Revision)
 			if err := cfg.Load(k, cliCtx); err != nil {
 				return err
 			}
@@ -178,8 +178,8 @@ func newApp() *cli.App {
 			sessionCfg := scfg.New()
 			populateSessionConfig(cliCtx, &sessionCfg)
 
-			app, s := app.NewApplication(), session.NewSession()
-			featureSet, _, err := s.Start(app.Authorizer(), sessionCfg)
+			tui, s := app.NewApplication(), session.NewSession()
+			featureSet, _, err := s.Start(tui.Authorizer(), sessionCfg)
 			if err != nil {
 				return err
 			}
@@ -190,7 +190,7 @@ func newApp() *cli.App {
 			}
 			printUnsupportedFeatures(cfg, featureSet)
 
-			return app.Start(s, featureSet, cfg)
+			return tui.Start(s, featureSet, cfg)
 		},
 		ExitErrHandler: func(_ *cli.Context, err error) {
 			if err == nil {

@@ -1,4 +1,4 @@
 /*
-Package views provides individual composable views for the application.
+Package views provides arranged views for the application.
 */
 package views

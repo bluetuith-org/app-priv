@@ -20,18 +20,33 @@ import (
 const (
 	configFile    = "bluetuith.conf"
 	oldConfigFile = "config"
+
+	themesDir = "themes"
 )
 
 // Config describes the configuration for the app.
 type Config struct {
 	path string
 
+	Version, Revision string
+
 	Values Values
 }
 
 // NewConfig returns a new configuration.
 func NewConfig() *Config {
-	return &Config{}
+	c := &Config{}
+	c.Values.config = c
+
+	return c
+}
+
+// SetVersion sets the version and revision of the app.
+func (c *Config) SetVersion(version, revision string) *Config {
+	c.Version = version
+	c.Revision = revision
+
+	return c
 }
 
 // Load loads the configuration from the configuration file and the command-line flags.
@@ -138,8 +153,27 @@ func (c *Config) FilePath(configFile string) (string, error) {
 		fd, err := os.Create(confPath)
 		fd.Close()
 		if err != nil {
-			return "", fmt.Errorf("Cannot create "+configFile+" file at %s", confPath)
+			return "", fmt.Errorf("cannot create %s file at %s", configFile, confPath)
 		}
+	}
+
+	return confPath, nil
+}
+
+// DirPath returns the absolute path for the given configuration file.
+func (c *Config) DirPath(configDir string) (string, error) {
+	confPath := filepath.Join(c.path, configDir)
+
+	info, err := os.Stat(confPath)
+	if err != nil {
+		err = os.Mkdir(confPath, os.ModePerm)
+		if err != nil {
+			return "", fmt.Errorf("cannot create %s directory at %s", configDir, confPath)
+		}
+	}
+
+	if info != nil && !info.IsDir() {
+		return "", fmt.Errorf("%s is not a directory", configDir)
 	}
 
 	return confPath, nil
@@ -156,6 +190,13 @@ func (c *Config) GenerateAndSave(currentCfg *koanf.Koanf) (bool, error) {
 	}
 
 	cfg.Delete("generate")
+
+	themeDir, err := c.DirPath(themesDir)
+	if err != nil {
+		return parsedOldCfg, err
+	}
+
+	_ = themeDir
 
 	data, err := hjson.Parser().Marshal(cfg.Raw())
 	if err != nil {
