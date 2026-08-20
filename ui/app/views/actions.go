@@ -34,7 +34,7 @@ type actionUpdateMsg struct {
 	state actionStateSpec
 }
 
-func newActionUpdateMsg(id string, state actionStateSpec) actionUpdateMsg {
+func msgAdActionUpdate(id string, state actionStateSpec) actionUpdateMsg {
 	return actionUpdateMsg{id, state}
 }
 
@@ -56,18 +56,24 @@ func (a *actionUpdateMsg) isValid(stateID string) bool {
 }
 
 func actionHandleKeyMsg(p tea.KeyPressMsg, node *treeview.Node[adTreeNode]) (tea.Msg, bool) {
-	_, actionState, ok := keybindings.IterMatch(p, actionKeyIterator(node))
+	_, result, ok := keybindings.IterMatch(p, actionKeyIterator(node))
 	if !ok {
 		return nil, false
 	}
 
-	createInfo, opFunc := actionState.invokeAction()
+	createInfo, opFunc := result.state.invokeAction()
+	createInfo.updateID(result.id)
 
-	return newOpCreateMsg(createInfo, opFunc), true
+	return msgOperationView(newOpCreateMsg(createInfo, opFunc)), true
 }
 
-func actionKeyIterator(node *treeview.Node[adTreeNode]) keybindings.IterKeyMatch[*adActionState] {
-	return func(yield func(keybindings.KeyID, *adActionState) bool) {
+type actionKeyIterResult struct {
+	state *adActionState
+	id    string
+}
+
+func actionKeyIterator(node *treeview.Node[adTreeNode]) keybindings.IterKeyMatch[*actionKeyIterResult] {
+	return func(yield func(keybindings.KeyID, *actionKeyIterResult) bool) {
 		n := node
 		if n == nil {
 			return
@@ -81,9 +87,14 @@ func actionKeyIterator(node *treeview.Node[adTreeNode]) keybindings.IterKeyMatch
 		actionListNode := ch[actionsListNodePos]
 		actionNodes := actionListNode.Children()
 
+		res := &actionKeyIterResult{}
 		for _, ac := range actionNodes {
 			data := ac.Data()
-			if !yield(data.actionState.key, data.actionState) {
+
+			res.id = ac.ID()
+			res.state = data.actionState
+
+			if !yield(data.actionState.key, res) {
 				return
 			}
 		}

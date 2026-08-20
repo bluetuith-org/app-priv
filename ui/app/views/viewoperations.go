@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	errOpNoneInProgress    = errors.New("no operations in progress")
 	errOpAlreadyInProgress = errors.New("this operation is already in progress")
 	errOpInternal          = errors.New("(op) an internal error has occurred")
 )
@@ -30,6 +29,11 @@ type operationsView struct {
 	orderedList  []*opRunningInfo
 
 	v rootView
+}
+
+// ViewID returns the view's ID.
+func (o *operationsView) ViewID() viewID {
+	return viewIDOperations
 }
 
 // InitializeView initializes the view.
@@ -152,13 +156,14 @@ func (o *operationsView) Icon() *iconVariant {
 	return o.v.Icons().CogWheel
 }
 
+// handleRouterMsg handles the routed message.
+func (o *operationsView) handleRouterMsg(m routerMsg) tea.Cmd {
+	return handleRouterMsg(o, m)
+}
+
 func (o *operationsView) createNewOperation(msg opCreateMsg) (*opRunningInfo, opInvoker, error) {
 	if msg.id == "" {
 		return nil, nil, fmt.Errorf("%w: msg ID empty on create", errOpInternal)
-	}
-
-	if len(o.mapIDToIndex) == 0 {
-		return nil, nil, errOpNoneInProgress
 	}
 
 	_, ok := o.mapIDToIndex[msg.id]
@@ -166,10 +171,10 @@ func (o *operationsView) createNewOperation(msg opCreateMsg) (*opRunningInfo, op
 		return nil, nil, errOpAlreadyInProgress
 	}
 
-	info := newOpRunningInfo(o.v, msg.id, msg.description, msg.message)
+	info := newOpRunningInfo(o.v, msg.opCreationInfo)
 
 	o.orderedList = append(o.orderedList, info)
-	o.mapIDToIndex[info.id] = len(o.orderedList)
+	o.mapIDToIndex[info.id] = len(o.orderedList) - 1
 
 	return info, msg.opAction, nil
 }
@@ -233,8 +238,12 @@ type opCreationInfo struct {
 	message     string
 }
 
-func newOpCreationInfo(id, desc, msg string) opCreationInfo {
-	return opCreationInfo{id, desc, msg}
+func newOpCreationInfo(desc, msg string) opCreationInfo {
+	return opCreationInfo{"", desc, msg}
+}
+
+func (o *opCreationInfo) updateID(id string) {
+	o.id = id
 }
 
 type opRunningInfo struct {
@@ -243,24 +252,32 @@ type opRunningInfo struct {
 	v rootView
 }
 
-func newOpRunningInfo(v rootView, id, desc, msg string) *opRunningInfo {
-	return &opRunningInfo{opCreationInfo: newOpCreationInfo(id, desc, msg), v: v}
+func newOpRunningInfo(v rootView, creationInfo opCreationInfo) *opRunningInfo {
+	return &opRunningInfo{opCreationInfo: creationInfo, v: v}
 }
 
 func (o *opRunningInfo) info(msg string) {
-	o.v.SendMsg(newOpUpdateMsg(o.id, "", msg))
+	o.v.SendMsg(newOpUpdateMsg(o.opCreationInfo, "", msg))
 }
 
 func (o *opRunningInfo) updateDescription(desc string) {
-	o.v.SendMsg(newOpUpdateMsg(o.id, desc, ""))
+	o.v.SendMsg(newOpUpdateMsg(o.opCreationInfo, desc, ""))
 }
 
-func (o *opRunningInfo) opSuccess(state actionStateSpec) actionUpdateMsg {
-	return newActionUpdateMsg(o.id, state)
+func (o *opRunningInfo) opSuccess(state actionStateSpec) routerMsg {
+	return msgAdTree(msgAdActionUpdate(o.id, state))
 }
 
 func (o *opRunningInfo) opError(err error) opErrorMsg {
 	return newOpErrorMsg(err)
+}
+
+type operationViewMsgC interface {
+	opCreateMsg | opUpdateMsg | opDeleteMsg | opErrorMsg
+}
+
+func msgOperationView[T operationViewMsgC](msg T) routerMsg {
+	return viewIDOperations.routerMessage(msg)
 }
 
 type opCreateMsg struct {
@@ -277,8 +294,11 @@ type opUpdateMsg struct {
 	opCreationInfo
 }
 
-func newOpUpdateMsg(id, desc, msg string) opUpdateMsg {
-	return opUpdateMsg{opCreationInfo: newOpCreationInfo(id, desc, msg)}
+func newOpUpdateMsg(creationInfo opCreationInfo, desc, msg string) opUpdateMsg {
+	creationInfo.description = desc
+	creationInfo.message = msg
+
+	return opUpdateMsg{opCreationInfo: creationInfo}
 }
 
 type opDeleteMsg struct {

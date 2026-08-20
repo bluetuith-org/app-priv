@@ -18,9 +18,10 @@ import (
 // TODO: Delete.
 type Views struct{}
 
-type viewUpdate struct{}
-
 type viewer interface {
+	// ViewID returns the view's ID.
+	ViewID() viewID
+
 	// InitializeView initializes the view.
 	InitializeView(features *appfeatures.FeatureSet) (inited bool, err error)
 
@@ -41,6 +42,9 @@ type viewer interface {
 
 	// UpdateStyles updates the styles for the view.
 	UpdateStyles()
+
+	// handleRouterMsg handles the routed message.
+	handleRouterMsg(m routerMsg) tea.Cmd
 
 	tea.Model
 }
@@ -83,7 +87,7 @@ type ViewModel struct {
 	infoView       *infoView
 	operationsView *operationsView
 
-	initedViews []viewer
+	initedViews map[viewID]viewer
 
 	icons *iconSet
 
@@ -100,7 +104,8 @@ func NewViewModel(appBinder AppBinder) (*ViewModel, error) {
 		width:  120,
 		height: 30,
 
-		tabsView: &tabsView{},
+		tabsView:    &tabsView{},
+		initedViews: make(map[viewID]viewer),
 
 		adTreeView:     &adTree{},
 		infoView:       &infoView{},
@@ -192,7 +197,27 @@ func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case 'q':
 			return v, tea.Quit
+
+		default:
+			vid := viewIDNone
+
+			for view := range v.modelIterator() {
+				if view.GetFocus() {
+					vid = view.ViewID()
+					break
+				}
+			}
+
+			return v, v.updateViewByID(vid, m)
 		}
+
+	case routerMsg:
+		view, ok := v.getViewByID(m.id)
+		if !ok {
+			return v, nil
+		}
+
+		return v, view.handleRouterMsg(m)
 	}
 
 	return v, collectCmds(true, msg, v.modelIterator())
@@ -235,9 +260,7 @@ func (v *ViewModel) initAllViews() error {
 	tint.NewDefaultRegistry()
 	tint.SetTint(tint.TintDraculaPlus)
 
-	v.initedViews = []viewer{}
-
-	for _, view := range []viewer{
+	for _, view := range [maxViews]viewer{
 		v.tabsView,
 		v.adTreeView,
 		v.infoView,
@@ -251,26 +274,43 @@ func (v *ViewModel) initAllViews() error {
 		}
 
 		if inited {
+			v.initedViews[view.ViewID()] = view
 			if tab, ok := view.AttachToTabView(); ok {
 				v.tabsView.AddTabSection(tab)
-				continue
 			}
-
-			v.initedViews = append(v.initedViews, view)
 		}
 	}
 
 	return nil
 }
 
-func (v *ViewModel) modelIterator() iter.Seq[tea.Model] {
-	return func(yield func(tea.Model) bool) {
-		for _, view := range v.initedViews {
+func (v *ViewModel) modelIterator() iter.Seq[viewer] {
+	return func(yield func(viewer) bool) {
+		for _, view := range []viewer{v.adTreeView, v.tabsView} {
 			if !yield(view) {
 				return
 			}
 		}
 	}
+}
+
+func (v *ViewModel) getViewByID(id viewID) (viewer, bool) {
+	if !id.isValid() {
+		return nil, false
+	}
+
+	view, ok := v.initedViews[id]
+	return view, ok
+}
+
+func (v *ViewModel) updateViewByID(id viewID, msg tea.Msg) tea.Cmd {
+	view, ok := v.getViewByID(id)
+	if !ok {
+		return nil
+	}
+
+	_, cmd := view.Update(msg)
+	return cmd
 }
 
 func (v *ViewModel) renderHeader() string {
@@ -289,8 +329,8 @@ func (v *ViewModel) renderHeader() string {
 	return style.Render(title)
 }
 
-func collectCmds(update bool, msg tea.Msg, views iter.Seq[tea.Model]) tea.Cmd {
-	cmds := []tea.Cmd{}
+func collectCmds(update bool, msg tea.Msg, views iter.Seq[viewer]) tea.Cmd {
+	cmds := make([]tea.Cmd, 0, 5)
 
 	for view := range views {
 		var cmd tea.Cmd
@@ -308,6 +348,14 @@ func collectCmds(update bool, msg tea.Msg, views iter.Seq[tea.Model]) tea.Cmd {
 
 	if len(cmds) == 0 {
 		return nil
+	}
+
+	switch len(cmds) {
+	case 0:
+		return nil
+
+	case 1:
+		return cmds[0]
 	}
 
 	return tea.Batch(cmds...)

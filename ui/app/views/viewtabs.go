@@ -39,6 +39,11 @@ type tabsView struct {
 	v rootView
 }
 
+// ViewID returns the view's ID.
+func (t *tabsView) ViewID() viewID {
+	return viewIDTabs
+}
+
 // InitializeView initializes the view.
 func (t *tabsView) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err error) {
 	t.tabs = make([]tabSection, 0, 5)
@@ -104,7 +109,7 @@ func (t *tabsView) UpdateStyles() {
 // Init is the first function that will be called. It returns an optional
 // initial command. To not perform an initial command return nil.
 func (t *tabsView) Init() tea.Cmd {
-	return collectCmds(false, nil, t.viewsIterator())
+	return collectCmds(false, nil, t.viewsIterator(false))
 }
 
 // Update is called when a message is received. Use it to inspect messages
@@ -129,12 +134,13 @@ func (t *tabsView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return t, nil
 
 		default:
+			return t, collectCmds(true, msg, t.viewsIterator(true))
 		}
 	}
 
 	t.vport.Update(msg)
 
-	return t, collectCmds(true, msg, t.viewsIterator())
+	return t, collectCmds(true, msg, t.viewsIterator(false))
 }
 
 // View renders the program's UI, which can be a string or a [Layer]. The
@@ -173,6 +179,11 @@ func (t *tabsView) move(fwd bool) {
 	if prevPos == 0 && t.activeTab == 0 {
 		t.activeTab = numTabs
 	}
+}
+
+// handleRouterMsg handles the routed message.
+func (t *tabsView) handleRouterMsg(m routerMsg) tea.Cmd {
+	return handleRouterMsg(t, m)
 }
 
 func (t *tabsView) renderTabs() string {
@@ -245,8 +256,13 @@ func (t *tabsView) renderTabs() string {
 	return s
 }
 
-func (t *tabsView) viewsIterator() iter.Seq[tea.Model] {
-	return func(yield func(tea.Model) bool) {
+func (t *tabsView) viewsIterator(focusedOnly bool) iter.Seq[viewer] {
+	return func(yield func(viewer) bool) {
+		if focusedOnly {
+			yield(t.tabs[t.activeTab])
+			return
+		}
+
 		for _, v := range t.tabs {
 			if !yield(v) {
 				return

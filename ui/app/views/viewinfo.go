@@ -16,6 +16,11 @@ type infoView struct {
 	v rootView
 }
 
+// ViewID returns the view's ID.
+func (i *infoView) ViewID() viewID {
+	return viewIDInfo
+}
+
 // InitializeView initializes the view.
 func (i *infoView) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err error) {
 	return true, nil
@@ -89,4 +94,9 @@ func (i *infoView) Title() string {
 
 func (i *infoView) Icon() *iconVariant {
 	return i.v.Icons().Info
+}
+
+// handleRouterMsg handles the routed message.
+func (i *infoView) handleRouterMsg(m routerMsg) tea.Cmd {
+	return handleRouterMsg(i, m)
 }

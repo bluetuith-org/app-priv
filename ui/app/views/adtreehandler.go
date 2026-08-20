@@ -3,6 +3,7 @@ package views
 import (
 	"runtime"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/Digital-Shane/treeview/v2"
@@ -222,7 +223,14 @@ func (a *adapterAdNode) updateAction(actionNode *treeview.Node[adTreeNode], upda
 }
 
 func (a *adapterAdNode) actionPowered() (opCreationInfo, opInvoker) {
-	return opCreationInfo{}, nil
+	return newOpCreationInfo("Changing power state", "Message"), func(ov *opRunningInfo) tea.Msg {
+		time.Sleep(1 * time.Second)
+		ov.info("Updated Message 1")
+		time.Sleep(1 * time.Second)
+		ov.info("Updated Message 2")
+		time.Sleep(1 * time.Second)
+		return nil
+	}
 }
 
 func (a *adapterAdNode) actionDiscoverable() (opCreationInfo, opInvoker) {

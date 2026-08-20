@@ -15,10 +15,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 )
 
-type (
-	treeUpdate viewUpdate
-)
-
 type adTree struct {
 	tree    *treeview.Tree[adTreeNode]
 	tuiTree *treeview.TuiTreeModel[adTreeNode]
@@ -34,6 +30,11 @@ type adTree struct {
 	focusedID string
 
 	mu sync.Mutex
+}
+
+// ViewID returns the view's ID.
+func (a *adTree) ViewID() viewID {
+	return viewIDAdTree
 }
 
 // InitializeView initializes the view.
@@ -189,6 +190,11 @@ func (a *adTree) View() tea.View {
 	return view
 }
 
+// handleRouterMsg handles the routed message.
+func (a *adTree) handleRouterMsg(m routerMsg) tea.Cmd {
+	return handleRouterMsg(a, m)
+}
+
 func (a *adTree) features() *appfeatures.FeatureSet {
 	return a.v.Features()
 }
@@ -209,7 +215,7 @@ func (a *adTree) populate() tea.Cmd {
 			a.addAdapter(adapter, true)
 		}
 
-		return treeUpdate{}
+		return msgAdTree(treeUpdateMsg{})
 	}
 }
 
@@ -354,4 +360,14 @@ func getDeviceDisplayName(deviceData bluetooth.DeviceEventData) string {
 	}
 
 	return deviceData.Address.String()
+}
+
+type treeUpdateMsg struct{}
+
+type adTreeMsgC interface {
+	treeUpdateMsg | actionUpdateMsg
+}
+
+func msgAdTree[M adTreeMsgC](msg M) routerMsg {
+	return viewIDAdTree.routerMessage(msg)
 }
