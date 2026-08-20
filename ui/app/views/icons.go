@@ -3,10 +3,12 @@ package views
 import "charm.land/lipgloss/v2"
 
 type iconSet struct {
-	Info       *iconVariant
-	ArrowLeft  *iconVariant
-	ArrowRight *iconVariant
-	CogWheel   *iconVariant
+	Info          *iconVariant
+	ArrowLeft     *iconVariant
+	ArrowRight    *iconVariant
+	TriangleRight *iconVariant
+	TriangleDown  *iconVariant
+	CogWheel      *iconVariant
 }
 
 func newIconSet(isASCII bool) *iconSet {
@@ -30,6 +32,16 @@ func (i *iconSet) populateIcons(isASCII bool) *iconSet {
 		ArrowRight: &iconVariant{
 			Unicode: "\u2192",
 			ASCII:   "->",
+			IsASCII: isASCII,
+		},
+		TriangleRight: &iconVariant{
+			Unicode: "\u25b6",
+			ASCII:   ">",
+			IsASCII: isASCII,
+		},
+		TriangleDown: &iconVariant{
+			Unicode: "\u25bc",
+			ASCII:   "v",
 			IsASCII: isASCII,
 		},
 		CogWheel: &iconVariant{

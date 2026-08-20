@@ -30,12 +30,8 @@ const (
 )
 
 type actionUpdateMsg struct {
-	id    string
-	state actionStateSpec
-}
-
-func msgAdActionUpdate(id string, state actionStateSpec) actionUpdateMsg {
-	return actionUpdateMsg{id, state}
+	id        string
+	stateSpec actionStateSpec
 }
 
 func emptyActionUpdateMsg() actionUpdateMsg {
@@ -47,7 +43,7 @@ func (a *actionUpdateMsg) updateState(stateID string, ad *adActionState) bool {
 		return false
 	}
 
-	ad.currentState = a.state
+	ad.currentState = a.stateSpec
 	return true
 }
 
@@ -72,7 +68,7 @@ func actionStateToOperation(id string, state *adActionState) tea.Msg {
 	createInfo, opFunc := state.invokeAction()
 	createInfo.updateID(id)
 
-	return msgOperationView(msgOpCreate(createInfo, opFunc))
+	return msgOpCreate(createInfo, opFunc)
 }
 
 type actionKeyIterResult struct {

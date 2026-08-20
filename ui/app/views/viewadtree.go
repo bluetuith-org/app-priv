@@ -46,7 +46,7 @@ func (a *adTree) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err err
 	a.width, a.height = 120, 30
 
 	a.ctx = context.Background()
-	a.provider = newAdTreeProvider()
+	a.provider = newAdTreeProvider(a.v)
 
 	rootNode := newRootAdNode(a)
 
@@ -241,7 +241,7 @@ func (a *adTree) populate() tea.Cmd {
 			a.addAdapter(adapter, true)
 		}
 
-		return msgAdTreeView(treeUpdateMsg{})
+		return treeUpdateMsg{}
 	}
 }
 
@@ -372,10 +372,14 @@ func (a *adTree) handleSearch(m tea.KeyPressMsg) bool {
 
 type adTreeProvider struct {
 	defaultStyle, focusedStyle lipgloss.Style
+
+	v rootView
 }
 
-func newAdTreeProvider() *adTreeProvider {
+func newAdTreeProvider(v rootView) *adTreeProvider {
 	p := &adTreeProvider{}
+
+	p.v = v
 
 	p.defaultStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("252"))
@@ -390,9 +394,8 @@ func newAdTreeProvider() *adTreeProvider {
 
 // Icon returns the leading glyph (e.g. folder / file symbol) for the node.
 func (a *adTreeProvider) Icon(node *treeview.Node[adTreeNode]) string {
-	// TODO: Ascii
-	const collapseIndicator = string('\u25b6')
-	const expandIndicator = string('\u25bc')
+	collapseIndicator := a.v.Icons().TriangleRight.getIcon()
+	expandIndicator := a.v.Icons().TriangleDown.getIcon()
 
 	return useBuffer(len(expandIndicator)+2, func(b *strings.Builder) {
 		if node.HasChildren() {
@@ -449,10 +452,10 @@ func getDeviceDisplayName(deviceData bluetooth.DeviceEventData) string {
 
 type treeUpdateMsg struct{}
 
-type adTreeMsgC interface {
-	treeUpdateMsg | actionUpdateMsg
+func msgAdTreeUpdate() routerMsg {
+	return viewIDAdTree.routerMessage(treeUpdateMsg{})
 }
 
-func msgAdTreeView[M adTreeMsgC](msg M) routerMsg {
-	return viewIDAdTree.routerMessage(msg)
+func msgAdActionUpdate(id string, stateSpec actionStateSpec) routerMsg {
+	return viewIDAdTree.routerMessage(actionUpdateMsg{id, stateSpec})
 }

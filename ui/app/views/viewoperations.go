@@ -213,7 +213,7 @@ func (o *operationsView) removeOperation(msg opDeleteMsg) {
 func (o *operationsView) deleteOperationCmd(id string) tea.Cmd {
 	return func() tea.Msg {
 		time.Sleep(1 * time.Second)
-		return msgOperationView(msgOpDelete(id))
+		return msgOpDelete(id)
 	}
 }
 
@@ -258,27 +258,19 @@ func newOpRunningInfo(v rootView, creationInfo opCreationInfo) *opRunningInfo {
 }
 
 func (o *opRunningInfo) info(msg string) {
-	o.v.SendMsg(msgOperationView(msgOpUpdate(o.opCreationInfo, "", msg)))
+	o.v.SendMsg(msgOpUpdate(o.opCreationInfo, "", msg))
 }
 
 func (o *opRunningInfo) updateDescription(desc string) {
-	o.v.SendMsg(msgOperationView(msgOpUpdate(o.opCreationInfo, desc, "")))
+	o.v.SendMsg(msgOpUpdate(o.opCreationInfo, desc, ""))
 }
 
 func (o *opRunningInfo) opSuccess(state actionStateSpec) routerMsg {
-	return msgAdTreeView(msgAdActionUpdate(o.id, state))
+	return msgAdActionUpdate(o.id, state)
 }
 
 func (o *opRunningInfo) opError(err error) routerMsg {
-	return msgOperationView(msgOpError(err))
-}
-
-type operationViewMsgC interface {
-	opCreateMsg | opUpdateMsg | opDeleteMsg | opErrorMsg
-}
-
-func msgOperationView[T operationViewMsgC](msg T) routerMsg {
-	return viewIDOperations.routerMessage(msg)
+	return msgOpError(err)
 }
 
 type opCreateMsg struct {
@@ -287,33 +279,33 @@ type opCreateMsg struct {
 	opAction opInvoker
 }
 
-func msgOpCreate(creationInfo opCreationInfo, action opInvoker) opCreateMsg {
-	return opCreateMsg{opCreationInfo: creationInfo, opAction: action}
+func msgOpCreate(creationInfo opCreationInfo, action opInvoker) routerMsg {
+	return viewIDOperations.routerMessage(opCreateMsg{opCreationInfo: creationInfo, opAction: action})
 }
 
 type opUpdateMsg struct {
 	opCreationInfo
 }
 
-func msgOpUpdate(creationInfo opCreationInfo, desc, msg string) opUpdateMsg {
+func msgOpUpdate(creationInfo opCreationInfo, desc, msg string) routerMsg {
 	creationInfo.description = desc
 	creationInfo.message = msg
 
-	return opUpdateMsg{opCreationInfo: creationInfo}
+	return viewIDOperations.routerMessage(opUpdateMsg{opCreationInfo: creationInfo})
 }
 
 type opDeleteMsg struct {
 	id string
 }
 
-func msgOpDelete(id string) opDeleteMsg {
-	return opDeleteMsg{id}
+func msgOpDelete(id string) routerMsg {
+	return viewIDOperations.routerMessage(opDeleteMsg{id})
 }
 
 type opErrorMsg struct {
 	err error
 }
 
-func msgOpError(err error) opErrorMsg {
-	return opErrorMsg{err}
+func msgOpError(err error) routerMsg {
+	return viewIDOperations.routerMessage(opErrorMsg{err})
 }
