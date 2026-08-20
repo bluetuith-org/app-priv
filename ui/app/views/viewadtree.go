@@ -3,7 +3,6 @@ package views
 import (
 	"context"
 	"errors"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -13,16 +12,16 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 )
 
 type (
 	treeUpdate viewUpdate
-	nodeID     = string
 )
 
 type adTree struct {
-	tree    *treeview.Tree[*adTreeNode]
-	tuiTree *treeview.TuiTreeModel[*adTreeNode]
+	tree    *treeview.Tree[adTreeNode]
+	tuiTree *treeview.TuiTreeModel[adTreeNode]
 
 	provider *adTreeProvider
 
@@ -45,22 +44,28 @@ func (a *adTree) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err err
 	a.ctx = context.Background()
 	a.provider = newAdTreeProvider()
 
-	rootNode := newAdTreeNode().withRootNode()
-	rootNode.node.SetChildren(make([]*treeview.Node[*adTreeNode], 0, 10))
+	rootNode := newRootAdNode(a)
 
-	kmap := treeview.DefaultKeyMap()
-	kmap.Quit = []string{}
+	kmap := treeview.KeyMap{
+		Up:           keybindings.RawBinding(keybindings.KeyNavigateUp),
+		Down:         keybindings.RawBinding(keybindings.KeyNavigateDown),
+		Toggle:       keybindings.RawBinding(keybindings.KeySelect),
+		SearchStart:  []string{},
+		SearchAccept: []string{},
+		SearchCancel: []string{},
+		SearchDelete: []string{},
+	}
 
 	a.tree = treeview.NewTree(
-		[]*treeview.Node[*adTreeNode]{rootNode.node},
+		[]*treeview.Node[adTreeNode]{rootNode.node},
 		treeview.WithExpandFunc(a.expandFunc),
 		treeview.WithProvider(a.provider),
 	)
 
 	a.tuiTree = treeview.NewTuiTreeModel(
 		a.tree,
-		treeview.WithTuiDisableNavBar[*adTreeNode](true),
-		treeview.WithTuiKeyMap[*adTreeNode](kmap),
+		treeview.WithTuiDisableNavBar[adTreeNode](true),
+		treeview.WithTuiKeyMap[adTreeNode](kmap),
 	)
 
 	return true, nil
@@ -89,7 +94,7 @@ func (a *adTree) Resize(width, height int) tea.WindowSizeMsg {
 
 // SetFocus sets whether the view is currently focused.
 func (a *adTree) SetFocus(focused bool) {
-	a.updateTreeFn(true, func(rootNode *treeview.Node[*adTreeNode]) {
+	a.updateTreeFn(true, func(rootNode *treeview.Node[adTreeNode]) {
 		a.focused = focused
 
 		if !focused {
@@ -121,7 +126,7 @@ func (a *adTree) UpdateStyles() {
 // Init is the first function that will be called. It returns an optional
 // initial command. To not perform an initial command return nil.
 func (a *adTree) Init() tea.Cmd {
-	return a.populate
+	return a.populate()
 }
 
 // Update is called when a message is received. Use it to inspect messages
@@ -137,6 +142,27 @@ func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !a.focused {
 			return a, nil
 		}
+
+		fnode := a.tree.GetFocusedNode()
+		if fnode == nil {
+			return a, nil
+		}
+
+		switch {
+		case keybindings.MatchesKey(keybindings.KeySelect, m):
+		// call focusednode's handler
+		default:
+		}
+
+		data := fnode.Data()
+		noder := data.noder
+
+		if nmsg, ok := noder.handleKeys(m); ok {
+			return a, func() tea.Msg { return nmsg }
+		}
+
+	case actionUpdateMsg:
+		return a, a.updateAction(m)
 	}
 
 	if a.tuiTree != nil {
@@ -163,18 +189,28 @@ func (a *adTree) View() tea.View {
 	return view
 }
 
-func (a *adTree) populate() tea.Msg {
-	adapters, err := a.v.Session().Adapters()
-	if err != nil {
-		// TODO: Log error messages
-		return nil
-	}
+func (a *adTree) features() *appfeatures.FeatureSet {
+	return a.v.Features()
+}
 
-	for _, adapter := range adapters {
-		a.addAdapter(adapter, true)
-	}
+func (a *adTree) session() bluetooth.Session {
+	return a.v.Session()
+}
 
-	return treeUpdate{}
+func (a *adTree) populate() tea.Cmd {
+	return func() tea.Msg {
+		adapters, err := a.v.Session().Adapters()
+		if err != nil {
+			// TODO: Log error messages
+			return nil
+		}
+
+		for _, adapter := range adapters {
+			a.addAdapter(adapter, true)
+		}
+
+		return treeUpdate{}
+	}
 }
 
 func (a *adTree) addAdapter(adapter bluetooth.AdapterData, lock bool) {
@@ -182,60 +218,33 @@ func (a *adTree) addAdapter(adapter bluetooth.AdapterData, lock bool) {
 	if err != nil {
 		// TODO:Log error messages
 		_ = err
+		return
 	}
 
-	ln := 1
-	if len(devices) > 0 {
-		ln = len(devices)
-	}
-
-	a.updateTreeFn(lock, func(rootNode *treeview.Node[*adTreeNode]) {
-		adNode := newAdTreeNode().withAdapter(adapter)
-
-		actionsNode := newAdTreeNode().withActionsList(adNode.getID())
-		actionsNode.node.SetChildren(make([]*treeview.Node[*adTreeNode], 0, 5))
-
-		devicesListNode := newAdTreeNode().withDevicesList(adNode.getID())
-		devicesListNode.node.SetChildren(make([]*treeview.Node[*adTreeNode], 0, ln))
-
-		for _, device := range devices {
-			a.addDevice(device, devicesListNode, false)
-		}
-
-		adNode.node.SetChildren([]*treeview.Node[*adTreeNode]{actionsNode.node, devicesListNode.node})
-
-		rootCh := rootNode.Children()
-		rootCh = append(rootCh, adNode.node)
-		rootNode.SetChildren(rootCh)
+	a.updateTreeFn(lock, func(rootNode *treeview.Node[adTreeNode]) {
+		newAdapterAdNode(a, rootNode, adapter, devices)
 	})
 }
 
 func (a *adTree) addDevice(device bluetooth.DeviceData, parentNode *adTreeNode, lock bool) {
 	if parentNode == nil {
-		n, _ := a.tuiTree.FindByID(context.Background(), filepath.Join(devicesListIDNib, adapterIDNib, device.AssociatedAdapter.String()))
+		n, _ := a.tuiTree.FindByID(
+			context.Background(),
+			newAdapterNodeID(bluetooth.NewAdapterAddress(device.AssociatedAdapter)).appendSubNodeNib(nibDevicesList).String(),
+		)
 		if n == nil {
 			return
 		}
 
-		parentNode = *n.Data()
+		parentNode = n.Data()
 	}
 
-	a.updateTreeFn(lock, func(*treeview.Node[*adTreeNode]) {
-		dvNode := newAdTreeNode().withDevice(device)
-
-		actionsNode := newAdTreeNode().withActionsList(dvNode.getID())
-		actionsNode.node.SetChildren(make([]*treeview.Node[*adTreeNode], 0, 5))
-
-		dvNode.node.SetChildren([]*treeview.Node[*adTreeNode]{actionsNode.node})
-
-		adCh := parentNode.node.Children()
-		adCh = append(adCh, dvNode.node)
-
-		parentNode.node.SetChildren(adCh)
+	a.updateTreeFn(lock, func(*treeview.Node[adTreeNode]) {
+		newDeviceAdNode(a, parentNode.node, device)
 	})
 }
 
-func (a *adTree) expandFunc(node *treeview.Node[*adTreeNode]) bool {
+func (a *adTree) expandFunc(node *treeview.Node[adTreeNode]) bool {
 	data := *node.Data()
 
 	return data.nodeType == nodeTypeRoot ||
@@ -244,7 +253,24 @@ func (a *adTree) expandFunc(node *treeview.Node[*adTreeNode]) bool {
 		data.nodeType == nodeTypeDevicesList
 }
 
-func (a *adTree) updateTreeFn(lock bool, fn func(rootNode *treeview.Node[*adTreeNode])) {
+func (a *adTree) updateAction(msg actionUpdateMsg) tea.Cmd {
+	return func() tea.Msg {
+		a.updateTreeFn(true, func(_ *treeview.Node[adTreeNode]) {
+			node, err := a.tree.FindByID(context.Background(), msg.id)
+			if err != nil {
+				return
+			}
+
+			if node != nil {
+				node.Data().noder.updateAction(node, msg)
+			}
+		})
+
+		return nil
+	}
+}
+
+func (a *adTree) updateTreeFn(lock bool, fn func(rootNode *treeview.Node[adTreeNode])) {
 	if lock {
 		a.mu.Lock()
 		defer a.mu.Unlock()
@@ -252,27 +278,6 @@ func (a *adTree) updateTreeFn(lock bool, fn func(rootNode *treeview.Node[*adTree
 
 	fn(a.tuiTree.Nodes()[0])
 }
-
-type adTreeNodeType uint8
-
-const (
-	nodeTypeRoot adTreeNodeType = iota
-	nodeTypeAdapter
-	nodeTypeDevice
-	nodeTypeDevicesList
-	nodeTypeAction
-	nodeTypeActionsList
-)
-
-type idNib = string
-
-const (
-	devicesListIDNib idNib = "dl"
-	actionsListIDNib idNib = "al"
-	actionIDNib      idNib = "ac"
-	adapterIDNib     idNib = "ad"
-	deviceIDNib      idNib = "dv"
-)
 
 type adTreeProvider struct {
 	defaultStyle, focusedStyle lipgloss.Style
@@ -293,12 +298,12 @@ func newAdTreeProvider() *adTreeProvider {
 }
 
 // Icon returns the leading glyph (e.g. folder / file symbol) for the node.
-func (a *adTreeProvider) Icon(node *treeview.Node[*adTreeNode]) string {
+func (a *adTreeProvider) Icon(node *treeview.Node[adTreeNode]) string {
 	// TODO: Ascii
 	const collapseIndicator = string('\u25b6')
 	const expandIndicator = string('\u25bc')
 
-	return useBuffer(func(b *strings.Builder) {
+	return useBuffer(len(expandIndicator)+2, func(b *strings.Builder) {
 		if node.HasChildren() {
 			indicator := expandIndicator
 			if !node.IsExpanded() {
@@ -312,12 +317,12 @@ func (a *adTreeProvider) Icon(node *treeview.Node[*adTreeNode]) string {
 }
 
 // Format converts the node's data into a human-readable label that follows the icon.
-func (a *adTreeProvider) Format(node *treeview.Node[*adTreeNode]) string {
+func (a *adTreeProvider) Format(node *treeview.Node[adTreeNode]) string {
 	return node.Name()
 }
 
 // Style supplies the lipgloss style for the node based on its focus state.
-func (a *adTreeProvider) Style(_ *treeview.Node[*adTreeNode], isFocused bool) lipgloss.Style {
+func (a *adTreeProvider) Style(_ *treeview.Node[adTreeNode], isFocused bool) lipgloss.Style {
 	if isFocused {
 		return a.focusedStyle
 	}

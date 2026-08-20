@@ -11,25 +11,18 @@ var _bufferPool = sync.Pool{
 	},
 }
 
-func useBuffer(fn func(b *strings.Builder)) string {
-	buf := getBuffer()
-	defer returnBuffer(buf)
+func useBuffer(growCapacity int, fn func(b *strings.Builder)) string {
+	buf := strings.Builder{}
 
-	fn(buf)
+	if growCapacity > 0 {
+		buf.Grow(growCapacity)
+	}
+
+	fn(&buf)
 
 	return buf.String()
 }
 
-func getBuffer() *strings.Builder {
-	buf, ok := _bufferPool.Get().(*strings.Builder)
-	if !ok {
-		return nil
-	}
-
-	return buf
-}
-
-func returnBuffer(b *strings.Builder) {
-	b.Reset()
-	_bufferPool.Put(b)
+func useBufferCapFunc(growCapacity func() int, fn func(b *strings.Builder)) string {
+	return useBuffer(growCapacity(), fn)
 }

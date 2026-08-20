@@ -78,9 +78,10 @@ type ViewModel struct {
 	width, height         int
 	prevWidth, prevHeight int
 
-	tabsView   *tabsView
-	adTreeView *adTree
-	infoView   *infoView
+	tabsView       *tabsView
+	adTreeView     *adTree
+	infoView       *infoView
+	operationsView *operationsView
 
 	initedViews []viewer
 
@@ -101,8 +102,9 @@ func NewViewModel(appBinder AppBinder) (*ViewModel, error) {
 
 		tabsView: &tabsView{},
 
-		adTreeView: &adTree{},
-		infoView:   &infoView{},
+		adTreeView:     &adTree{},
+		infoView:       &infoView{},
+		operationsView: &operationsView{},
 
 		// TODO: Check for ascii icons.
 		icons: newIconSet(false),
@@ -239,6 +241,7 @@ func (v *ViewModel) initAllViews() error {
 		v.tabsView,
 		v.adTreeView,
 		v.infoView,
+		v.operationsView,
 	} {
 		view.SetRootView(v)
 
@@ -278,9 +281,8 @@ func (v *ViewModel) renderHeader() string {
 		Width(v.width).
 		Align(lipgloss.Left)
 
-	title := useBuffer(func(b *strings.Builder) {
-		cfg := v.Configuration()
-
+	cfg := v.Configuration()
+	title := useBuffer(len(cfg.Version)+len(cfg.Revision)+10, func(b *strings.Builder) {
 		fmt.Fprintf(b, " bluetuith %s (%s)", cfg.Version, cfg.Revision)
 	})
 

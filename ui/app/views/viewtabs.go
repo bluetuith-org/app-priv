@@ -149,10 +149,6 @@ func (t *tabsView) View() tea.View {
 
 func (t *tabsView) AddTabSection(section tabSection) {
 	t.tabs = append(t.tabs, section)
-	t.tabs = append(t.tabs, section)
-	t.tabs = append(t.tabs, section)
-	t.tabs = append(t.tabs, section)
-	t.tabs = append(t.tabs, section)
 }
 
 func (t *tabsView) move(fwd bool) {
