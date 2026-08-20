@@ -207,12 +207,13 @@ func (o *operationsView) removeOperation(msg opDeleteMsg) {
 	}
 
 	o.orderedList = slices.Delete(o.orderedList, idx, idx+1)
+	delete(o.mapIDToIndex, msg.id)
 }
 
 func (o *operationsView) deleteOperationCmd(id string) tea.Cmd {
 	return func() tea.Msg {
 		time.Sleep(1 * time.Second)
-		return newOpDeleteMsg(id)
+		return msgOperationView(msgOpDelete(id))
 	}
 }
 
@@ -257,19 +258,19 @@ func newOpRunningInfo(v rootView, creationInfo opCreationInfo) *opRunningInfo {
 }
 
 func (o *opRunningInfo) info(msg string) {
-	o.v.SendMsg(newOpUpdateMsg(o.opCreationInfo, "", msg))
+	o.v.SendMsg(msgOperationView(msgOpUpdate(o.opCreationInfo, "", msg)))
 }
 
 func (o *opRunningInfo) updateDescription(desc string) {
-	o.v.SendMsg(newOpUpdateMsg(o.opCreationInfo, desc, ""))
+	o.v.SendMsg(msgOperationView(msgOpUpdate(o.opCreationInfo, desc, "")))
 }
 
 func (o *opRunningInfo) opSuccess(state actionStateSpec) routerMsg {
-	return msgAdTree(msgAdActionUpdate(o.id, state))
+	return msgAdTreeView(msgAdActionUpdate(o.id, state))
 }
 
-func (o *opRunningInfo) opError(err error) opErrorMsg {
-	return newOpErrorMsg(err)
+func (o *opRunningInfo) opError(err error) routerMsg {
+	return msgOperationView(msgOpError(err))
 }
 
 type operationViewMsgC interface {
@@ -286,7 +287,7 @@ type opCreateMsg struct {
 	opAction opInvoker
 }
 
-func newOpCreateMsg(creationInfo opCreationInfo, action opInvoker) opCreateMsg {
+func msgOpCreate(creationInfo opCreationInfo, action opInvoker) opCreateMsg {
 	return opCreateMsg{opCreationInfo: creationInfo, opAction: action}
 }
 
@@ -294,7 +295,7 @@ type opUpdateMsg struct {
 	opCreationInfo
 }
 
-func newOpUpdateMsg(creationInfo opCreationInfo, desc, msg string) opUpdateMsg {
+func msgOpUpdate(creationInfo opCreationInfo, desc, msg string) opUpdateMsg {
 	creationInfo.description = desc
 	creationInfo.message = msg
 
@@ -305,7 +306,7 @@ type opDeleteMsg struct {
 	id string
 }
 
-func newOpDeleteMsg(id string) opDeleteMsg {
+func msgOpDelete(id string) opDeleteMsg {
 	return opDeleteMsg{id}
 }
 
@@ -313,6 +314,6 @@ type opErrorMsg struct {
 	err error
 }
 
-func newOpErrorMsg(err error) opErrorMsg {
+func msgOpError(err error) opErrorMsg {
 	return opErrorMsg{err}
 }

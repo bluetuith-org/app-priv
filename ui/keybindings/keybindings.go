@@ -19,6 +19,7 @@ const (
 	KeySwitch  KeyID = "Switch"
 	KeyClose   KeyID = "Close"
 	KeyHelp    KeyID = "Help"
+	KeyFilter  KeyID = "Filter"
 
 	KeyAdapterChange             KeyID = "AdapterChange"
 	KeyAdapterTogglePower        KeyID = "AdapterTogglePower"
@@ -137,7 +138,7 @@ var _keybindings = map[KeyID]Keybinding{
 	KeyClose: {
 		ID:      KeyClose,
 		Global:  true,
-		Binding: key.NewBinding(key.WithKeys("escape"), key.WithHelp("", "Close")),
+		Binding: key.NewBinding(key.WithKeys("esc"), key.WithHelp("", "Close")),
 	},
 	KeyQuit: {
 		ID:      KeyQuit,
@@ -163,6 +164,11 @@ var _keybindings = map[KeyID]Keybinding{
 		ID:      KeyHelp,
 		Global:  true,
 		Binding: key.NewBinding(key.WithKeys("?"), key.WithHelp("", "Help")),
+	},
+	KeyFilter: {
+		ID:      KeyFilter,
+		Global:  true,
+		Binding: key.NewBinding(key.WithKeys("/"), key.WithHelp("", "Filter")),
 	},
 	KeyNavigateUp: {
 		ID:      KeyNavigateUp,

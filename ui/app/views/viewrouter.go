@@ -36,8 +36,3 @@ func handleRouterMsg(v viewer, msg routerMsg) tea.Cmd {
 	_, cmd := v.Update(msg.msg)
 	return cmd
 }
-
-type msgToRoute[M any] struct {
-	v   viewID
-	msg M
-}

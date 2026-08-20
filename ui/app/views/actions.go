@@ -61,10 +61,18 @@ func actionHandleKeyMsg(p tea.KeyPressMsg, node *treeview.Node[adTreeNode]) (tea
 		return nil, false
 	}
 
-	createInfo, opFunc := result.state.invokeAction()
-	createInfo.updateID(result.id)
+	return actionStateToOperation(result.id, result.state), true
+}
 
-	return msgOperationView(newOpCreateMsg(createInfo, opFunc)), true
+func actionStateToOperation(id string, state *adActionState) tea.Msg {
+	if state == nil || id == "" {
+		return nil
+	}
+
+	createInfo, opFunc := state.invokeAction()
+	createInfo.updateID(id)
+
+	return msgOperationView(msgOpCreate(createInfo, opFunc))
 }
 
 type actionKeyIterResult struct {

@@ -29,6 +29,9 @@ type adTree struct {
 	focused   bool
 	focusedID string
 
+	search     bool
+	searchTerm string
+
 	mu sync.Mutex
 }
 
@@ -47,15 +50,7 @@ func (a *adTree) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err err
 
 	rootNode := newRootAdNode(a)
 
-	kmap := treeview.KeyMap{
-		Up:           keybindings.RawBinding(keybindings.KeyNavigateUp),
-		Down:         keybindings.RawBinding(keybindings.KeyNavigateDown),
-		Toggle:       keybindings.RawBinding(keybindings.KeySelect),
-		SearchStart:  []string{},
-		SearchAccept: []string{},
-		SearchCancel: []string{},
-		SearchDelete: []string{},
-	}
+	kmap := treeview.KeyMap{}
 
 	a.tree = treeview.NewTree(
 		[]*treeview.Node[adTreeNode]{rootNode.node},
@@ -133,32 +128,67 @@ func (a *adTree) Init() tea.Cmd {
 // Update is called when a message is received. Use it to inspect messages
 // and, in response, update the model and/or send a command.
 func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
 		msg = a.Resize(m.Width, m.Height)
+		a.tuiTree.Update(msg)
 
 	case tea.KeyPressMsg:
 		if !a.focused {
 			return a, nil
 		}
 
-		fnode := a.tree.GetFocusedNode()
-		if fnode == nil {
+		focusedNode := a.tree.GetFocusedNode()
+		if focusedNode == nil {
 			return a, nil
 		}
 
+		adNode := focusedNode.Data()
+
 		switch {
+		case keybindings.MatchesKey(keybindings.KeyNavigateUp, m):
+			a.tuiTree.NavigateUp()
+			return a, nil
+
+		case keybindings.MatchesKey(keybindings.KeyNavigateDown, m):
+			a.tuiTree.NavigateDown()
+			return a, nil
+
+		case keybindings.MatchesKey(keybindings.KeySwitch, m):
+			a.v.FocusTabView()
+			return a, nil
+
+		case keybindings.MatchesKey(keybindings.KeyClose, m):
+			a.endSearch()
+			return a, nil
+
 		case keybindings.MatchesKey(keybindings.KeySelect, m):
-		// call focusednode's handler
+			if a.endSearch() {
+				return a, nil
+			}
+
+			if adNode.nodeType != nodeTypeAction {
+				focusedNode.Toggle()
+				return a, nil
+			}
+
+			return a, func() tea.Msg {
+				return actionStateToOperation(focusedNode.ID(), adNode.actionState)
+			}
+
+		case keybindings.MatchesKey(keybindings.KeyFilter, m):
+			if a.beginSearch() {
+				return a, nil
+			}
+
 		default:
 		}
 
-		data := fnode.Data()
-		noder := data.noder
+		if a.handleSearch(m) {
+			return a, nil
+		}
 
-		if nmsg, ok := noder.handleKeys(m); ok {
+		if nmsg, ok := adNode.noder.handleKeys(m); ok {
 			return a, func() tea.Msg { return nmsg }
 		}
 
@@ -166,11 +196,7 @@ func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, a.updateAction(m)
 	}
 
-	if a.tuiTree != nil {
-		_, cmd = a.tuiTree.Update(msg)
-	}
-
-	return a, cmd
+	return a, nil
 }
 
 // View renders the program's UI, which can be a string or a [Layer]. The
@@ -215,7 +241,7 @@ func (a *adTree) populate() tea.Cmd {
 			a.addAdapter(adapter, true)
 		}
 
-		return msgAdTree(treeUpdateMsg{})
+		return msgAdTreeView(treeUpdateMsg{})
 	}
 }
 
@@ -283,6 +309,65 @@ func (a *adTree) updateTreeFn(lock bool, fn func(rootNode *treeview.Node[adTreeN
 	}
 
 	fn(a.tuiTree.Nodes()[0])
+}
+
+func (a *adTree) beginSearch() bool {
+	if a.search {
+		return false
+	}
+
+	a.search = true
+	a.tuiTree.BeginSearch()
+	a.searchTerm = ""
+
+	return true
+}
+
+func (a *adTree) endSearch() bool {
+	if !a.search {
+		return false
+	}
+
+	a.tuiTree.EndSearch()
+	a.search = false
+
+	focusedNodes := a.tuiTree.GetAllFocusedIDs()
+	if len(focusedNodes) > 0 {
+		a.focusedID = focusedNodes[0]
+	}
+
+	a.SetFocus(true)
+
+	return true
+}
+
+func (a *adTree) handleSearch(m tea.KeyPressMsg) bool {
+	if !a.search {
+		return false
+	}
+	text := m.Key().Text
+	key := m.String()
+
+	if key == "backspace" && len(a.searchTerm) > 0 {
+		a.searchTerm = a.searchTerm[:len(a.searchTerm)-1]
+		a.tuiTree.Search(a.searchTerm)
+
+		return true
+	}
+
+	if len(text) == 1 && text >= " " && text <= "~" {
+		a.searchTerm += text
+		a.tuiTree.Search(a.searchTerm)
+
+		return true
+	}
+
+	if len(key) == 1 && key >= " " && key <= "~" {
+		a.searchTerm += key
+		a.tuiTree.Search(a.searchTerm)
+	}
+
+	return true
 }
 
 type adTreeProvider struct {
@@ -368,6 +453,6 @@ type adTreeMsgC interface {
 	treeUpdateMsg | actionUpdateMsg
 }
 
-func msgAdTree[M adTreeMsgC](msg M) routerMsg {
+func msgAdTreeView[M adTreeMsgC](msg M) routerMsg {
 	return viewIDAdTree.routerMessage(msg)
 }

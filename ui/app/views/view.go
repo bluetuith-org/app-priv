@@ -59,6 +59,12 @@ type rootView interface {
 	// Icons returns the configured readonly icon set.
 	Icons() *iconSet
 
+	// FocusTreeView focuses the tree view.
+	FocusTreeView()
+
+	// FocusTabView focuses the tab view.
+	FocusTabView()
+
 	AppBinder
 }
 
@@ -179,22 +185,6 @@ func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyPressMsg:
 		switch m.Code {
-		case tea.KeyTab:
-			if v.adTreeView.GetFocus() {
-				v.adTreeView.SetFocus(false)
-				v.tabsView.SetFocus(true)
-
-				return v, nil
-			}
-
-		case tea.KeyEsc:
-			if v.tabsView.GetFocus() {
-				v.tabsView.SetFocus(false)
-				v.adTreeView.SetFocus(true)
-
-				return v, nil
-			}
-
 		case 'q':
 			return v, tea.Quit
 
@@ -254,6 +244,18 @@ func (v *ViewModel) UpdateStyles() {
 	for _, view := range v.initedViews {
 		view.UpdateStyles()
 	}
+}
+
+// FocusTreeView focuses the tree view.
+func (v *ViewModel) FocusTreeView() {
+	v.tabsView.SetFocus(false)
+	v.adTreeView.SetFocus(true)
+}
+
+// FocusTabView focuses the tab view.
+func (v *ViewModel) FocusTabView() {
+	v.adTreeView.SetFocus(false)
+	v.tabsView.SetFocus(true)
 }
 
 func (v *ViewModel) initAllViews() error {

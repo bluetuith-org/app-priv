@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -124,13 +125,13 @@ func (t *tabsView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return t, nil
 		}
 
-		switch m.String() {
-		case "tab":
+		switch {
+		case keybindings.MatchesKey(keybindings.KeySwitch, m):
 			t.move(true)
 			return t, nil
 
-		case "shift+tab":
-			t.move(false)
+		case keybindings.MatchesKey(keybindings.KeyClose, m):
+			t.v.FocusTreeView()
 			return t, nil
 
 		default:
