@@ -1,8 +1,11 @@
 package views
 
 import (
+	"iter"
 	"runtime"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -38,8 +41,8 @@ const (
 type adSubNodePos uint8
 
 const (
-	actionsListNodePos adSubNodePos = iota
-	devicesTreeNodePos              = 1
+	relPosActionsListNode adSubNodePos = iota
+	relPosDevicesListNode              = 1
 )
 
 func newAdNode(ntype adTreeNodeType, name string, expanded bool, id nodeID, noder adNoder, tree *adTree) *adTreeNode {
@@ -97,50 +100,125 @@ func (a *adTreeNode) addAction(key keybindings.KeyID, state actionStateSpec, isT
 }
 
 type adNoder interface {
-	handleKeys(p tea.KeyPressMsg) (tea.Msg, bool)
+	handleKeys(p tea.KeyPressMsg) (routerMsg, bool)
 	populateActions()
-	updateAction(action *treeview.Node[adTreeNode], updateMsg actionUpdateMsg)
+	updateActionNode(actionNode *treeview.Node[adTreeNode], updateMsg actionUpdateMsg)
+	setAdapterEventData(ev bluetooth.AdapterEventData)
+	setDeviceEventData(ev bluetooth.DeviceEventData)
 }
 
-type rootAdNode struct{}
+type rootAdNode struct {
+	*adTreeNode
+	emptyNoder
+	*treeview.Node[adTreeNode]
 
-func newRootAdNode(tree *adTree) *adTreeNode {
+	sync.RWMutex
+}
+
+func newRootAdNode(tree *adTree) *rootAdNode {
 	rn := &rootAdNode{}
-	id := newRootNodeID()
 
 	rootAdNode := newAdNode(
 		nodeTypeRoot, "Adapters",
-		true, id.NodeID(),
-		rn, tree, // TODO: Change
+		true, newRootNodeID(),
+		rn, tree,
 	)
 
 	rootAdNode.node.SetChildren(make([]*treeview.Node[adTreeNode], 0, 10))
+	rn.adTreeNode = rootAdNode
+	rn.Node = rootAdNode.node
 
-	return rootAdNode
+	return rn
 }
 
-func (r *rootAdNode) handleKeys(_ tea.KeyPressMsg) (tea.Msg, bool) {
-	return nil, false
+func (r *rootAdNode) addAdapter(adapter bluetooth.AdapterData, devices []bluetooth.DeviceData) {
+	r.Lock()
+	defer r.Unlock()
+
+	newAdapterAdNode(r.tree, r, adapter, devices)
 }
 
-func (r *rootAdNode) populateActions() {
+func (r *rootAdNode) addDevice(device bluetooth.DeviceData) {
+	r.Lock()
+	defer r.Unlock()
+
+	dlNodeID := newAdapterNodeID(device.AdapterAddress()).appendSubNodeNib(nibDevicesList)
+
+	deviceListNode, _, ok := findTreeNodeByID(r, dlNodeID.String(), nodeTypeDevicesList)
+	if !ok {
+		return
+	}
+
+	newDeviceAdNode(r.tree, deviceListNode, device)
 }
 
-func (r *rootAdNode) updateAction(_ *treeview.Node[adTreeNode], _ actionUpdateMsg) {
+func (r *rootAdNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove bool) {
+	r.Lock()
+	defer r.Unlock()
+
+	adNodeID := newAdapterNodeID(adapterEvent.AdapterAddress)
+
+	adapterNode, pos, ok := findTreeNodeByID(r, adNodeID.String(), nodeTypeAdapter)
+	if !ok {
+		return
+	}
+
+	if remove {
+		parentNode := r.Node
+		parentNode.SetChildren(slices.Delete(parentNode.Children(), pos, pos+1))
+
+		return
+	}
+
+	adapterNode.Data().noder.setAdapterEventData(adapterEvent)
+}
+
+func (r *rootAdNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bool) {
+	r.Lock()
+	defer r.Unlock()
+
+	dvNodeID := newDeviceNodeID(deviceEvent.DeviceAddress)
+
+	deviceNode, pos, ok := findTreeNodeByID(r, dvNodeID.String(), nodeTypeDevice)
+	if !ok {
+		return
+	}
+
+	if remove {
+		parentNode := deviceNode.Parent()
+		parentNode.SetChildren(slices.Delete(parentNode.Children(), pos, pos+1))
+
+		return
+	}
+
+	deviceNode.Data().noder.setDeviceEventData(deviceEvent)
+}
+
+func (r *rootAdNode) updateAction(updateMsg actionUpdateMsg) {
+	r.Lock()
+	defer r.Unlock()
+
+	node, _, ok := findTreeNodeByID(r, updateMsg.id, nodeTypeAction)
+	if !ok {
+		return
+	}
+
+	node.Data().noder.updateActionNode(node, updateMsg)
 }
 
 type adapterAdNode struct {
-	adapter bluetooth.AdapterData
 	*adTreeNode
+	emptyNoder
+
+	adapter bluetooth.AdapterData
 }
 
-func newAdapterAdNode(tree *adTree, rootNode *treeview.Node[adTreeNode], adapter bluetooth.AdapterData, devices []bluetooth.DeviceData) *adTreeNode {
+func newAdapterAdNode(tree *adTree, rootNode *rootAdNode, adapter bluetooth.AdapterData, devices []bluetooth.DeviceData) *adTreeNode {
 	an := &adapterAdNode{}
-	id := newAdapterNodeID(adapter.AdapterAddress)
 
 	adapterNode := newAdNode(
 		nodeTypeAdapter, getAdapterDisplayName(adapter),
-		true, id.NodeID(),
+		true, newAdapterNodeID(adapter.AdapterAddress),
 		an, tree,
 	)
 
@@ -157,12 +235,12 @@ func newAdapterAdNode(tree *adTree, rootNode *treeview.Node[adTreeNode], adapter
 	return adapterNode
 }
 
-func (a *adapterAdNode) handleKeys(p tea.KeyPressMsg) (tea.Msg, bool) {
+func (a *adapterAdNode) handleKeys(p tea.KeyPressMsg) (routerMsg, bool) {
 	return actionHandleKeyMsg(p, a.node)
 }
 
 func (a *adapterAdNode) populateActions() {
-	actionsListNode := a.node.Children()[actionsListNodePos]
+	actionsListNode := a.node.Children()[relPosActionsListNode]
 	actionsListNode.SetChildren(nil)
 
 	node := actionsListNode.Data()
@@ -176,11 +254,11 @@ func (a *adapterAdNode) populateActions() {
 	node.addAction(keybindings.KeyAdapterToggleScan, boolToActionState(a.adapter.Discovering.Value()), true, a.actionScan)
 
 	for _, actionNode := range actionsListNode.Children() {
-		a.updateAction(actionNode, emptyActionUpdateMsg())
+		a.updateActionNode(actionNode, emptyActionUpdateMsg())
 	}
 }
 
-func (a *adapterAdNode) updateAction(actionNode *treeview.Node[adTreeNode], updateMsg actionUpdateMsg) {
+func (a *adapterAdNode) updateActionNode(actionNode *treeview.Node[adTreeNode], updateMsg actionUpdateMsg) {
 	adnode := actionNode.Data()
 	state := adnode.actionState
 
@@ -222,6 +300,10 @@ func (a *adapterAdNode) updateAction(actionNode *treeview.Node[adTreeNode], upda
 	actionNode.SetName(displayName)
 }
 
+func (a *adapterAdNode) setAdapterEventData(ev bluetooth.AdapterEventData) {
+	a.adapter.AdapterEventData = ev
+}
+
 func (a *adapterAdNode) actionPowered() (opCreationInfo, opInvoker) {
 	return newOpCreationInfo("Changing power state", "Message"), func(ov *opRunningInfo) tea.Msg {
 		time.Sleep(1 * time.Second)
@@ -229,7 +311,8 @@ func (a *adapterAdNode) actionPowered() (opCreationInfo, opInvoker) {
 		time.Sleep(1 * time.Second)
 		ov.info("Updated Message 2")
 		time.Sleep(1 * time.Second)
-		return nil
+
+		return ov.opSuccess(actionStateDisabled)
 	}
 }
 
@@ -246,17 +329,18 @@ func (a *adapterAdNode) actionScan() (opCreationInfo, opInvoker) {
 }
 
 type deviceAdNode struct {
-	device bluetooth.DeviceData
 	*adTreeNode
+	emptyNoder
+
+	device bluetooth.DeviceData
 }
 
 func newDeviceAdNode(tree *adTree, parentNode *treeview.Node[adTreeNode], device bluetooth.DeviceData) *adTreeNode {
 	dn := &deviceAdNode{}
-	id := newDeviceNodeID(device.DeviceAddress)
 
 	deviceNode := newAdNode(
 		nodeTypeDevice, getDeviceDisplayName(device.DeviceEventData),
-		true, id.NodeID(),
+		true, newDeviceNodeID(device.DeviceAddress),
 		dn, tree,
 	)
 
@@ -271,17 +355,12 @@ func newDeviceAdNode(tree *adTree, parentNode *treeview.Node[adTreeNode], device
 	return deviceNode
 }
 
-func (d *deviceAdNode) handleKeys(p tea.KeyPressMsg) (tea.Msg, bool) {
+func (d *deviceAdNode) handleKeys(p tea.KeyPressMsg) (routerMsg, bool) {
 	return actionHandleKeyMsg(p, d.node)
 }
 
 func (d *deviceAdNode) populateActions() {
-	device, err := d.tree.session().Device(d.device.DeviceAddress).Properties()
-	if err != nil {
-		return
-	}
-
-	actionsListNode := d.node.Children()[actionsListNodePos]
+	actionsListNode := d.node.Children()[relPosActionsListNode]
 	actionsListNode.SetChildren(nil)
 
 	node := actionsListNode.Data()
@@ -292,40 +371,40 @@ func (d *deviceAdNode) populateActions() {
 	node.addAction(keybindings.KeyDeviceConnect, boolToActionState(d.device.Connected.Value()), true, d.actionConnect)
 	node.addAction(keybindings.KeyDevicePair, boolToActionState(d.device.Paired.Value()), true, d.actionPair)
 
-	if runtime.GOOS == "linux" {
-		node.addAction(keybindings.KeyDeviceTrust, boolToActionState(d.device.Trusted.Value()), true, d.actionTrust)
-		node.addAction(keybindings.KeyDeviceBlock, boolToActionState(d.device.Blocked.Value()), true, d.actionBlock)
-	}
-
 	if d.tree.features().Has(appfeatures.FeatureSendFile, appfeatures.FeatureReceiveFile) &&
-		device.HaveService(bluetooth.ObexObjpushServiceClass) {
+		d.device.HaveService(bluetooth.ObexObjpushServiceClass) {
 		node.addAction(keybindings.KeyDeviceSendFiles, actionStateNone, false, d.actionSend)
 	}
 
-	if d.tree.features().Has(appfeatures.FeatureNetwork) &&
-		device.HaveService(bluetooth.NapServiceClass) &&
-		(device.HaveService(bluetooth.PanuServiceClass) ||
-			device.HaveService(bluetooth.DialupNetServiceClass)) {
-		node.addAction(keybindings.KeyDeviceNetwork, actionStateNone, false, d.actionNetwork)
-	}
+	if runtime.GOOS == "linux" {
+		node.addAction(keybindings.KeyDeviceTrust, boolToActionState(d.device.Trusted.Value()), true, d.actionTrust)
+		node.addAction(keybindings.KeyDeviceBlock, boolToActionState(d.device.Blocked.Value()), true, d.actionBlock)
 
-	if device.HaveService(bluetooth.AudioSourceServiceClass) ||
-		device.HaveService(bluetooth.AudioSinkServiceClass) {
-		node.addAction(keybindings.KeyDeviceAudioProfiles, actionStateNone, false, d.actionAudioProfiles)
-	}
+		if d.device.HaveService(bluetooth.AudioSourceServiceClass) ||
+			d.device.HaveService(bluetooth.AudioSinkServiceClass) {
+			node.addAction(keybindings.KeyDeviceAudioProfiles, actionStateNone, false, d.actionAudioProfiles)
+		}
 
-	if device.HaveService(bluetooth.AudioSourceServiceClass) &&
-		device.HaveService(bluetooth.AvRemoteServiceClass) &&
-		device.HaveService(bluetooth.AvRemoteTargetServiceClass) {
-		node.addAction(keybindings.KeyPlayerShow, actionStateDisabled, true, d.actionMediaPlayer)
+		if d.device.HaveService(bluetooth.AudioSourceServiceClass) &&
+			d.device.HaveService(bluetooth.AvRemoteServiceClass) &&
+			d.device.HaveService(bluetooth.AvRemoteTargetServiceClass) {
+			node.addAction(keybindings.KeyPlayerShow, actionStateDisabled, true, d.actionMediaPlayer)
+		}
+
+		if d.tree.features().Has(appfeatures.FeatureNetwork) &&
+			d.device.HaveService(bluetooth.NapServiceClass) &&
+			(d.device.HaveService(bluetooth.PanuServiceClass) ||
+				d.device.HaveService(bluetooth.DialupNetServiceClass)) {
+			node.addAction(keybindings.KeyDeviceNetwork, actionStateNone, false, d.actionNetwork)
+		}
 	}
 
 	for _, actionNode := range actionsListNode.Children() {
-		d.updateAction(actionNode, emptyActionUpdateMsg())
+		d.updateActionNode(actionNode, emptyActionUpdateMsg())
 	}
 }
 
-func (d *deviceAdNode) updateAction(actionNode *treeview.Node[adTreeNode], updateMsg actionUpdateMsg) {
+func (d *deviceAdNode) updateActionNode(actionNode *treeview.Node[adTreeNode], updateMsg actionUpdateMsg) {
 	adnode := actionNode.Data()
 	state := adnode.actionState
 
@@ -376,6 +455,10 @@ func (d *deviceAdNode) updateAction(actionNode *treeview.Node[adTreeNode], updat
 	adnode.node.SetName(actionText)
 }
 
+func (d *deviceAdNode) setDeviceEventData(ev bluetooth.DeviceEventData) {
+	d.device.DeviceEventData = ev
+}
+
 func (d *deviceAdNode) actionConnect() (opCreationInfo, opInvoker) {
 	return opCreationInfo{}, nil
 }
@@ -408,10 +491,22 @@ func (d *deviceAdNode) actionMediaPlayer() (opCreationInfo, opInvoker) {
 	return opCreationInfo{}, nil
 }
 
-type nodeID struct {
-	id string
+type emptyNoder struct{}
 
-	nodeNib nodeIDNib
+func (e *emptyNoder) handleKeys(_ tea.KeyPressMsg) (routerMsg, bool) {
+	return emptyRouterMsg(), false
+}
+
+func (e *emptyNoder) populateActions() {
+}
+
+func (e *emptyNoder) updateActionNode(_ *treeview.Node[adTreeNode], _ actionUpdateMsg) {
+}
+
+func (e *emptyNoder) setAdapterEventData(_ bluetooth.AdapterEventData) {
+}
+
+func (e *emptyNoder) setDeviceEventData(_ bluetooth.DeviceEventData) {
 }
 
 type nodeIDNib = string
@@ -424,12 +519,60 @@ const (
 	nibDevice      nodeIDNib = "dv"
 )
 
+const (
+	lenNibPlusColon = 3
+	lenBdAddr       = 12
+	lenNodeIDTotal  = lenNibPlusColon + lenBdAddr
+)
+
+type nodeID struct {
+	id string
+
+	nodeNib nodeIDNib
+}
+
+func newRootNodeID() nodeID {
+	return nodeID{id: "root", nodeNib: ""}
+}
+
+func newAdapterNodeID(address bluetooth.AdapterAddress) nodeID {
+	n := nodeID{
+		nodeNib: nibAdapter,
+		id: useBuffer(lenNodeIDTotal, func(b *strings.Builder) {
+			b.WriteString(nibAdapter)
+			b.WriteString(":")
+			appendMacAddress(b, address.Address)
+		}),
+	}
+
+	return n
+}
+
+func newDeviceNodeID(address bluetooth.DeviceAddress) nodeID {
+	return nodeID{
+		nodeNib: nibDevice,
+		id: useBuffer((lenNodeIDTotal*2)+2+len(nibDevicesList), func(b *strings.Builder) {
+			b.WriteString(nibAdapter)
+			b.WriteString(":")
+			appendMacAddress(b, address.AssociatedAdapter)
+
+			b.WriteString("/")
+			b.WriteString(nibDevicesList)
+			b.WriteString("/")
+
+			b.WriteString(nibDevice)
+			b.WriteString(":")
+			appendMacAddress(b, address.Address)
+		}),
+	}
+}
+
 func (n nodeID) appendSubNodeNib(nib nodeIDNib) nodeID {
 	return n.appendSubNodeTextNib(nib, "")
 }
 
 func (n nodeID) appendSubNodeTextNib(nib nodeIDNib, text string) nodeID {
-	length := len(n.id) + len(nib) + len(text)
+	length := len(n.id) + lenNibPlusColon + len(text)
 
 	n.id = useBuffer(length, func(b *strings.Builder) {
 		b.WriteString(n.id)
@@ -449,80 +592,53 @@ func (n nodeID) String() string {
 	return n.id
 }
 
-type rootNodeID struct {
-	nodeID
+func findTreeNodeByID(rootNode *rootAdNode, id string, nodeType adTreeNodeType) (*treeview.Node[adTreeNode], int, bool) {
+	currNode := rootNode.Node
+	currNodePos := -1
+
+	for nodeID := range iterNodeID(id) {
+		found := false
+
+		for pos, node := range currNode.Children() {
+			if node.ID() == nodeID {
+				currNode = node
+				currNodePos = pos
+
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil, -1, false
+		}
+	}
+
+	return currNode, currNodePos, currNode != nil && currNode.Data().nodeType == nodeType
 }
 
-func newRootNodeID() rootNodeID {
-	return rootNodeID{nodeID: nodeID{id: "root", nodeNib: ""}}
-}
+func iterNodeID(id string) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		currIdx := 0
 
-func (r *rootNodeID) NodeID() nodeID {
-	return r.nodeID
-}
+		for currIdx < len(id) {
+			idx := strings.Index(id[currIdx:], "/")
+			if idx < 0 {
+				break
+			}
 
-type adapterNodeID struct {
-	nodeID
+			currIdx += idx + 1
+			nodeID := id[:currIdx-1]
 
-	adapterAddress bluetooth.AdapterAddress
-}
+			if !yield(nodeID) {
+				return
+			}
+		}
 
-func newAdapterNodeID(address bluetooth.AdapterAddress) adapterNodeID {
-	a := adapterNodeID{adapterAddress: address}
-
-	a.nodeNib = nibAdapter
-	a.id = a.buildID()
-
-	return a
-}
-
-func (a *adapterNodeID) NodeID() nodeID {
-	return a.nodeID
-}
-
-func (a *adapterNodeID) buildID() string {
-	length := 4 + len(a.nodeNib) + (bluetooth.MaxAddressStringLength + 2)
-
-	return useBuffer(length, func(b *strings.Builder) {
-		b.WriteString(a.nodeNib)
-		b.WriteString(":")
-		appendMacAddress(b, a.adapterAddress.Address)
-	})
-}
-
-type deviceNodeID struct {
-	nodeID
-
-	deviceAddress bluetooth.DeviceAddress
-}
-
-func newDeviceNodeID(address bluetooth.DeviceAddress) deviceNodeID {
-	d := deviceNodeID{deviceAddress: address}
-
-	d.nodeNib = nibDevice
-	d.id = d.buildID()
-
-	return d
-}
-
-func (d *deviceNodeID) NodeID() nodeID {
-	return d.nodeID
-}
-
-func (d *deviceNodeID) buildID() string {
-	length := 4 + len(d.nodeNib) + ((bluetooth.MaxAddressStringLength + 2) * 2)
-
-	return useBuffer(length, func(b *strings.Builder) {
-		b.WriteString(d.nodeNib)
-		b.WriteString(":")
-		appendMacAddress(b, d.deviceAddress.Address)
-
-		b.WriteString("/")
-
-		b.WriteString(nibAdapter)
-		b.WriteString(":")
-		appendMacAddress(b, d.deviceAddress.AssociatedAdapter)
-	})
+		if !yield(id) {
+			return
+		}
+	}
 }
 
 func appendMacAddress(b *strings.Builder, mac bluetooth.MacAddress) {

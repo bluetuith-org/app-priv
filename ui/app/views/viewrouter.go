@@ -32,6 +32,18 @@ func newRouterMsg(id viewID, msg tea.Msg) routerMsg {
 	return routerMsg{id, msg}
 }
 
+func emptyRouterMsg() routerMsg {
+	return routerMsg{}
+}
+
+func (r *routerMsg) isValid() bool {
+	return r.id != viewIDNone
+}
+
+func (r routerMsg) sendRoutedMsg(rv rootView) tea.Cmd {
+	return rv.SendRoutedUpdateMsg(r)
+}
+
 func handleRouterMsg(v viewer, msg routerMsg) tea.Cmd {
 	_, cmd := v.Update(msg.msg)
 	return cmd

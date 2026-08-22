@@ -51,18 +51,18 @@ func (a *actionUpdateMsg) isValid(stateID string) bool {
 	return a.id != "" && a.id == stateID
 }
 
-func actionHandleKeyMsg(p tea.KeyPressMsg, node *treeview.Node[adTreeNode]) (tea.Msg, bool) {
+func actionHandleKeyMsg(p tea.KeyPressMsg, node *treeview.Node[adTreeNode]) (routerMsg, bool) {
 	_, result, ok := keybindings.IterMatch(p, actionKeyIterator(node))
 	if !ok {
-		return nil, false
+		return emptyRouterMsg(), false
 	}
 
-	return actionStateToOperation(result.id, result.state), true
+	return acStateToOpMsg(result.id, result.state), true
 }
 
-func actionStateToOperation(id string, state *adActionState) tea.Msg {
+func acStateToOpMsg(id string, state *adActionState) routerMsg {
 	if state == nil || id == "" {
-		return nil
+		return emptyRouterMsg()
 	}
 
 	createInfo, opFunc := state.invokeAction()
@@ -84,11 +84,11 @@ func actionKeyIterator(node *treeview.Node[adTreeNode]) keybindings.IterKeyMatch
 		}
 
 		ch := node.Children()
-		if len(ch) <= int(actionsListNodePos) {
+		if len(ch) <= int(relPosActionsListNode) {
 			return
 		}
 
-		actionListNode := ch[actionsListNodePos]
+		actionListNode := ch[relPosActionsListNode]
 		actionNodes := actionListNode.Children()
 
 		res := &actionKeyIterResult{}

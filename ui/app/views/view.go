@@ -65,6 +65,10 @@ type rootView interface {
 	// FocusTabView focuses the tab view.
 	FocusTabView()
 
+	// SendRoutedUpdateMsg routes the message to the specified view.
+	// Should only be called from the view's [Update] function.
+	SendRoutedUpdateMsg(msg routerMsg) tea.Cmd
+
 	AppBinder
 }
 
@@ -256,6 +260,17 @@ func (v *ViewModel) FocusTreeView() {
 func (v *ViewModel) FocusTabView() {
 	v.adTreeView.SetFocus(false)
 	v.tabsView.SetFocus(true)
+}
+
+// SendRoutedUpdateMsg routes the message to the specified view.
+// Should only be called from the view's [Update] function.
+func (v *ViewModel) SendRoutedUpdateMsg(msg routerMsg) tea.Cmd {
+	if !msg.isValid() {
+		return nil
+	}
+
+	_, cmd := v.Update(msg)
+	return cmd
 }
 
 func (v *ViewModel) initAllViews() error {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"sync"
 
 	"github.com/Digital-Shane/treeview/v2"
 
@@ -32,7 +31,7 @@ type adTree struct {
 	search     bool
 	searchTerm string
 
-	mu sync.Mutex
+	rootNode *rootAdNode
 }
 
 // ViewID returns the view's ID.
@@ -48,12 +47,12 @@ func (a *adTree) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err err
 	a.ctx = context.Background()
 	a.provider = newAdTreeProvider(a.v)
 
-	rootNode := newRootAdNode(a)
+	a.rootNode = newRootAdNode(a)
 
 	kmap := treeview.KeyMap{}
 
 	a.tree = treeview.NewTree(
-		[]*treeview.Node[adTreeNode]{rootNode.node},
+		[]*treeview.Node[adTreeNode]{a.rootNode.Node},
 		treeview.WithExpandFunc(a.expandFunc),
 		treeview.WithProvider(a.provider),
 	)
@@ -90,28 +89,23 @@ func (a *adTree) Resize(width, height int) tea.WindowSizeMsg {
 
 // SetFocus sets whether the view is currently focused.
 func (a *adTree) SetFocus(focused bool) {
-	a.updateTreeFn(true, func(rootNode *treeview.Node[adTreeNode]) {
-		a.focused = focused
+	a.focused = focused
 
-		if !focused {
-			a.focusedID = a.tuiTree.GetFocusedID()
-			a.tuiTree.ClearAllFocus()
+	if !focused {
+		a.focusedID = a.tuiTree.GetFocusedID()
+		a.tuiTree.ClearAllFocus()
 
-			return
-		}
+		return
+	}
 
-		_, err := a.tuiTree.SetFocusedID(a.ctx, a.focusedID)
-		if errors.Is(err, treeview.ErrNodeNotFound) {
-			a.tuiTree.SetFocusedID(a.ctx, rootNode.ID())
-		}
-	})
+	_, err := a.tuiTree.SetFocusedID(a.ctx, a.focusedID)
+	if errors.Is(err, treeview.ErrNodeNotFound) {
+		a.tuiTree.SetFocusedID(a.ctx, a.rootNode.ID())
+	}
 }
 
 // GetFocus gets whether the view is currently focused.
 func (a *adTree) GetFocus() bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
 	return a.focused
 }
 
@@ -137,6 +131,9 @@ func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !a.focused {
 			return a, nil
 		}
+
+		a.rootNode.RLock()
+		defer a.rootNode.RUnlock()
 
 		focusedNode := a.tree.GetFocusedNode()
 		if focusedNode == nil {
@@ -172,9 +169,7 @@ func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return a, nil
 			}
 
-			return a, func() tea.Msg {
-				return actionStateToOperation(focusedNode.ID(), adNode.actionState)
-			}
+			return a, acStateToOpMsg(focusedNode.ID(), adNode.actionState).sendRoutedMsg(a.v)
 
 		case keybindings.MatchesKey(keybindings.KeyFilter, m):
 			if a.beginSearch() {
@@ -189,7 +184,7 @@ func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if nmsg, ok := adNode.noder.handleKeys(m); ok {
-			return a, func() tea.Msg { return nmsg }
+			return a, nmsg.sendRoutedMsg(a.v)
 		}
 
 	case actionUpdateMsg:
@@ -238,42 +233,31 @@ func (a *adTree) populate() tea.Cmd {
 		}
 
 		for _, adapter := range adapters {
-			a.addAdapter(adapter, true)
+			if err := a.addAdapter(adapter); err != nil {
+				_ = err
+				return nil
+			}
 		}
 
-		return treeUpdateMsg{}
+		return msgAdTreeUpdate()
 	}
 }
 
-func (a *adTree) addAdapter(adapter bluetooth.AdapterData, lock bool) {
+func (a *adTree) addAdapter(adapter bluetooth.AdapterData) error {
 	devices, err := a.v.Session().Adapter(adapter.AdapterAddress).Devices()
 	if err != nil {
 		// TODO:Log error messages
 		_ = err
-		return
+		return err
 	}
 
-	a.updateTreeFn(lock, func(rootNode *treeview.Node[adTreeNode]) {
-		newAdapterAdNode(a, rootNode, adapter, devices)
-	})
+	a.rootNode.addAdapter(adapter, devices)
+
+	return nil
 }
 
-func (a *adTree) addDevice(device bluetooth.DeviceData, parentNode *adTreeNode, lock bool) {
-	if parentNode == nil {
-		n, _ := a.tuiTree.FindByID(
-			context.Background(),
-			newAdapterNodeID(bluetooth.NewAdapterAddress(device.AssociatedAdapter)).appendSubNodeNib(nibDevicesList).String(),
-		)
-		if n == nil {
-			return
-		}
-
-		parentNode = n.Data()
-	}
-
-	a.updateTreeFn(lock, func(*treeview.Node[adTreeNode]) {
-		newDeviceAdNode(a, parentNode.node, device)
-	})
+func (a *adTree) addDevice(device bluetooth.DeviceData) {
+	a.rootNode.addDevice(device)
 }
 
 func (a *adTree) expandFunc(node *treeview.Node[adTreeNode]) bool {
@@ -286,29 +270,8 @@ func (a *adTree) expandFunc(node *treeview.Node[adTreeNode]) bool {
 }
 
 func (a *adTree) updateAction(msg actionUpdateMsg) tea.Cmd {
-	return func() tea.Msg {
-		a.updateTreeFn(true, func(_ *treeview.Node[adTreeNode]) {
-			node, err := a.tree.FindByID(context.Background(), msg.id)
-			if err != nil {
-				return
-			}
-
-			if node != nil {
-				node.Data().noder.updateAction(node, msg)
-			}
-		})
-
-		return nil
-	}
-}
-
-func (a *adTree) updateTreeFn(lock bool, fn func(rootNode *treeview.Node[adTreeNode])) {
-	if lock {
-		a.mu.Lock()
-		defer a.mu.Unlock()
-	}
-
-	fn(a.tuiTree.Nodes()[0])
+	a.rootNode.updateAction(msg)
+	return nil
 }
 
 func (a *adTree) beginSearch() bool {
@@ -345,6 +308,7 @@ func (a *adTree) handleSearch(m tea.KeyPressMsg) bool {
 	if !a.search {
 		return false
 	}
+
 	text := m.Key().Text
 	key := m.String()
 
@@ -355,17 +319,15 @@ func (a *adTree) handleSearch(m tea.KeyPressMsg) bool {
 		return true
 	}
 
-	if len(text) == 1 && text >= " " && text <= "~" {
+	switch {
+	case len(text) == 1 && text >= " " && text <= "~":
 		a.searchTerm += text
-		a.tuiTree.Search(a.searchTerm)
 
-		return true
-	}
-
-	if len(key) == 1 && key >= " " && key <= "~" {
+	case len(key) == 1 && key >= " " && key <= "~":
 		a.searchTerm += key
-		a.tuiTree.Search(a.searchTerm)
 	}
+
+	a.tuiTree.Search(a.searchTerm)
 
 	return true
 }
