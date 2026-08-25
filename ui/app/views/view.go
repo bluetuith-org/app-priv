@@ -7,7 +7,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/76creates/stickers/flexbox"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui/config"
@@ -43,8 +42,8 @@ type viewer interface {
 	// UpdateStyles updates the styles for the view.
 	UpdateStyles()
 
-	// handleRouterMsg handles the routed message.
-	handleRouterMsg(m routerMsg) tea.Cmd
+	// HandleRouterMsg handles the routed message.
+	HandleRouterMsg(m routerMsg) tea.Cmd
 
 	tea.Model
 }
@@ -96,20 +95,22 @@ type ViewModel struct {
 	adTreeView     *adTree
 	infoView       *infoView
 	operationsView *operationsView
+	statusBar      *statusBarView
+	logView        *logView
 
 	initedViews map[viewID]viewer
 
 	icons *iconSet
-
-	flexVertical   *flexbox.FlexBox
-	flexHorizontal *flexbox.HorizontalFlexBox
-	cells          []*flexbox.Cell
 
 	AppBinder
 }
 
 // NewViewModel returns the main view.
 func NewViewModel(appBinder AppBinder) (*ViewModel, error) {
+	if err := initLogger(appBinder, "", 1000); err != nil {
+		return nil, err
+	}
+
 	v := &ViewModel{
 		width:  120,
 		height: 30,
@@ -120,38 +121,14 @@ func NewViewModel(appBinder AppBinder) (*ViewModel, error) {
 		adTreeView:     &adTree{},
 		infoView:       &infoView{},
 		operationsView: &operationsView{},
+		statusBar:      &statusBarView{},
+		logView:        &logView{},
 
 		// TODO: Check for ascii icons.
 		icons: newIconSet(false),
 
-		flexVertical:   flexbox.New(0, 0),
-		flexHorizontal: flexbox.NewHorizontal(0, 0),
-
 		AppBinder: appBinder,
 	}
-
-	v.cells = []*flexbox.Cell{
-		flexbox.NewCell(2, 1).SetContentGenerator(func(_, _ int) string {
-			return v.renderHeader()
-		}),
-		flexbox.NewCell(2, -1).SetContentGenerator(func(_, _ int) string {
-			return v.flexVertical.Render()
-		}),
-		flexbox.NewCell(1, 1).SetContentGenerator(func(_, _ int) string {
-			return v.adTreeView.View().Content
-		}),
-		flexbox.NewCell(1, 1).SetContentGenerator(func(_, _ int) string {
-			return v.tabsView.View().Content
-		}),
-	}
-
-	v.flexHorizontal.AddColumns([]*flexbox.Column{
-		v.flexHorizontal.NewColumn().AddCells(v.cells[0], v.cells[1]),
-	})
-
-	v.flexVertical.AddRows([]*flexbox.Row{
-		v.flexVertical.NewRow().AddCells(v.cells[2], v.cells[3]),
-	})
 
 	return v, v.initAllViews()
 }
@@ -179,13 +156,13 @@ func (v *ViewModel) Init() tea.Cmd {
 
 // Update is called when a message is received. Use it to inspect messages
 // and, in response, update the model and/or send a command.
-//
-//	TODO: Implement focus
 func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
-		v.width = m.Width
-		v.height = m.Height
+		v.width = max(3, m.Width)
+		v.height = max(3, m.Height)
+
+		msg = tea.WindowSizeMsg{Width: v.width, Height: v.height - 3}
 
 	case tea.KeyPressMsg:
 		switch m.Code {
@@ -211,7 +188,7 @@ func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return v, nil
 		}
 
-		return v, view.handleRouterMsg(m)
+		return v, view.HandleRouterMsg(m)
 	}
 
 	return v, collectCmds(true, msg, v.modelIterator())
@@ -225,20 +202,15 @@ func (v *ViewModel) View() tea.View {
 	view.AltScreen = true
 	view.MouseMode = tea.MouseModeCellMotion
 
-	fbrow := v.flexVertical
-	fbcol := v.flexHorizontal
-	if v.prevWidth != v.width || v.prevHeight != v.height {
-		fbrow.SetHeight(v.height)
-		fbrow.SetWidth(v.width)
+	adTreeContent := v.adTreeView.View().Content
+	tabsContent := v.tabsView.View().Content
 
-		fbcol.SetHeight(v.height)
-		fbcol.SetWidth(v.width)
-	}
+	padWidth := max(2, v.width-(lipgloss.Width(adTreeContent)+lipgloss.Width(tabsContent)))
 
-	v.prevWidth = v.width
-	v.prevHeight = v.height
+	horiz := lipgloss.JoinHorizontal(lipgloss.Left, adTreeContent, strings.Repeat(" ", padWidth), tabsContent)
+	vert := lipgloss.JoinVertical(lipgloss.Top, v.renderHeader(), horiz, v.statusBar.View().Content)
 
-	view.SetContent(fbcol.Render())
+	view.SetContent(vert)
 
 	return view
 }
@@ -282,6 +254,8 @@ func (v *ViewModel) initAllViews() error {
 		v.adTreeView,
 		v.infoView,
 		v.operationsView,
+		v.statusBar,
+		v.logView,
 	} {
 		view.SetRootView(v)
 
@@ -303,7 +277,7 @@ func (v *ViewModel) initAllViews() error {
 
 func (v *ViewModel) modelIterator() iter.Seq[viewer] {
 	return func(yield func(viewer) bool) {
-		for _, view := range []viewer{v.adTreeView, v.tabsView} {
+		for _, view := range []viewer{v.adTreeView, v.tabsView, v.statusBar} {
 			if !yield(view) {
 				return
 			}
@@ -336,10 +310,11 @@ func (v *ViewModel) renderHeader() string {
 		Background(lipgloss.Color("62")).
 		Foreground(lipgloss.Color("15")).
 		Width(v.width).
+		Height(1).
 		Align(lipgloss.Left)
 
 	cfg := v.Configuration()
-	title := useBuffer(len(cfg.Version)+len(cfg.Revision)+10, func(b *strings.Builder) {
+	title := useStringBuffer(len(cfg.Version)+len(cfg.Revision)+10, func(b *strings.Builder) {
 		fmt.Fprintf(b, " bluetuith %s (%s)", cfg.Version, cfg.Revision)
 	})
 

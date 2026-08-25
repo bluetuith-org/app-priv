@@ -288,7 +288,7 @@ func (a *adapterAdNode) updateActionNode(actionNode *treeview.Node[adTreeNode], 
 		actionText = "On"
 	}
 
-	displayName := useBuffer(len(text)+len(actionText)+10, func(b *strings.Builder) {
+	displayName := useStringBuffer(len(text)+len(actionText)+10, func(b *strings.Builder) {
 		b.WriteString("Switch ")
 
 		b.WriteString(text)
@@ -538,7 +538,7 @@ func newRootNodeID() nodeID {
 func newAdapterNodeID(address bluetooth.AdapterAddress) nodeID {
 	n := nodeID{
 		nodeNib: nibAdapter,
-		id: useBuffer(lenNodeIDTotal, func(b *strings.Builder) {
+		id: useStringBuffer(lenNodeIDTotal, func(b *strings.Builder) {
 			b.WriteString(nibAdapter)
 			b.WriteString(":")
 			appendMacAddress(b, address.Address)
@@ -551,7 +551,7 @@ func newAdapterNodeID(address bluetooth.AdapterAddress) nodeID {
 func newDeviceNodeID(address bluetooth.DeviceAddress) nodeID {
 	return nodeID{
 		nodeNib: nibDevice,
-		id: useBuffer((lenNodeIDTotal*2)+2+len(nibDevicesList), func(b *strings.Builder) {
+		id: useStringBuffer((lenNodeIDTotal*2)+2+len(nibDevicesList), func(b *strings.Builder) {
 			b.WriteString(nibAdapter)
 			b.WriteString(":")
 			appendMacAddress(b, address.AssociatedAdapter)
@@ -574,7 +574,7 @@ func (n nodeID) appendSubNodeNib(nib nodeIDNib) nodeID {
 func (n nodeID) appendSubNodeTextNib(nib nodeIDNib, text string) nodeID {
 	length := len(n.id) + lenNibPlusColon + len(text)
 
-	n.id = useBuffer(length, func(b *strings.Builder) {
+	n.id = useStringBuffer(length, func(b *strings.Builder) {
 		b.WriteString(n.id)
 		b.WriteString("/")
 		b.WriteString(nib)

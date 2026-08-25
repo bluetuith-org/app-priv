@@ -13,7 +13,17 @@ type infoView struct {
 	width, height int
 	focused       bool
 
+	vp viewport.Model
+
 	v rootView
+}
+
+func (i *infoView) Title() string {
+	return "Info"
+}
+
+func (i *infoView) Icon() *iconVariant {
+	return i.v.Icons().Info
 }
 
 // ViewID returns the view's ID.
@@ -23,6 +33,8 @@ func (i *infoView) ViewID() viewID {
 
 // InitializeView initializes the view.
 func (i *infoView) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err error) {
+	i.vp = viewport.New()
+
 	return true, nil
 }
 
@@ -57,6 +69,11 @@ func (i *infoView) GetFocus() bool {
 func (i *infoView) UpdateStyles() {
 }
 
+// HandleRouterMsg handles the routed message.
+func (i *infoView) HandleRouterMsg(m routerMsg) tea.Cmd {
+	return handleRouterMsg(i, m)
+}
+
 // Init is the first function that will be called. It returns an optional
 // initial command. To not perform an initial command return nil.
 func (i *infoView) Init() tea.Cmd {
@@ -79,24 +96,13 @@ func (i *infoView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the program's UI, which can be a string or a [Layer]. The
 // view is rendered after every Update.
 func (i *infoView) View() tea.View {
-	mv := lipgloss.NewStyle().
-		Width(i.width).
-		Height(i.height).
+	i.vp.Style = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62"))
 
-	return tea.NewView(mv.Render("Information"))
-}
+	i.vp.SetWidth(i.width)
+	i.vp.SetHeight(i.height)
+	i.vp.SetContent("Information")
 
-func (i *infoView) Title() string {
-	return "Info"
-}
-
-func (i *infoView) Icon() *iconVariant {
-	return i.v.Icons().Info
-}
-
-// handleRouterMsg handles the routed message.
-func (i *infoView) handleRouterMsg(m routerMsg) tea.Cmd {
-	return handleRouterMsg(i, m)
+	return tea.NewView(i.vp.View())
 }

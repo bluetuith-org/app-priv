@@ -79,7 +79,7 @@ func (a *adTree) AttachToTabView() (tabSection, bool) {
 // Resize resizes the view.
 func (a *adTree) Resize(width, height int) tea.WindowSizeMsg {
 	a.width = (width / 2) - 1
-	a.height = height - 2
+	a.height = height
 
 	return tea.WindowSizeMsg{
 		Width:  a.width,
@@ -211,8 +211,8 @@ func (a *adTree) View() tea.View {
 	return view
 }
 
-// handleRouterMsg handles the routed message.
-func (a *adTree) handleRouterMsg(m routerMsg) tea.Cmd {
+// HandleRouterMsg handles the routed message.
+func (a *adTree) HandleRouterMsg(m routerMsg) tea.Cmd {
 	return handleRouterMsg(a, m)
 }
 
@@ -359,7 +359,7 @@ func (a *adTreeProvider) Icon(node *treeview.Node[adTreeNode]) string {
 	collapseIndicator := a.v.Icons().TriangleRight.getIcon()
 	expandIndicator := a.v.Icons().TriangleDown.getIcon()
 
-	return useBuffer(len(expandIndicator)+2, func(b *strings.Builder) {
+	return useStringBuffer(len(expandIndicator)+2, func(b *strings.Builder) {
 		if node.HasChildren() {
 			indicator := expandIndicator
 			if !node.IsExpanded() {

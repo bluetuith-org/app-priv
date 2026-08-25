@@ -9,6 +9,7 @@ type iconSet struct {
 	TriangleRight *iconVariant
 	TriangleDown  *iconVariant
 	CogWheel      *iconVariant
+	Log           *iconVariant
 }
 
 func newIconSet(isASCII bool) *iconSet {
@@ -47,6 +48,11 @@ func (i *iconSet) populateIcons(isASCII bool) *iconSet {
 		CogWheel: &iconVariant{
 			Unicode: "\u2699",
 			ASCII:   "[-O-]",
+		},
+		Log: &iconVariant{
+			Unicode: "\U0001F50D",
+			ASCII:   "",
+			IsASCII: isASCII,
 		},
 	}
 

@@ -70,12 +70,11 @@ func (t *tabsView) AttachToTabView() (tabSection, bool) {
 func (t *tabsView) Resize(width int, height int) tea.WindowSizeMsg {
 	const (
 		cHPaddingSize = 8
-		cVPaddingSize = 2
 		cMinHeight    = 2
 		cMinWidth     = 4
 	)
 
-	w, h := (width/2)-1, height-cVPaddingSize
+	w, h := (width / 2), height
 
 	t.vport.SetWidth(clamp(w-cHPaddingSize, cMinWidth, w))
 	t.vport.SetHeight(clamp(cMinHeight, cMinHeight, h))
@@ -159,31 +158,28 @@ func (t *tabsView) AddTabSection(section tabSection) {
 }
 
 func (t *tabsView) move(fwd bool) {
-	numTabs := len(t.tabs) - 1
+	numTabs := len(t.tabs)
 	prevPos := t.activeTab
 
-	t.tabs[prevPos].SetFocus(false)
-	defer func() {
-		t.tabs[t.activeTab].SetFocus(t.focused)
-	}()
-
-	if fwd {
-		t.activeTab = clamp(t.activeTab+1, 0, numTabs)
-		if prevPos == numTabs && t.activeTab == numTabs {
-			t.activeTab = 0
-		}
-
+	if numTabs == 0 {
 		return
 	}
 
-	t.activeTab = clamp(t.activeTab-1, 0, numTabs)
-	if prevPos == 0 && t.activeTab == 0 {
-		t.activeTab = numTabs
+	t.tabs[prevPos].SetFocus(false)
+
+	switch fwd {
+	case true:
+		t.activeTab = (t.activeTab + 1) % numTabs
+
+	case false:
+		t.activeTab = ((t.activeTab - 1) + numTabs) % numTabs
 	}
+
+	t.tabs[t.activeTab].SetFocus(t.focused)
 }
 
-// handleRouterMsg handles the routed message.
-func (t *tabsView) handleRouterMsg(m routerMsg) tea.Cmd {
+// HandleRouterMsg handles the routed message.
+func (t *tabsView) HandleRouterMsg(m routerMsg) tea.Cmd {
 	return handleRouterMsg(t, m)
 }
 

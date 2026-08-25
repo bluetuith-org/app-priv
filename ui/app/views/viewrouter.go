@@ -10,6 +10,8 @@ const (
 	viewIDTabs
 	viewIDInfo
 	viewIDOperations
+	viewIDStatusBar
+	viewIDLog
 	_viewIDMax
 )
 

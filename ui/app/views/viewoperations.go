@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
+	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
@@ -20,13 +20,13 @@ var (
 )
 
 type operationsView struct {
-	sync.Mutex
-
 	width, height int
 	focused       bool
 
 	mapIDToIndex map[string]int
 	orderedList  []*opRunningInfo
+
+	vp viewport.Model
 
 	v rootView
 }
@@ -40,6 +40,8 @@ func (o *operationsView) ViewID() viewID {
 func (o *operationsView) InitializeView(_ *appfeatures.FeatureSet) (inited bool, err error) {
 	o.mapIDToIndex = make(map[string]int)
 	o.orderedList = make([]*opRunningInfo, 0, 10)
+
+	o.vp = viewport.New()
 
 	return true, nil
 }
@@ -117,8 +119,7 @@ func (o *operationsView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		o.removeOperation(m)
 
 	case opErrorMsg:
-		// TODO: Handle errors.
-		_ = m
+		logError(m.err)
 	}
 
 	return o, cmd
@@ -127,15 +128,9 @@ func (o *operationsView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the program's UI, which can be a string or a [Layer]. The
 // view is rendered after every Update.
 func (o *operationsView) View() tea.View {
-	mv := lipgloss.NewStyle().
-		Width(o.width).
-		Height(o.height).
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("62"))
-
 	text := ""
 	if len(o.orderedList) > 0 {
-		text = useBuffer(len(o.orderedList)+10, func(b *strings.Builder) {
+		text = useStringBuffer(len(o.orderedList)+10, func(b *strings.Builder) {
 			for _, op := range o.orderedList {
 				b.WriteString(op.id)
 				b.WriteString(": \n")
@@ -145,7 +140,12 @@ func (o *operationsView) View() tea.View {
 		})
 	}
 
-	return tea.NewView(mv.Render(text))
+	o.vp.Style = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("62"))
+	o.vp.SetWidth(o.width)
+	o.vp.SetHeight(o.height)
+	o.vp.SetContent(text)
+
+	return tea.NewView(o.vp.View())
 }
 
 func (o *operationsView) Title() string {
@@ -156,8 +156,8 @@ func (o *operationsView) Icon() *iconVariant {
 	return o.v.Icons().CogWheel
 }
 
-// handleRouterMsg handles the routed message.
-func (o *operationsView) handleRouterMsg(m routerMsg) tea.Cmd {
+// HandleRouterMsg handles the routed message.
+func (o *operationsView) HandleRouterMsg(m routerMsg) tea.Cmd {
 	return handleRouterMsg(o, m)
 }
 
