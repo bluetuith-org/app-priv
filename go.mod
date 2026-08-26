@@ -8,6 +8,7 @@ require (
 	charm.land/lipgloss/v2 v2.0.5
 	github.com/Digital-Shane/treeview/v2 v2.0.1
 	github.com/bluetuith-org/bluetooth-classic v0.0.8
+	github.com/dave/dst v0.27.4
 	github.com/fatih/color v1.19.0
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/hjson v1.1.0
@@ -52,6 +53,8 @@ require (
 	github.com/ugorji/go/codec v1.3.2 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
+	golang.org/x/mod v0.39.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
 )

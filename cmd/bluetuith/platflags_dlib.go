@@ -1,6 +1,6 @@
 //go:build !linux
 
-package cmd
+package main
 
 import "github.com/urfave/cli/v2"
 
