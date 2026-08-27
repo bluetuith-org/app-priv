@@ -156,6 +156,5 @@ func (t *Theme) IterProperties(cfg *Configuration) iter.Seq2[string, *lipgloss.S
 		if !yield(cfg.StatusBar.Bg, &t.StatusBar.Bg) {
 			return
 		}
-
 	}
 }
