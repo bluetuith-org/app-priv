@@ -12,6 +12,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 var (
@@ -71,10 +72,6 @@ func (o *operationsView) SetFocus(focused bool) {
 // GetFocus gets whether the view is currently focused.
 func (o *operationsView) GetFocus() bool {
 	return o.focused
-}
-
-// UpdateStyles updates the styles for the view.
-func (o *operationsView) UpdateStyles() {
 }
 
 // Init is the first function that will be called. It returns an optional
@@ -152,8 +149,8 @@ func (o *operationsView) Title() string {
 	return "Operations"
 }
 
-func (o *operationsView) Icon() *iconVariant {
-	return o.v.Icons().CogWheel
+func (o *operationsView) Icon() *theme.IconVariant {
+	return theme.Icons().CogWheel
 }
 
 // HandleRouterMsg handles the routed message.

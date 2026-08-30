@@ -10,6 +10,14 @@ import (
 
 var _noColor = lipgloss.NoColor{}
 
+func adaptBright(c color.Color, amount float64) color.Color {
+	if tint.Current().Dark {
+		return lipgloss.Lighten(c, amount)
+	}
+
+	return lipgloss.Darken(c, amount)
+}
+
 func parseColor(colorFmt string) (color.Color, bool) {
 	if tintColor, ok := getColorFromTint(colorFmt, tint.Current()); ok {
 		return tintColor, true

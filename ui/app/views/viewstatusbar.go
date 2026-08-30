@@ -52,10 +52,6 @@ func (s *statusBarView) GetFocus() bool {
 	return false
 }
 
-// UpdateStyles updates the styles for the view.
-func (s *statusBarView) UpdateStyles() {
-}
-
 // HandleRouterMsg handles the routed message.
 func (s *statusBarView) HandleRouterMsg(m routerMsg) tea.Cmd {
 	return handleRouterMsg(s, m)

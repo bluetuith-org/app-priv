@@ -12,6 +12,7 @@ import (
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 type adTree struct {
@@ -107,10 +108,6 @@ func (a *adTree) SetFocus(focused bool) {
 // GetFocus gets whether the view is currently focused.
 func (a *adTree) GetFocus() bool {
 	return a.focused
-}
-
-// UpdateStyles updates the styles for the view.
-func (a *adTree) UpdateStyles() {
 }
 
 // Init is the first function that will be called. It returns an optional
@@ -356,8 +353,8 @@ func newAdTreeProvider(v rootView) *adTreeProvider {
 
 // Icon returns the leading glyph (e.g. folder / file symbol) for the node.
 func (a *adTreeProvider) Icon(node *treeview.Node[adTreeNode]) string {
-	collapseIndicator := a.v.Icons().TriangleRight.getIcon()
-	expandIndicator := a.v.Icons().TriangleDown.getIcon()
+	collapseIndicator := theme.Icons().TriangleRight.GetIcon()
+	expandIndicator := theme.Icons().TriangleDown.GetIcon()
 
 	return useStringBuffer(len(expandIndicator)+2, func(b *strings.Builder) {
 		if node.HasChildren() {

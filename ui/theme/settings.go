@@ -1,8 +1,6 @@
 package theme
 
 import (
-	"sync"
-
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -20,7 +18,7 @@ type ConfigSettings struct {
 	*Theme
 
 	rootCfg RootConfiguration
-	mu      sync.RWMutex
+	iconSet *IconSet
 }
 
 // ParseTheme parses and applies the theme configuration.
@@ -34,6 +32,8 @@ func (s *ConfigSettings) ParseTheme() error {
 	th := s.rootCfg.convertToTheme()
 	s.Theme = &th
 
+	s.iconSet = NewIconSet(false)
+
 	return nil
 }
 
@@ -44,16 +44,18 @@ func Settings() *ConfigSettings {
 
 // Current returns the current theme.
 func Current() *Theme {
-	_current.mu.RLock()
-	defer _current.mu.RUnlock()
-
 	return _current.Theme
+}
+
+// Icons returns the preconfigured icons.
+func Icons() *IconSet {
+	return _current.iconSet
 }
 
 // _current returns the current theme settings.
 var _current = &ConfigSettings{
 	rootCfg: RootConfiguration{
-		Tint:          "moonlight_ii",
+		Tint:          "primer",
 		Border:        "bg:from-theme; fg:white",
 		BorderFocused: "bg:from-theme; fg:green; attr:bold",
 		ADTree: struct {
@@ -121,7 +123,7 @@ var _current = &ConfigSettings{
 			Heading: "bg:blue; fg:white",
 		},
 		StatusBar: struct{ Style string }{
-			Style: "bg:62; fg:black",
+			Style: "bg:from-theme; fg:black",
 		},
 	},
 	Theme: &Theme{},

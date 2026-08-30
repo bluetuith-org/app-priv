@@ -7,6 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 type logView struct {
@@ -22,8 +23,8 @@ func (l *logView) Title() string {
 	return "Log"
 }
 
-func (l *logView) Icon() *iconVariant {
-	return l.v.Icons().Log
+func (l *logView) Icon() *theme.IconVariant {
+	return theme.Icons().Log
 }
 
 // ViewID returns the view's ID.
@@ -63,10 +64,6 @@ func (l *logView) SetFocus(focused bool) {
 // GetFocus gets whether the view is currently focused.
 func (l *logView) GetFocus() bool {
 	return l.focused
-}
-
-// UpdateStyles updates the styles for the view.
-func (l *logView) UpdateStyles() {
 }
 
 // HandleRouterMsg handles the routed message.

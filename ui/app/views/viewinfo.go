@@ -5,6 +5,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 type infoView struct {
@@ -22,8 +23,8 @@ func (i *infoView) Title() string {
 	return "Info"
 }
 
-func (i *infoView) Icon() *iconVariant {
-	return i.v.Icons().Info
+func (i *infoView) Icon() *theme.IconVariant {
+	return theme.Icons().Info
 }
 
 // ViewID returns the view's ID.
@@ -63,10 +64,6 @@ func (i *infoView) SetFocus(focused bool) {
 // GetFocus gets whether the view is currently focused.
 func (i *infoView) GetFocus() bool {
 	return i.focused
-}
-
-// UpdateStyles updates the styles for the view.
-func (i *infoView) UpdateStyles() {
 }
 
 // HandleRouterMsg handles the routed message.

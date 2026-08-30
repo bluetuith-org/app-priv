@@ -8,12 +8,13 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
 type tabSection interface {
 	Title() string
-	Icon() *iconVariant
+	Icon() *theme.IconVariant
 
 	viewer
 }
@@ -95,15 +96,6 @@ func (t *tabsView) SetFocus(focused bool) {
 // GetFocus gets whether the view is currently focused.
 func (t *tabsView) GetFocus() bool {
 	return t.focused
-}
-
-// UpdateStyles updates the styles for the view.
-func (t *tabsView) UpdateStyles() {
-	t.setStyles()
-
-	for _, section := range t.tabs {
-		section.UpdateStyles()
-	}
 }
 
 // Init is the first function that will be called. It returns an optional
@@ -238,14 +230,14 @@ func (t *tabsView) renderTabs() string {
 	arrowLeft, arrowRight := "  ", "  "
 	switch {
 	case t.activeTab == 0 && totalTabs > 1:
-		arrowRight = t.v.Icons().ArrowRight.Render(arrowStyle, "")
+		arrowRight = theme.Icons().ArrowRight.Render(arrowStyle, "")
 
 	case t.activeTab == totalTabs-1 && totalTabs > 1:
-		arrowLeft = t.v.Icons().ArrowLeft.Render(arrowStyle, "")
+		arrowLeft = theme.Icons().ArrowLeft.Render(arrowStyle, "")
 
 	case t.activeTab > 0 && t.activeTab < totalTabs:
-		arrowLeft = t.v.Icons().ArrowLeft.Render(arrowStyle, "")
-		arrowRight = t.v.Icons().ArrowRight.Render(arrowStyle, "")
+		arrowLeft = theme.Icons().ArrowLeft.Render(arrowStyle, "")
+		arrowRight = theme.Icons().ArrowRight.Render(arrowStyle, "")
 	}
 
 	s := lipgloss.JoinHorizontal(lipgloss.Center, arrowLeft, t.vport.View(), arrowRight)

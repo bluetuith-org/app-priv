@@ -39,9 +39,6 @@ type viewer interface {
 	// GetFocus gets whether the view is currently focused.
 	GetFocus() bool
 
-	// UpdateStyles updates the styles for the view.
-	UpdateStyles()
-
 	// HandleRouterMsg handles the routed message.
 	HandleRouterMsg(m routerMsg) tea.Cmd
 
@@ -54,9 +51,6 @@ type rootView interface {
 
 	// ViewHeight returns the total height of the view.
 	ViewHeight() int
-
-	// Icons returns the configured readonly icon set.
-	Icons() *iconSet
 
 	// FocusTreeView focuses the tree view.
 	FocusTreeView()
@@ -100,8 +94,6 @@ type ViewModel struct {
 
 	initedViews map[viewID]viewer
 
-	icons *iconSet
-
 	AppBinder
 }
 
@@ -124,9 +116,6 @@ func NewViewModel(appBinder AppBinder) (*ViewModel, error) {
 		statusBar:      &statusBarView{},
 		logView:        &logView{},
 
-		// TODO: Check for ascii icons.
-		icons: newIconSet(false),
-
 		AppBinder: appBinder,
 	}
 
@@ -141,11 +130,6 @@ func (v *ViewModel) ViewWidth() int {
 // ViewHeight returns the total height of the view.
 func (v *ViewModel) ViewHeight() int {
 	return v.height
-}
-
-// Icons returns the configured readonly icon set.
-func (v *ViewModel) Icons() *iconSet {
-	return v.icons
 }
 
 // Init is the first function that will be called. It returns an optional
@@ -213,13 +197,6 @@ func (v *ViewModel) View() tea.View {
 	view.SetContent(vert)
 
 	return view
-}
-
-// UpdateStyles updates the styles for the view.
-func (v *ViewModel) UpdateStyles() {
-	for _, view := range v.initedViews {
-		view.UpdateStyles()
-	}
 }
 
 // FocusTreeView focuses the tree view.
