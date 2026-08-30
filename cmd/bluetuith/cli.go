@@ -49,11 +49,11 @@ func newApp() *cli.App {
 				Name:    "list-adapters",
 				Aliases: []string{"l"},
 				Usage:   "List available adapters.",
-				Action: func(*cli.Context, bool) error {
+				Action: func(cliCtx *cli.Context, _ bool) error {
 					var sb strings.Builder
 
 					s := session.NewSession()
-					_, _, err := s.Start(nil, scfg.New())
+					_, _, err := s.Start(nil, newSessionCfg(cliCtx))
 					if err != nil {
 						return err
 					}
@@ -175,8 +175,7 @@ func newApp() *cli.App {
 				return err
 			}
 
-			sessionCfg := scfg.New()
-			populateSessionConfig(cliCtx, &sessionCfg)
+			sessionCfg := newSessionCfg(cliCtx)
 
 			tui, s := app.NewApplication(), session.NewSession()
 			featureSet, _, err := s.Start(tui.Authorizer(), sessionCfg)
@@ -202,6 +201,20 @@ func newApp() *cli.App {
 	}
 }
 
+func newSessionCfg(cliCtx *cli.Context) scfg.Configuration {
+	sessionCfg := scfg.New()
+
+	sessionCfg.EnableObexServices = true
+	if cliCtx.Bool("disable-obex-services") {
+		sessionCfg.EnableObexServices = false
+	}
+
+	sessionCfg.LibraryPath = cliCtx.String("alt-library-path")
+	sessionCfg.SocketPath = cliCtx.String("alt-daemon-socket-path")
+
+	return sessionCfg
+}
+
 // printUnsupportedFeatures prints all unsupported features of the session.
 func printUnsupportedFeatures(cfg *config.Config, featureSet *appfeatures.FeatureSet) {
 	if cfg.Values.NoWarning {
@@ -224,17 +237,6 @@ func printUnsupportedFeatures(cfg *config.Config, featureSet *appfeatures.Featur
 	}
 
 	printWarn(warn.String())
-	time.Sleep(1 * time.Second)
-}
-
-func populateSessionConfig(cliCtx *cli.Context, sessionCfg *scfg.Configuration) {
-	sessionCfg.EnableObexServices = true
-	if cliCtx.Bool("disable-obex-services") {
-		sessionCfg.EnableObexServices = false
-	}
-
-	sessionCfg.LibraryPath = cliCtx.String("alt-library-path")
-	sessionCfg.SocketPath = cliCtx.String("alt-daemon-socket-path")
 }
 
 // getAdapterDisplayName returns the display name of the adapter.
