@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 // Values describes the possible configuration values that a user can
@@ -255,5 +256,5 @@ func (v *Values) validateGsm() error {
 // TODO: Theme
 // validateTheme validates the theme configuration.
 func (v *Values) validateTheme() error {
-	return nil
+	return theme.Settings().ParseTheme()
 }

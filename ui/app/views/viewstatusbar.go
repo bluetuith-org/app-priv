@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 type statusBarView struct {
@@ -82,10 +83,7 @@ func (s *statusBarView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the program's UI, which can be a string or a [Layer]. The
 // view is rendered after every Update.
 func (s *statusBarView) View() tea.View {
-	style := lipgloss.NewStyle().
-		Bold(true).
-		Background(lipgloss.Color("62")).
-		Foreground(lipgloss.Color("15")).
+	style := theme.Current().StatusBar.Style.
 		Width(s.width).
 		Height(s.height).
 		MaxWidth(s.width).

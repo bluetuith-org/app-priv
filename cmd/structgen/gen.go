@@ -33,8 +33,6 @@ type GenTempl interface {
 }
 
 func generateStruct(tpl GenTempl, g *GenOptions) error {
-	newFileName := filepath.Base(g.newFilePath)
-
 	fset := token.NewFileSet()
 
 	cfgDst, err := decorator.ParseFile(fset, g.currentFilePath, nil, parser.AllErrors)
@@ -91,7 +89,7 @@ func generateStruct(tpl GenTempl, g *GenOptions) error {
 			setNodes(parentNode, tspec, stype),
 	)
 
-	return writeCodeToFile(cfgDst, g.pkgName, newFileName, g.newFilePath)
+	return writeCodeToFile(cfgDst, g.pkgName, filepath.Base(g.newFilePath), g.newFilePath)
 }
 
 func writeCodeToFile(generatedDst *dst.File, pkgName, fileName, filePath string) error {

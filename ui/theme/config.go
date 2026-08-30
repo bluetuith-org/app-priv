@@ -13,11 +13,15 @@ const (
 	bgKeyword        = "bg"
 	attrKeyword      = "attr"
 	fromThemeKeyword = "from-theme"
-	globalKeyword    = "global"
 
 	propSegmentSep = ";"
 	propValSep     = ":"
 	multiValSep    = ","
+)
+
+const (
+	minBufferLen = 20
+	maxBuffenLen = 200
 )
 
 //go:generate go run ../../cmd/structgen theme
@@ -26,7 +30,6 @@ const (
 type Configuration struct {
 	Tint string
 
-	Global                string
 	Border, BorderFocused string
 
 	ADTree struct {
@@ -54,27 +57,27 @@ type Configuration struct {
 	}
 
 	TabsPane struct {
-		Bg              string
+		Style           string
 		Tab, FocusedTab string
 	}
 
 	Info struct {
-		Bg      string
+		Style   string
 		Heading string
 	}
 
 	Operations struct {
-		Bg      string
+		Style   string
 		Heading string
 	}
 
 	Log struct {
-		Bg      string
+		Style   string
 		Heading string
 	}
 
 	StatusBar struct {
-		Bg string
+		Style string
 	}
 }
 
@@ -83,7 +86,13 @@ type RootConfiguration Configuration
 
 // Merge merges the provided configuration with the root configuration.
 func (r *RootConfiguration) Merge(cfg *Configuration) error {
-	var sb strings.Builder
+	tintName := cfg.Tint
+
+	if t := tint.DefaultTintsByID(tintName); t == nil {
+		return fmt.Errorf("the specified theme was not found: %s", tintName)
+	}
+
+	r.Tint = tintName
 
 	for parseInfo := range iterProperties(r, cfg, nil) {
 		rootCfg := *parseInfo.rootCfg
@@ -98,7 +107,7 @@ func (r *RootConfiguration) Merge(cfg *Configuration) error {
 			return parseErr
 		}
 
-		*parseInfo.rootCfg = rootParseInfo.format(&sb, cmpParseInfo)
+		*parseInfo.rootCfg = rootParseInfo.format(cmpParseInfo)
 	}
 
 	return nil
@@ -106,6 +115,10 @@ func (r *RootConfiguration) Merge(cfg *Configuration) error {
 
 // convertToTheme converts the configuration to a [Theme].
 func (r *RootConfiguration) convertToTheme() Theme {
+	tintSpec := tint.DefaultTintsByID(r.Tint)
+	tint.Register(tintSpec)
+	tint.SetTint(tintSpec)
+
 	th := Theme{}
 
 	for parseInfo := range iterProperties(r, nil, &th) {
@@ -118,7 +131,7 @@ func (r *RootConfiguration) convertToTheme() Theme {
 func (r *RootConfiguration) applyTheme(p *parseThemeInfo) {
 	style := lipgloss.NewStyle()
 
-	for seg := range strings.SplitSeq(*p.rootCfg, propSegmentSep) {
+	for seg := range strings.SplitSeq(removeSpaces(*p.rootCfg), propSegmentSep) {
 		prop, val, _ := strings.Cut(seg, propValSep)
 
 		switch prop {
@@ -126,8 +139,6 @@ func (r *RootConfiguration) applyTheme(p *parseThemeInfo) {
 			switch val {
 			case fromThemeKeyword:
 				style = style.Foreground(tint.Current().Fg)
-
-			case globalKeyword:
 
 			default:
 				color, _ := parseColor(val)
@@ -138,8 +149,6 @@ func (r *RootConfiguration) applyTheme(p *parseThemeInfo) {
 			switch val {
 			case fromThemeKeyword:
 				style = style.Background(tint.Current().Bg)
-
-			case globalKeyword:
 
 			default:
 				color, _ := parseColor(val)
@@ -167,6 +176,8 @@ func (r *RootConfiguration) applyTheme(p *parseThemeInfo) {
 			}
 		}
 	}
+
+	*p.style = style
 }
 
 func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigInfo, err error) {
@@ -174,7 +185,7 @@ func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigI
 		return cfgParseInfo, nil
 	}
 
-	for seg := range strings.SplitSeq(strings.TrimSpace(cfgItem), propSegmentSep) {
+	for seg := range strings.SplitSeq(removeSpaces(cfgItem), propSegmentSep) {
 		prop, val, ok := strings.Cut(seg, propValSep)
 		if !ok {
 			return cfgParseInfo, fmt.Errorf("invalid property sequence: %s -> %s (%s)", prop, val, cfgItem)
@@ -185,10 +196,9 @@ func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigI
 		}
 
 		switch prop {
-		case fgKeyword:
+		case fgKeyword, bgKeyword:
 			switch val {
 			case fromThemeKeyword:
-			case globalKeyword:
 
 			default:
 				if _, ok := parseColor(val); !ok {
@@ -196,17 +206,9 @@ func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigI
 				}
 			}
 
-			cfgParseInfo.fg = val
-
-		case bgKeyword:
-			switch val {
-			case fromThemeKeyword:
-			case globalKeyword:
-
-			default:
-				if _, ok := parseColor(val); !ok {
-					return cfgParseInfo, fmt.Errorf("invalid color specifier %s for property %s (%s)", val, prop, cfgItem)
-				}
+			if prop == fgKeyword {
+				cfgParseInfo.fg = val
+				continue
 			}
 
 			cfgParseInfo.bg = val
@@ -252,7 +254,7 @@ type parseConfigInfo struct {
 	attrs  string
 }
 
-func (p *parseConfigInfo) format(sb *strings.Builder, cmpCfg parseConfigInfo) string {
+func (p *parseConfigInfo) format(cmpCfg parseConfigInfo) string {
 	const (
 		numSemicolons = 2
 	)
@@ -271,7 +273,8 @@ func (p *parseConfigInfo) format(sb *strings.Builder, cmpCfg parseConfigInfo) st
 
 	fgPrefixLen, bgPrefixLen, attrPrefixLen := len(fgKeyword), len(bgKeyword), len(attrKeyword)
 
-	sb.Reset()
+	var sb strings.Builder
+
 	sb.Grow(
 		(min(len(p.fg), 10) + fgPrefixLen) +
 			(min(len(p.bg), 10) + bgPrefixLen) +
@@ -303,6 +306,18 @@ func (p *parseConfigInfo) format(sb *strings.Builder, cmpCfg parseConfigInfo) st
 		sb.WriteString(attrKeyword)
 		sb.WriteString(propValSep)
 		sb.WriteString(p.attrs)
+	}
+
+	return sb.String()
+}
+
+func removeSpaces(s string) string {
+	var sb strings.Builder
+
+	sb.Grow(max(minBufferLen, min(len(s), maxBuffenLen)))
+
+	for field := range strings.FieldsSeq(s) {
+		sb.WriteString(field)
 	}
 
 	return sb.String()
