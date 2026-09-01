@@ -1,26 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"go/token"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
-)
 
-const (
-	pkgName  = "theme"
-	themeDir = "ui/theme"
-)
-
-const (
-	configFileName   = "config.go"
-	configStructName = "Configuration"
-)
-
-const (
-	themeGenFileName   = "theme.gen.go"
-	themeStructName    = "Theme"
-	themeStructComment = "// Theme represents the settings for the app's theme."
+	"github.com/dave/dst"
 )
 
 const themeGenPart = `
@@ -72,6 +62,8 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, p *par
 }
 `
 
+var acc, val []string
+
 type ThemeGenImpl struct {
 	sb    strings.Builder
 	count int
@@ -103,6 +95,8 @@ func (t *ThemeGenImpl) AppendAccessor(s string) (string, bool) {
 
 		`, t.count, path, s, s, s)
 
+	acc = append(acc, fmt.Sprintf("r.%s", s))
+
 	t.count++
 
 	return "lipgloss.Style", true
@@ -113,6 +107,26 @@ func (t *ThemeGenImpl) GetPartialCode() string {
 }
 
 func generateTheme() error {
+	const (
+		pkgName  = "theme"
+		themeDir = "ui/theme"
+	)
+
+	const (
+		configFileName   = "config.go"
+		configStructName = "Configuration"
+	)
+
+	const (
+		themeGenFileName   = "theme.gen.go"
+		themeStructName    = "Theme"
+		themeStructComment = "// Theme represents the settings for the app's theme."
+	)
+
+	const (
+		replaceVar = "_rootCfg"
+	)
+
 	dir, err := os.Getwd()
 	if err != nil {
 		return err
@@ -121,7 +135,68 @@ func generateTheme() error {
 	cfgFilePath := filepath.Join(dir, configFileName)
 	themeGenPath := filepath.Join(dir, themeGenFileName)
 
-	return generateStruct(&ThemeGenImpl{}, &GenOptions{
+	f, err := os.OpenFile(cfgFilePath, os.O_RDONLY, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	var p []varReplaceOptions
+
+	scanner := bufio.NewScanner(f)
+	lineNum := 1
+
+	for scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+
+		line := scanner.Text()
+
+		if strings.Contains(line, replaceVar) {
+			out, err := execute("go", "tool", "fillstruct", "-file", cfgFilePath, "-line", strconv.Itoa(lineNum))
+			if err != nil {
+				return err
+			}
+
+			err = json.Unmarshal(out, &p)
+			if err != nil {
+				return err
+			}
+
+			break
+		}
+
+		lineNum++
+	}
+
+	replOpts := p[0]
+	replOpts.set(replaceVar, pkgName, cfgFilePath, func(n dst.Node) bool {
+		if lit, ok := n.(*dst.BasicLit); ok {
+			val = append(val, lit.Value)
+
+			if lit.Value == `""` {
+				lit.Kind = token.VAR
+				lit.Value = `__UNDEFINED__`
+			}
+		}
+		return true
+	})
+
+	if err := replaceStructVar(replOpts); err != nil {
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		return err
+	}
+
+	defer func() {
+		for i := range acc {
+			fmt.Printf("%s = %s\n", acc[i], val[i])
+		}
+	}()
+
+	return generateStruct(&ThemeGenImpl{}, &genOptions{
 		pkgName:           pkgName,
 		currentFilePath:   cfgFilePath,
 		currentStructName: configStructName,

@@ -17,15 +17,15 @@ func init() {
 type ConfigSettings struct {
 	*Theme
 
-	rootCfg RootConfiguration
+	rootCfg *RootConfiguration
 	iconSet *IconSet
 }
 
 // ParseTheme parses and applies the theme configuration.
 func (s *ConfigSettings) ParseTheme() error {
-	cmpCfg := Configuration(s.rootCfg)
+	cmpCfg := (*Configuration)(s.rootCfg)
 
-	if err := s.rootCfg.Merge(&cmpCfg); err != nil {
+	if err := s.rootCfg.Merge(cmpCfg); err != nil {
 		return err
 	}
 
@@ -54,77 +54,6 @@ func Icons() *IconSet {
 
 // _current returns the current theme settings.
 var _current = &ConfigSettings{
-	rootCfg: RootConfiguration{
-		Tint:          "primer",
-		Border:        "bg:from-theme; fg:white",
-		BorderFocused: "bg:from-theme; fg:green; attr:bold",
-		ADTree: struct {
-			Headers           string
-			ExpandedIndicator string
-			ClosedIndicator   string
-			Selection         string
-			Adapter           struct{ Present string }
-			Device            struct {
-				Discovered string
-				Paired     string
-			}
-			DevicesList struct{ Nodes string }
-			ActionsList struct{ Nodes string }
-		}{
-			Headers:           "bg:from-theme; fg:from-theme",
-			ExpandedIndicator: "bg:from-theme; fg:from-theme",
-			ClosedIndicator:   "bg:from-theme; fg:from-theme",
-			Selection:         "bg:from-theme; fg:blue; attr:reverse",
-			Adapter: struct{ Present string }{
-				Present: "bg:from-theme; fg:from-theme",
-			},
-			Device: struct {
-				Discovered string
-				Paired     string
-			}{
-				Discovered: "bg:from-theme; fg:from-theme",
-				Paired:     "bg:from-theme; fg:from-theme",
-			},
-			DevicesList: struct{ Nodes string }{
-				Nodes: "bg:from-theme; fg:from-theme",
-			},
-			ActionsList: struct{ Nodes string }{
-				Nodes: "bg:from-theme; fg:from-theme",
-			},
-		},
-		TabsPane: struct {
-			Style      string
-			Tab        string
-			FocusedTab string
-		}{
-			Style:      "bg:from-theme; fg:from-theme",
-			Tab:        "bg:from-theme; fg:from-theme",
-			FocusedTab: "bg:from-theme; fg:brightpurple",
-		},
-		Info: struct {
-			Style   string
-			Heading string
-		}{
-			Style:   "bg:from-theme; fg:from-theme",
-			Heading: "bg:blue; fg:white",
-		},
-		Operations: struct {
-			Style   string
-			Heading string
-		}{
-			Style:   "bg:from-theme; fg:from-theme",
-			Heading: "bg:blue; fg:white",
-		},
-		Log: struct {
-			Style   string
-			Heading string
-		}{
-			Style:   "bg:from-theme; fg:from-theme",
-			Heading: "bg:blue; fg:white",
-		},
-		StatusBar: struct{ Style string }{
-			Style: "bg:from-theme; fg:black",
-		},
-	},
-	Theme: &Theme{},
+	rootCfg: defaultRootConfig(),
+	Theme:   &Theme{},
 }
