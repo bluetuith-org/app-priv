@@ -10,6 +10,7 @@ require (
 	github.com/bluetuith-org/bluetooth-classic v0.0.8
 	github.com/dave/dst v0.27.4
 	github.com/fatih/color v1.19.0
+	github.com/fatih/structtag v1.2.0
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/hjson v1.1.0
 	github.com/knadh/koanf/providers/cliflagv2 v1.0.2
@@ -33,7 +34,6 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/cskr/pubsub/v2 v2.0.2 // indirect
-	github.com/davidrjenni/reftools v0.0.0-20250907133731-34b10582faa4 // indirect
 	github.com/ebitengine/purego v0.10.2 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
@@ -59,5 +59,3 @@ require (
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 )
-
-tool github.com/davidrjenni/reftools/cmd/fillstruct

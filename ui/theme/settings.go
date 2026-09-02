@@ -54,6 +54,6 @@ func Icons() *IconSet {
 
 // _current returns the current theme settings.
 var _current = &ConfigSettings{
-	rootCfg: defaultRootConfig(),
+	rootCfg: defaultConfig(),
 	Theme:   &Theme{},
 }

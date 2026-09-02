@@ -27,165 +27,61 @@ const (
 	maxBuffenLen = 200
 )
 
-func defaultRootConfig() *RootConfiguration {
-	r := &RootConfiguration{}
-
-	r.Border = "primer"
-	r.BorderFocused = "bg:from-theme; fg:white"
-
-	r.ADTree.Headers = "bg:from-theme; fg:green; attr:bold"
-	r.ADTree.ExpandedIndicator = "bg:from-theme; fg:from-theme"
-	r.ADTree.ClosedIndicator = "bg:from-theme; fg:from-theme"
-	r.ADTree.Selection = "bg:from-theme; fg:from-theme"
-	r.ADTree.Adapter.Present = "bg:from-theme; fg:blue; attr:reverse"
-	r.ADTree.Device.Discovered = "bg:from-theme; fg:from-theme"
-	r.ADTree.Device.Paired = "bg:from-theme; fg:from-theme"
-	r.ADTree.DevicesList.Nodes = "bg:from-theme; fg:from-theme"
-	r.ADTree.ActionsList.Nodes = "bg:from-theme; fg:from-theme"
-
-	r.TabsPane.Style = "bg:from-theme; fg:from-theme"
-	r.TabsPane.Tab = "bg:from-theme; fg:from-theme"
-	r.TabsPane.FocusedTab = "bg:from-theme; fg:from-theme"
-
-	r.Info.Style = "bg:from-theme; fg:brightpurple"
-	r.Info.Heading = "bg:from-theme; fg:from-theme"
-
-	r.Operations.Style = "bg:blue; fg:white"
-	r.Operations.Heading = "bg:from-theme; fg:from-theme"
-
-	r.Log.Style = "bg:blue; fg:white"
-	r.Log.Heading = "bg:from-theme; fg:from-theme"
-
-	r.StatusBar.Style = "bg:blue; fg:white"
-
-	return r
-}
-
-var _rootCfg = &RootConfiguration{
-	Tint:          "primer",
-	Border:        "bg:from-theme; fg:white",
-	BorderFocused: "bg:from-theme; fg:green; attr:bold",
-	ADTree: struct {
-		Headers           string
-		ExpandedIndicator string
-		ClosedIndicator   string
-		Selection         string
-		Adapter           struct{ Present string }
-		Device            struct {
-			Discovered string
-			Paired     string
-		}
-		DevicesList struct{ Nodes string }
-		ActionsList struct{ Nodes string }
-	}{
-		Headers:           "bg:from-theme; fg:from-theme",
-		ExpandedIndicator: "bg:from-theme; fg:from-theme",
-		ClosedIndicator:   "bg:from-theme; fg:from-theme",
-		Selection:         "bg:from-theme; fg:blue; attr:reverse",
-		Adapter: struct{ Present string }{
-			Present: "bg:from-theme; fg:from-theme",
-		},
-		Device: struct {
-			Discovered string
-			Paired     string
-		}{
-			Discovered: "bg:from-theme; fg:from-theme",
-			Paired:     "bg:from-theme; fg:from-theme",
-		},
-		DevicesList: struct{ Nodes string }{
-			Nodes: "bg:from-theme; fg:from-theme",
-		},
-		ActionsList: struct{ Nodes string }{
-			Nodes: "bg:from-theme; fg:from-theme",
-		},
-	},
-	TabsPane: struct {
-		Style      string
-		Tab        string
-		FocusedTab string
-	}{
-		Style:      "bg:from-theme; fg:from-theme",
-		Tab:        "bg:from-theme; fg:from-theme",
-		FocusedTab: "bg:from-theme; fg:brightpurple",
-	},
-	Info: struct {
-		Style   string
-		Heading string
-	}{
-		Style:   "bg:from-theme; fg:from-theme",
-		Heading: "bg:blue; fg:white",
-	},
-	Operations: struct {
-		Style   string
-		Heading string
-	}{
-		Style:   "bg:from-theme; fg:from-theme",
-		Heading: "bg:blue; fg:white",
-	},
-	Log: struct {
-		Style   string
-		Heading string
-	}{
-		Style:   "bg:from-theme; fg:from-theme",
-		Heading: "bg:blue; fg:white",
-	},
-	StatusBar: struct{ Style string }{
-		Style: "bg:purple;fg:white;attr:bold",
-	},
-}
-
 // Configuration represents the app's theme configuration.
 type Configuration struct {
-	Tint string
+	Tint string `themetype:"primer"`
 
-	Border, BorderFocused string
+	Border        string `themedef:"bg:from-theme; fg:white"`
+	BorderFocused string `themedef:"bg:from-theme; fg:green; attr:bold"`
 
 	ADTree struct {
-		Headers string
+		Headers string `themedef:"bg:from-theme; fg:from-theme"`
 
-		ExpandedIndicator, ClosedIndicator string
-		Selection                          string
+		ExpandedIndicator string `themedef:"bg:from-theme; fg:from-theme"`
+		ClosedIndicator   string `themedef:"bg:from-theme; fg:from-theme"`
+		Selection         string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
 
 		Adapter struct {
-			Present string
+			Present string `themedef:"bg:from-theme; fg:from-theme"`
 		}
 
 		Device struct {
-			Discovered string
-			Paired     string
+			Discovered string `themedef:"bg:from-theme; fg:from-theme"`
+			Paired     string `themedef:"bg:from-theme; fg:from-theme"`
 		}
 
 		DevicesList struct {
-			Nodes string
+			Nodes string `themedef:"bg:from-theme; fg:from-theme"`
 		}
 
 		ActionsList struct {
-			Nodes string
+			Nodes string `themedef:"bg:from-theme; fg:from-theme"`
 		}
 	}
 
 	TabsPane struct {
-		Style           string
-		Tab, FocusedTab string
+		Style      string `themedef:"bg:from-theme; fg:from-theme"`
+		Tab        string `themedef:"bg:from-theme; fg:from-theme"`
+		FocusedTab string `themedef:"bg:from-theme; fg:brightpurple"`
 	}
 
 	Info struct {
-		Style   string
-		Heading string
+		Style   string `themedef:"bg:blue; fg:white"`
+		Heading string `themedef:"bg:from-theme; fg:from-theme"`
 	}
 
 	Operations struct {
-		Style   string
-		Heading string
+		Style   string `themedef:"bg:blue; fg:white"`
+		Heading string `themedef:"bg:from-theme; fg:from-theme"`
 	}
 
 	Log struct {
-		Style   string
-		Heading string
+		Style   string `themedef:"bg:blue; fg:white"`
+		Heading string `themedef:"bg:from-theme; fg:from-theme"`
 	}
 
 	StatusBar struct {
-		Style string
+		Style string `themedef:"bg:purple;fg:white;attr:bold"`
 	}
 }
 
@@ -215,7 +111,7 @@ func (r *RootConfiguration) Merge(cfg *Configuration) error {
 			return parseErr
 		}
 
-		*parseInfo.rootCfg = rootParseInfo.format(cmpParseInfo)
+		*parseInfo.rootCfg = rootParseInfo.merge(cmpParseInfo)
 	}
 
 	return nil
@@ -362,7 +258,7 @@ type parseConfigInfo struct {
 	attrs  string
 }
 
-func (p *parseConfigInfo) format(cmpCfg parseConfigInfo) string {
+func (p *parseConfigInfo) merge(cmpCfg parseConfigInfo) string {
 	const (
 		numSemicolons = 2
 	)

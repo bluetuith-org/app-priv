@@ -12,13 +12,15 @@ import (
 type Theme struct {
 	Tint string
 
-	Border, BorderFocused lipgloss.Style
+	Border        lipgloss.Style
+	BorderFocused lipgloss.Style
 
 	ADTree struct {
 		Headers lipgloss.Style
 
-		ExpandedIndicator, ClosedIndicator lipgloss.Style
-		Selection                          lipgloss.Style
+		ExpandedIndicator lipgloss.Style
+		ClosedIndicator   lipgloss.Style
+		Selection         lipgloss.Style
 
 		Adapter struct {
 			Present lipgloss.Style
@@ -39,8 +41,9 @@ type Theme struct {
 	}
 
 	TabsPane struct {
-		Style           lipgloss.Style
-		Tab, FocusedTab lipgloss.Style
+		Style      lipgloss.Style
+		Tab        lipgloss.Style
+		FocusedTab lipgloss.Style
 	}
 
 	Info struct {
@@ -61,6 +64,35 @@ type Theme struct {
 	StatusBar struct {
 		Style lipgloss.Style
 	}
+}
+
+func defaultConfig() *RootConfiguration {
+	r := &RootConfiguration{}
+
+	r.Tint = "primer"
+	r.Border = "bg:from-theme; fg:white"
+	r.BorderFocused = "bg:from-theme; fg:green; attr:bold"
+	r.ADTree.Headers = "bg:from-theme; fg:from-theme"
+	r.ADTree.ExpandedIndicator = "bg:from-theme; fg:from-theme"
+	r.ADTree.ClosedIndicator = "bg:from-theme; fg:from-theme"
+	r.ADTree.Selection = "bg:from-theme; fg:blue; attr:reverse"
+	r.ADTree.Adapter.Present = "bg:from-theme; fg:from-theme"
+	r.ADTree.Device.Discovered = "bg:from-theme; fg:from-theme"
+	r.ADTree.Device.Paired = "bg:from-theme; fg:from-theme"
+	r.ADTree.DevicesList.Nodes = "bg:from-theme; fg:from-theme"
+	r.ADTree.ActionsList.Nodes = "bg:from-theme; fg:from-theme"
+	r.TabsPane.Style = "bg:from-theme; fg:from-theme"
+	r.TabsPane.Tab = "bg:from-theme; fg:from-theme"
+	r.TabsPane.FocusedTab = "bg:from-theme; fg:brightpurple"
+	r.Info.Style = "bg:blue; fg:white"
+	r.Info.Heading = "bg:from-theme; fg:from-theme"
+	r.Operations.Style = "bg:blue; fg:white"
+	r.Operations.Heading = "bg:from-theme; fg:from-theme"
+	r.Log.Style = "bg:blue; fg:white"
+	r.Log.Heading = "bg:from-theme; fg:from-theme"
+	r.StatusBar.Style = "bg:purple;fg:white;attr:bold"
+
+	return r
 }
 
 var (
@@ -115,115 +147,115 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, p *par
 		p.style = &t.BorderFocused
 
 	case 2:
-		p.path = "root/ADTree:Headers"
+		p.path = "root/ADTree:.Headers"
 		p.rootCfg = &cfg.ADTree.Headers
 		p.cmpCfg = cmpCfg.ADTree.Headers
 		p.style = &t.ADTree.Headers
 
 	case 3:
-		p.path = "root/ADTree:ExpandedIndicator"
+		p.path = "root/ADTree:.ExpandedIndicator"
 		p.rootCfg = &cfg.ADTree.ExpandedIndicator
 		p.cmpCfg = cmpCfg.ADTree.ExpandedIndicator
 		p.style = &t.ADTree.ExpandedIndicator
 
 	case 4:
-		p.path = "root/ADTree:ClosedIndicator"
+		p.path = "root/ADTree:.ClosedIndicator"
 		p.rootCfg = &cfg.ADTree.ClosedIndicator
 		p.cmpCfg = cmpCfg.ADTree.ClosedIndicator
 		p.style = &t.ADTree.ClosedIndicator
 
 	case 5:
-		p.path = "root/ADTree:Selection"
+		p.path = "root/ADTree:.Selection"
 		p.rootCfg = &cfg.ADTree.Selection
 		p.cmpCfg = cmpCfg.ADTree.Selection
 		p.style = &t.ADTree.Selection
 
 	case 6:
-		p.path = "root/ADTree/Adapter:Present"
+		p.path = "root/ADTree/Adapter:.Present"
 		p.rootCfg = &cfg.ADTree.Adapter.Present
 		p.cmpCfg = cmpCfg.ADTree.Adapter.Present
 		p.style = &t.ADTree.Adapter.Present
 
 	case 7:
-		p.path = "root/ADTree/Device:Discovered"
+		p.path = "root/ADTree/Device:.Discovered"
 		p.rootCfg = &cfg.ADTree.Device.Discovered
 		p.cmpCfg = cmpCfg.ADTree.Device.Discovered
 		p.style = &t.ADTree.Device.Discovered
 
 	case 8:
-		p.path = "root/ADTree/Device:Paired"
+		p.path = "root/ADTree/Device:.Paired"
 		p.rootCfg = &cfg.ADTree.Device.Paired
 		p.cmpCfg = cmpCfg.ADTree.Device.Paired
 		p.style = &t.ADTree.Device.Paired
 
 	case 9:
-		p.path = "root/ADTree/DevicesList:Nodes"
+		p.path = "root/ADTree/DevicesList:.Nodes"
 		p.rootCfg = &cfg.ADTree.DevicesList.Nodes
 		p.cmpCfg = cmpCfg.ADTree.DevicesList.Nodes
 		p.style = &t.ADTree.DevicesList.Nodes
 
 	case 10:
-		p.path = "root/ADTree/ActionsList:Nodes"
+		p.path = "root/ADTree/ActionsList:.Nodes"
 		p.rootCfg = &cfg.ADTree.ActionsList.Nodes
 		p.cmpCfg = cmpCfg.ADTree.ActionsList.Nodes
 		p.style = &t.ADTree.ActionsList.Nodes
 
 	case 11:
-		p.path = "root/TabsPane:Style"
+		p.path = "root/TabsPane:.Style"
 		p.rootCfg = &cfg.TabsPane.Style
 		p.cmpCfg = cmpCfg.TabsPane.Style
 		p.style = &t.TabsPane.Style
 
 	case 12:
-		p.path = "root/TabsPane:Tab"
+		p.path = "root/TabsPane:.Tab"
 		p.rootCfg = &cfg.TabsPane.Tab
 		p.cmpCfg = cmpCfg.TabsPane.Tab
 		p.style = &t.TabsPane.Tab
 
 	case 13:
-		p.path = "root/TabsPane:FocusedTab"
+		p.path = "root/TabsPane:.FocusedTab"
 		p.rootCfg = &cfg.TabsPane.FocusedTab
 		p.cmpCfg = cmpCfg.TabsPane.FocusedTab
 		p.style = &t.TabsPane.FocusedTab
 
 	case 14:
-		p.path = "root/Info:Style"
+		p.path = "root/Info:.Style"
 		p.rootCfg = &cfg.Info.Style
 		p.cmpCfg = cmpCfg.Info.Style
 		p.style = &t.Info.Style
 
 	case 15:
-		p.path = "root/Info:Heading"
+		p.path = "root/Info:.Heading"
 		p.rootCfg = &cfg.Info.Heading
 		p.cmpCfg = cmpCfg.Info.Heading
 		p.style = &t.Info.Heading
 
 	case 16:
-		p.path = "root/Operations:Style"
+		p.path = "root/Operations:.Style"
 		p.rootCfg = &cfg.Operations.Style
 		p.cmpCfg = cmpCfg.Operations.Style
 		p.style = &t.Operations.Style
 
 	case 17:
-		p.path = "root/Operations:Heading"
+		p.path = "root/Operations:.Heading"
 		p.rootCfg = &cfg.Operations.Heading
 		p.cmpCfg = cmpCfg.Operations.Heading
 		p.style = &t.Operations.Heading
 
 	case 18:
-		p.path = "root/Log:Style"
+		p.path = "root/Log:.Style"
 		p.rootCfg = &cfg.Log.Style
 		p.cmpCfg = cmpCfg.Log.Style
 		p.style = &t.Log.Style
 
 	case 19:
-		p.path = "root/Log:Heading"
+		p.path = "root/Log:.Heading"
 		p.rootCfg = &cfg.Log.Heading
 		p.cmpCfg = cmpCfg.Log.Heading
 		p.style = &t.Log.Heading
 
 	case 20:
-		p.path = "root/StatusBar:Style"
+		p.path = "root/StatusBar:.Style"
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style
