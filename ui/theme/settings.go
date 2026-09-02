@@ -13,8 +13,8 @@ func init() {
 	)
 }
 
-// ConfigSettings represents the current settings for themes and other elements.
-type ConfigSettings struct {
+// Settings represents the current settings for themes and other elements.
+type Settings struct {
 	*Theme
 
 	rootCfg *RootConfiguration
@@ -22,7 +22,7 @@ type ConfigSettings struct {
 }
 
 // ParseTheme parses and applies the theme configuration.
-func (s *ConfigSettings) ParseTheme() error {
+func (s *Settings) ParseTheme() error {
 	cmpCfg := (*Configuration)(s.rootCfg)
 
 	if err := s.rootCfg.Merge(cmpCfg); err != nil {
@@ -37,8 +37,8 @@ func (s *ConfigSettings) ParseTheme() error {
 	return nil
 }
 
-// Settings returns the current theme configuration and settings.
-func Settings() *ConfigSettings {
+// CurrentSettings returns the current theme configuration and settings.
+func CurrentSettings() *Settings {
 	return _current
 }
 
@@ -53,7 +53,7 @@ func Icons() *IconSet {
 }
 
 // _current returns the current theme settings.
-var _current = &ConfigSettings{
+var _current = &Settings{
 	rootCfg: defaultConfig(),
 	Theme:   &Theme{},
 }

@@ -132,7 +132,7 @@ func (r *RootConfiguration) convertToTheme() Theme {
 	return th
 }
 
-func (r *RootConfiguration) applyTheme(p *parseThemeInfo) {
+func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 	style := lipgloss.NewStyle()
 
 	for seg := range strings.SplitSeq(removeSpaces(*p.rootCfg), propSegmentSep) {

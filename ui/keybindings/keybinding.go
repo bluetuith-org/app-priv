@@ -7,69 +7,83 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// KeyID describes the application keybinding type.
-type KeyID string
+// KeyID represents a keybinding's ID.
+type KeyID int
+
+// Keybinding represents a single Keybinding.
+type Keybinding struct {
+	ID                       KeyID
+	Key, ShortHelp, LongHelp string
+}
+
+// NewKeybinding returns a new keybinding.
+func NewKeybinding(id KeyID, keyCombo, shorthelp, longhelp string) Keybinding {
+	return Keybinding{ID: id, Key: keyCombo, ShortHelp: shorthelp, LongHelp: longhelp}
+}
+
+// KeyBindingID describes the application keybinding type.
+type KeyBindingID string
 
 // The different application keybinding types.
 const (
-	KeyMenu    KeyID = "Menu"
-	KeySelect  KeyID = "Select"
-	KeySuspend KeyID = "Suspend"
-	KeyQuit    KeyID = "Quit"
-	KeySwitch  KeyID = "Switch"
-	KeyClose   KeyID = "Close"
-	KeyHelp    KeyID = "Help"
-	KeyFilter  KeyID = "Filter"
+	KeyMenu    KeyBindingID = "Menu"
+	KeySelect  KeyBindingID = "Select"
+	KeySuspend KeyBindingID = "Suspend"
+	KeyQuit    KeyBindingID = "Quit"
+	KeySwitch  KeyBindingID = "Switch"
+	KeyClose   KeyBindingID = "Close"
+	KeyHelp    KeyBindingID = "Help"
+	KeyFilter  KeyBindingID = "Filter"
 
-	KeyAdapterChange             KeyID = "AdapterChange"
-	KeyAdapterTogglePower        KeyID = "AdapterTogglePower"
-	KeyAdapterToggleDiscoverable KeyID = "AdapterToggleDiscoverable"
-	KeyAdapterTogglePairable     KeyID = "AdapterTogglePairable"
-	KeyAdapterToggleScan         KeyID = "AdapterToggleScan"
+	KeyAdapterChange             KeyBindingID = "AdapterChange"
+	KeyAdapterTogglePower        KeyBindingID = "AdapterTogglePower"
+	KeyAdapterToggleDiscoverable KeyBindingID = "AdapterToggleDiscoverable"
+	KeyAdapterTogglePairable     KeyBindingID = "AdapterTogglePairable"
+	KeyAdapterToggleScan         KeyBindingID = "AdapterToggleScan"
 
-	KeyDeviceSendFiles     KeyID = "DeviceSendFiles"
-	KeyDeviceNetwork       KeyID = "DeviceNetwork"
-	KeyDeviceConnect       KeyID = "DeviceConnect"
-	KeyDevicePair          KeyID = "DevicePair"
-	KeyDeviceTrust         KeyID = "DeviceTrust"
-	KeyDeviceBlock         KeyID = "DeviceBlock"
-	KeyDeviceAudioProfiles KeyID = "DeviceAudioProfiles"
-	KeyDeviceRemove        KeyID = "DeviceRemove"
+	KeyDeviceSendFiles     KeyBindingID = "DeviceSendFiles"
+	KeyDeviceNetwork       KeyBindingID = "DeviceNetwork"
+	KeyDeviceConnect       KeyBindingID = "DeviceConnect"
+	KeyDevicePair          KeyBindingID = "DevicePair"
+	KeyDeviceTrust         KeyBindingID = "DeviceTrust"
+	KeyDeviceBlock         KeyBindingID = "DeviceBlock"
+	KeyDeviceAudioProfiles KeyBindingID = "DeviceAudioProfiles"
+	KeyDeviceRemove        KeyBindingID = "DeviceRemove"
 
-	KeyFilebrowserDirForward       KeyID = "FilebrowserDirForward"
-	KeyFilebrowserDirBack          KeyID = "FilebrowserDirBack"
-	KeyFilebrowserSelect           KeyID = "FilebrowserSelect"
-	KeyFilebrowserInvertSelection  KeyID = "FilebrowserInvertSelection"
-	KeyFilebrowserSelectAll        KeyID = "FilebrowserSelectAll"
-	KeyFilebrowserRefresh          KeyID = "FilebrowserRefresh"
-	KeyFilebrowserToggleHidden     KeyID = "FilebrowserToggleHidden"
-	KeyFilebrowserConfirmSelection KeyID = "FilebrowserConfirmSelection"
+	KeyFilebrowserDirForward       KeyBindingID = "FilebrowserDirForward"
+	KeyFilebrowserDirBack          KeyBindingID = "FilebrowserDirBack"
+	KeyFilebrowserSelect           KeyBindingID = "FilebrowserSelect"
+	KeyFilebrowserInvertSelection  KeyBindingID = "FilebrowserInvertSelection"
+	KeyFilebrowserSelectAll        KeyBindingID = "FilebrowserSelectAll"
+	KeyFilebrowserRefresh          KeyBindingID = "FilebrowserRefresh"
+	KeyFilebrowserToggleHidden     KeyBindingID = "FilebrowserToggleHidden"
+	KeyFilebrowserConfirmSelection KeyBindingID = "FilebrowserConfirmSelection"
 
-	KeyProgressView            KeyID = "ProgressView"
-	KeyProgressTransferSuspend KeyID = "ProgressTransferSuspend"
-	KeyProgressTransferResume  KeyID = "ProgressTransferResume"
-	KeyProgressTransferCancel  KeyID = "ProgressTransferCancel"
+	KeyProgressView            KeyBindingID = "ProgressView"
+	KeyProgressTransferSuspend KeyBindingID = "ProgressTransferSuspend"
+	KeyProgressTransferResume  KeyBindingID = "ProgressTransferResume"
+	KeyProgressTransferCancel  KeyBindingID = "ProgressTransferCancel"
 
-	KeyInfo KeyID = "Info"
+	KeyInfo KeyBindingID = "Info"
 
-	KeyTasks      KeyID = "Tasks"
-	KeyTaskCancel KeyID = "TaskCancel"
+	KeyTasks      KeyBindingID = "Tasks"
+	KeyTaskCancel KeyBindingID = "TaskCancel"
 
-	KeyPlayerShow         KeyID = "PlayerShow"
-	KeyPlayerHide         KeyID = "PlayerHide"
-	KeyPlayerTogglePlay   KeyID = "PlayerTogglePlay"
-	KeyPlayerNext         KeyID = "PlayerNext"
-	KeyPlayerPrevious     KeyID = "PlayerPrevious"
-	KeyPlayerSeekForward  KeyID = "PlayerSeekForward"
-	KeyPlayerSeekBackward KeyID = "PlayerSeekBackward"
-	KeyPlayerStop         KeyID = "PlayerStop"
+	KeyPlayerShow         KeyBindingID = "PlayerShow"
+	KeyPlayerHide         KeyBindingID = "PlayerHide"
+	KeyPlayerTogglePlay   KeyBindingID = "PlayerTogglePlay"
+	KeyPlayerNext         KeyBindingID = "PlayerNext"
+	KeyPlayerPrevious     KeyBindingID = "PlayerPrevious"
+	KeyPlayerSeekForward  KeyBindingID = "PlayerSeekForward"
+	KeyPlayerSeekBackward KeyBindingID = "PlayerSeekBackward"
+	KeyPlayerStop         KeyBindingID = "PlayerStop"
 
-	KeyNavigateUp     KeyID = "NavigateUp"
-	KeyNavigateDown   KeyID = "NavigateDown"
-	KeyNavigateRight  KeyID = "NavigateRight"
-	KeyNavigateLeft   KeyID = "NavigateLeft"
-	KeyNavigateTop    KeyID = "NavigateTop"
-	KeyNavigateBottom KeyID = "NavigateBottom"
+	KeyNavigateUp     KeyBindingID = "NavigateUp"
+	KeyNavigateDown   KeyBindingID = "NavigateDown"
+	KeyNavigateRight  KeyBindingID = "NavigateRight"
+	KeyNavigateLeft   KeyBindingID = "NavigateLeft"
+	KeyNavigateTop    KeyBindingID = "NavigateTop"
+	KeyNavigateBottom KeyBindingID = "NavigateBottom"
 )
 
 // KeyContext describes the context where the keybinding is
@@ -87,17 +101,17 @@ const (
 
 // IterKeyMatch describes an iterator which calls the provided function
 // when a KeyID is found.
-type IterKeyMatch[V any] iter.Seq2[KeyID, V]
+type IterKeyMatch[V any] iter.Seq2[KeyBindingID, V]
 
-// Keybinding represents a custom key binding.
-type Keybinding struct {
-	ID      KeyID
+// KeybindingVar represents a custom key binding.
+type KeybindingVar struct {
+	ID      KeyBindingID
 	Binding key.Binding
 	Global  bool
 }
 
 // MatchesKey checks if a pressed key matches the stored binding setting.
-func MatchesKey(k KeyID, p tea.KeyPressMsg) bool {
+func MatchesKey(k KeyBindingID, p tea.KeyPressMsg) bool {
 	e, ok := _keybindings[k]
 	if !ok {
 		return false
@@ -107,7 +121,7 @@ func MatchesKey(k KeyID, p tea.KeyPressMsg) bool {
 }
 
 // IterMatch iterates over a sequence of keys and finds a match.
-func IterMatch[V any](p tea.KeyPressMsg, keys IterKeyMatch[V]) (Keybinding, V, bool) {
+func IterMatch[V any](p tea.KeyPressMsg, keys IterKeyMatch[V]) (KeybindingVar, V, bool) {
 	var val V
 
 	for k, v := range keys {
@@ -121,15 +135,15 @@ func IterMatch[V any](p tea.KeyPressMsg, keys IterKeyMatch[V]) (Keybinding, V, b
 		}
 	}
 
-	return Keybinding{}, val, false
+	return KeybindingVar{}, val, false
 }
 
 // RawBinding returns the raw string-based keybinding setting.
-func RawBinding(k KeyID) []string {
+func RawBinding(k KeyBindingID) []string {
 	return _keybindings[k].Binding.Keys()
 }
 
-var _keybindings = map[KeyID]Keybinding{
+var _keybindings = map[KeyBindingID]KeybindingVar{
 	KeySwitch: {
 		ID:      KeySwitch,
 		Global:  true,

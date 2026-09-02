@@ -17,6 +17,11 @@ type genOptions struct {
 	newFilePath, newStructName, newStructComment string
 }
 
+type (
+	codeID      string
+	codeContent string
+)
+
 type genTempl interface {
 	AppendAccessor(s string, tag string) (genTemplRet, error)
 	GetPartialCode() string
@@ -89,14 +94,15 @@ func generateStruct(tpl genTempl, g *genOptions) error {
 		return true
 	}, nil)
 
-	if err := modifyStruct(
+	f, err := modifyStruct(
 		newModStructArg(fset, cfgDst, tpl, g).
 			setNodes(parentNode, tspec, stype),
-	); err != nil {
+	)
+	if err != nil {
 		return err
 	}
 
-	return writeCodeToFile(cfgDst, g.pkgName, g.newFilePath, true)
+	return writeCodeToFile(f, g.pkgName, g.newFilePath, true)
 }
 
 func matchStructType(n dst.Node, name string) (ts *dst.TypeSpec, st *dst.StructType, exists bool) {
@@ -166,7 +172,7 @@ func (m *modStructArg) setNodes(parentNode dst.Node, ts *dst.TypeSpec, st *dst.S
 	return m
 }
 
-func modifyStruct(v *modStructArg) error {
+func modifyStruct(v *modStructArg) (*dst.File, error) {
 	v.ts.Name.Name = v.newStructName
 
 	decs := v.parentNode.Decorations()
@@ -177,17 +183,19 @@ func modifyStruct(v *modStructArg) error {
 
 	if err := genStructAndAccessors(v.st, v.tpl, v.genOptions, ""); err != nil {
 		fmt.Println(err)
-		return err
+		return nil, err
 	}
 
-	f, err := decorator.ParseFile(v.fset, "part.go", v.tpl.GetPartialCode(), parser.AllErrors)
+	code := v.tpl.GetPartialCode()
+
+	f, err := decorator.ParseFile(v.fset, "part.go", code, parser.AllErrors)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	v.cfgFile.Decls = append(v.cfgFile.Decls, f.Decls...)
 
-	return nil
+	return v.cfgFile, nil
 }
 
 func genStructAndAccessors(st *dst.StructType, tpl genTempl, opt *genOptions, prefix string) error {
@@ -213,7 +221,7 @@ func genStructAndAccessors(st *dst.StructType, tpl genTempl, opt *genOptions, pr
 					tag = field.Tag.Value
 				}
 
-				ret, err := tpl.AppendAccessor(name, tag)
+				ret, err := tpl.AppendAccessor(name, tag[min(1, len(tag)):max(0, len(tag)-1)])
 				if err != nil {
 					return err
 				}

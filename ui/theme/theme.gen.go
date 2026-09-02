@@ -66,6 +66,11 @@ type Theme struct {
 	}
 }
 
+var (
+	_emptyCmpCfg = &Configuration{}
+	_emptyTheme  = &Theme{}
+)
+
 func defaultConfig() *RootConfiguration {
 	r := &RootConfiguration{}
 
@@ -95,15 +100,8 @@ func defaultConfig() *RootConfiguration {
 	return r
 }
 
-var (
-	_emptyCmpCfg = &Configuration{}
-	_emptyTheme  = &Theme{}
-)
-
 // parseThemeInfo holds the theme parsing information.
 type parseThemeInfo struct {
-	path string
-
 	rootCfg *string
 	cmpCfg  string
 
@@ -111,7 +109,7 @@ type parseThemeInfo struct {
 }
 
 // iterProperties iterates over the configuration's and theme's properties.
-func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) iter.Seq[*parseThemeInfo] {
+func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) iter.Seq[parseThemeInfo] {
 	if cmpCfg == nil {
 		cmpCfg = _emptyCmpCfg
 	}
@@ -120,11 +118,9 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 		t = _emptyTheme
 	}
 
-	return func(yield func(*parseThemeInfo) bool) {
-		parseInfo := &parseThemeInfo{}
-
+	return func(yield func(parseThemeInfo) bool) {
 		for i := range 21 {
-			if !yield(getProperty(cfg, cmpCfg, t, parseInfo, i)) {
+			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
 		}
@@ -132,130 +128,111 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 }
 
 // getProperty returns the property according to the specified parsing position.
-func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, p *parseThemeInfo, pos int) *parseThemeInfo {
+func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos int) parseThemeInfo {
+	p := parseThemeInfo{}
+
 	switch pos {
 	case 0:
-		p.path = "root:Border"
 		p.rootCfg = &cfg.Border
 		p.cmpCfg = cmpCfg.Border
 		p.style = &t.Border
 
 	case 1:
-		p.path = "root:BorderFocused"
 		p.rootCfg = &cfg.BorderFocused
 		p.cmpCfg = cmpCfg.BorderFocused
 		p.style = &t.BorderFocused
 
 	case 2:
-		p.path = "root/ADTree:.Headers"
 		p.rootCfg = &cfg.ADTree.Headers
 		p.cmpCfg = cmpCfg.ADTree.Headers
 		p.style = &t.ADTree.Headers
 
 	case 3:
-		p.path = "root/ADTree:.ExpandedIndicator"
 		p.rootCfg = &cfg.ADTree.ExpandedIndicator
 		p.cmpCfg = cmpCfg.ADTree.ExpandedIndicator
 		p.style = &t.ADTree.ExpandedIndicator
 
 	case 4:
-		p.path = "root/ADTree:.ClosedIndicator"
 		p.rootCfg = &cfg.ADTree.ClosedIndicator
 		p.cmpCfg = cmpCfg.ADTree.ClosedIndicator
 		p.style = &t.ADTree.ClosedIndicator
 
 	case 5:
-		p.path = "root/ADTree:.Selection"
 		p.rootCfg = &cfg.ADTree.Selection
 		p.cmpCfg = cmpCfg.ADTree.Selection
 		p.style = &t.ADTree.Selection
 
 	case 6:
-		p.path = "root/ADTree/Adapter:.Present"
 		p.rootCfg = &cfg.ADTree.Adapter.Present
 		p.cmpCfg = cmpCfg.ADTree.Adapter.Present
 		p.style = &t.ADTree.Adapter.Present
 
 	case 7:
-		p.path = "root/ADTree/Device:.Discovered"
 		p.rootCfg = &cfg.ADTree.Device.Discovered
 		p.cmpCfg = cmpCfg.ADTree.Device.Discovered
 		p.style = &t.ADTree.Device.Discovered
 
 	case 8:
-		p.path = "root/ADTree/Device:.Paired"
 		p.rootCfg = &cfg.ADTree.Device.Paired
 		p.cmpCfg = cmpCfg.ADTree.Device.Paired
 		p.style = &t.ADTree.Device.Paired
 
 	case 9:
-		p.path = "root/ADTree/DevicesList:.Nodes"
 		p.rootCfg = &cfg.ADTree.DevicesList.Nodes
 		p.cmpCfg = cmpCfg.ADTree.DevicesList.Nodes
 		p.style = &t.ADTree.DevicesList.Nodes
 
 	case 10:
-		p.path = "root/ADTree/ActionsList:.Nodes"
 		p.rootCfg = &cfg.ADTree.ActionsList.Nodes
 		p.cmpCfg = cmpCfg.ADTree.ActionsList.Nodes
 		p.style = &t.ADTree.ActionsList.Nodes
 
 	case 11:
-		p.path = "root/TabsPane:.Style"
 		p.rootCfg = &cfg.TabsPane.Style
 		p.cmpCfg = cmpCfg.TabsPane.Style
 		p.style = &t.TabsPane.Style
 
 	case 12:
-		p.path = "root/TabsPane:.Tab"
 		p.rootCfg = &cfg.TabsPane.Tab
 		p.cmpCfg = cmpCfg.TabsPane.Tab
 		p.style = &t.TabsPane.Tab
 
 	case 13:
-		p.path = "root/TabsPane:.FocusedTab"
 		p.rootCfg = &cfg.TabsPane.FocusedTab
 		p.cmpCfg = cmpCfg.TabsPane.FocusedTab
 		p.style = &t.TabsPane.FocusedTab
 
 	case 14:
-		p.path = "root/Info:.Style"
 		p.rootCfg = &cfg.Info.Style
 		p.cmpCfg = cmpCfg.Info.Style
 		p.style = &t.Info.Style
 
 	case 15:
-		p.path = "root/Info:.Heading"
 		p.rootCfg = &cfg.Info.Heading
 		p.cmpCfg = cmpCfg.Info.Heading
 		p.style = &t.Info.Heading
 
 	case 16:
-		p.path = "root/Operations:.Style"
 		p.rootCfg = &cfg.Operations.Style
 		p.cmpCfg = cmpCfg.Operations.Style
 		p.style = &t.Operations.Style
 
 	case 17:
-		p.path = "root/Operations:.Heading"
 		p.rootCfg = &cfg.Operations.Heading
 		p.cmpCfg = cmpCfg.Operations.Heading
 		p.style = &t.Operations.Heading
 
 	case 18:
-		p.path = "root/Log:.Style"
 		p.rootCfg = &cfg.Log.Style
 		p.cmpCfg = cmpCfg.Log.Style
 		p.style = &t.Log.Style
 
 	case 19:
-		p.path = "root/Log:.Heading"
 		p.rootCfg = &cfg.Log.Heading
 		p.cmpCfg = cmpCfg.Log.Heading
 		p.style = &t.Log.Heading
 
 	case 20:
-		p.path = "root/StatusBar:.Style"
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style

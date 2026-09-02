@@ -35,6 +35,15 @@ func buildSelectorExpr(sel string) dst.Expr {
 	return expr
 }
 
+func getAccessor(s string) (k string, v string) {
+	idx := strings.LastIndex(s, ".")
+	if idx == -1 {
+		return "", s
+	}
+
+	return s[:idx], s[idx+1:]
+}
+
 func deleteNodeFromCursor(c *dstutil.Cursor) {
 	if c.Index() >= 0 {
 		c.Delete()

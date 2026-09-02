@@ -7,7 +7,7 @@ import (
 )
 
 type adActionState struct {
-	key keybindings.KeyID
+	key keybindings.KeyBindingID
 
 	currentState actionStateSpec
 	isToggleable bool
@@ -17,7 +17,7 @@ type adActionState struct {
 
 type actionInvoker func() (opCreationInfo, opInvoker)
 
-func newAdActionState(key keybindings.KeyID, state actionStateSpec, isToggleable bool, invoker actionInvoker) *adActionState {
+func newAdActionState(key keybindings.KeyBindingID, state actionStateSpec, isToggleable bool, invoker actionInvoker) *adActionState {
 	return &adActionState{key, state, isToggleable, invoker}
 }
 
@@ -77,7 +77,7 @@ type actionKeyIterResult struct {
 }
 
 func actionKeyIterator(node *treeview.Node[adTreeNode]) keybindings.IterKeyMatch[*actionKeyIterResult] {
-	return func(yield func(keybindings.KeyID, *actionKeyIterResult) bool) {
+	return func(yield func(keybindings.KeyBindingID, *actionKeyIterResult) bool) {
 		n := node
 		if n == nil {
 			return

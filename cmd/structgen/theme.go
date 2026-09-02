@@ -12,17 +12,15 @@ import (
 const themeGenPart = `
 package theme
 
-%s
-
 var (
 	_emptyCmpCfg = &Configuration{}
 	_emptyTheme = &Theme{}
 )
 
+%s
+
 // parseThemeInfo holds the theme parsing information.
 type parseThemeInfo struct {
-	path string
-
 	rootCfg *string
   cmpCfg string
 
@@ -30,7 +28,7 @@ type parseThemeInfo struct {
 }
 
 // iterProperties iterates over the configuration's and theme's properties.
-func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) iter.Seq[*parseThemeInfo] {
+func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) iter.Seq[parseThemeInfo] {
 	if cmpCfg == nil {
 	  cmpCfg = _emptyCmpCfg
 	}
@@ -39,11 +37,9 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 	  t = _emptyTheme
 	}
 
-	return func(yield func(*parseThemeInfo) bool) {
-		parseInfo := &parseThemeInfo{}
-
+	return func(yield func(parseThemeInfo) bool) {
 		for i := range %d {
-			if !yield(getProperty(cfg, cmpCfg, t, parseInfo, i)) {
+			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
 		}
@@ -51,7 +47,9 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 }
 
 // getProperty returns the property according to the specified parsing position.
-func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, p *parseThemeInfo, pos int) *parseThemeInfo {
+func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos int) parseThemeInfo {
+	p := parseThemeInfo{}
+
 	switch pos {
 	%s
 	}
@@ -77,36 +75,31 @@ type ThemeGenImpl struct {
 	count     int
 }
 
-func getAccessor(s string) (k string, v string) {
-	idx := strings.LastIndex(s, ".")
-	if idx == -1 {
-		return "", s
-	}
-
-	return s[:idx], s[idx:]
-}
-
 func (t *ThemeGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error) {
-	path := "root"
 	isRoot := true
 
-	k, v := getAccessor(s)
+	k, _ := getAccessor(s)
 	if k != "" {
-		path += "/" + strings.ReplaceAll(k, ".", "/")
 		isRoot = false
 	}
-	path += ":" + v
 
-	tags, err := structtag.Parse(tag[min(1, len(tag)):max(0, len(tag)-1)])
+	tags, err := structtag.Parse(tag)
 	if err != nil {
 		return emptyGenTemplRet(), fmt.Errorf("%w: cannot parse tag on accessor %s (tag %s)", err, s, tag)
 	}
 
-	tagValue := ""
-	for _, tagKey := range tagKeys {
-		tag, err := tags.Get(tagKey)
+	var (
+		tagValue, tagKey string
+		foundCount       int
+	)
+
+	for _, tkey := range tagKeys {
+		tag, err := tags.Get(tkey)
 		if err == nil {
 			tagValue = tag.Value()
+			tagKey = tkey
+
+			foundCount++
 		}
 	}
 	if tagValue == "" {
@@ -115,21 +108,27 @@ func (t *ThemeGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error)
 			s, strings.Join(tagKeys[:], ", "),
 		)
 	}
+	if foundCount >= len(tagKeys) {
+		return emptyGenTemplRet(), fmt.Errorf(
+			"only one of %s must be specified for accessor %s (tag %s)",
+			strings.Join(tagKeys[:], ", "),
+			s, tag,
+		)
+	}
 
-	fmt.Fprintf(&t.defSb, "r.%s = \"%s\"\n", s, tagValue)
+	fmt.Fprintf(&t.defSb, "r.%s = %q\n", s, tagValue)
 
-	if isRoot && s == "Tint" {
+	if isRoot && tagKey == tagKeys[0] {
 		return newGenTemplRet("", false, true), nil
 	}
 
 	fmt.Fprintf(&t.sb, `
 		case %d:
-		p.path = "%s"
 		p.rootCfg = &cfg.%s
 		p.cmpCfg = cmpCfg.%s
 		p.style = &t.%s
 
-		`, t.count, path, s, s, s)
+		`, t.count, s, s, s)
 
 	t.count++
 
@@ -140,9 +139,9 @@ func (t *ThemeGenImpl) GetPartialCode() string {
 	t.defSb.WriteString("\n")
 	def := fmt.Sprintf(defaultConfigPart, t.defSb.String())
 
-	v := fmt.Sprintf(themeGenPart, def, t.count, t.sb.String())
+	code := fmt.Sprintf(themeGenPart, def, t.count, t.sb.String())
 
-	return v
+	return code
 }
 
 func generateTheme() error {

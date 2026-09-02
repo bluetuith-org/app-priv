@@ -87,7 +87,7 @@ func (a *adTreeNode) addActionsList() {
 	a.node.AddChild(alAdNode.node)
 }
 
-func (a *adTreeNode) addAction(key keybindings.KeyID, state actionStateSpec, isToggleable bool, invoker actionInvoker) {
+func (a *adTreeNode) addAction(key keybindings.KeyBindingID, state actionStateSpec, isToggleable bool, invoker actionInvoker) {
 	actionNode := newAdNode(
 		nodeTypeAction, "",
 		false, a.id.appendSubNodeTextNib(nibAction, string(key)),

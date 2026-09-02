@@ -256,5 +256,5 @@ func (v *Values) validateGsm() error {
 // TODO: Theme
 // validateTheme validates the theme configuration.
 func (v *Values) validateTheme() error {
-	return theme.Settings().ParseTheme()
+	return theme.CurrentSettings().ParseTheme()
 }
