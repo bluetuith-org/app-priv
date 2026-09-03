@@ -10,6 +10,7 @@ import (
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui/config"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -149,6 +150,7 @@ func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		msg = tea.WindowSizeMsg{Width: v.width, Height: v.height - 3}
 
 	case tea.KeyPressMsg:
+		logInfo("KEY CODE: " + m.String())
 		switch m.Code {
 		case 'q':
 			return v, tea.Quit
@@ -328,4 +330,8 @@ func collectCmds(update bool, msg tea.Msg, views iter.Seq[viewer]) tea.Cmd {
 	}
 
 	return tea.Batch(cmds...)
+}
+
+func kb() *keybindings.Keybindings {
+	return keybindings.Current
 }

@@ -11,7 +11,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
-	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
@@ -95,7 +94,7 @@ func (o *operationsView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch {
-		case keybindings.MatchesKey(keybindings.KeySelect, m):
+		case kb().SelectItem.Matches(m):
 		default:
 		}
 

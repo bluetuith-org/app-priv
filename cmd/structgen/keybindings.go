@@ -11,7 +11,7 @@ import (
 
 const kbConstPart = `
 const (
-	_ KeyID = iota
+	KeyNone KeyID = iota
 	%s
 )
 `
@@ -78,7 +78,7 @@ func (k *KbGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error) {
 		return emptyGenTemplRet(), err
 	}
 
-	id := "KeyID" + strings.ReplaceAll(s, ".", "")
+	id := "Key" + strings.ReplaceAll(s, ".", "")
 
 	var vals [len(tagKeysKb)]string
 	for idx, k := range tagKeysKb {

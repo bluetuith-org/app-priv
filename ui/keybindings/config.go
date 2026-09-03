@@ -33,6 +33,7 @@ type Configuration struct {
 		TogglePairedState string `keydef:"p" keyshorthelp:"TogglePairedState" keylonghelp:"TogglePairedState"`
 		Trust             string `keydef:"t" keyshorthelp:"Trust" keylonghelp:"Trust"`
 
+		SendFiles      string `keydef:"f" keyshorthelp:"SendFiles" keylonghelp:"SendFiles"`
 		NetworkOptions string `keydef:"n" keyshorthelp:"NetworkOptions" keylonghelp:"NetworkOptions"`
 		AudioProfiles  string `keydef:"A" keyshorthelp:"AudioProfiles" keylonghelp:"AudioProfiles"`
 		Block          string `keydef:"b" keyshorthelp:"Block" keylonghelp:"Block"`
@@ -42,7 +43,7 @@ type Configuration struct {
 		CdForward string `keydef:"right" keyshorthelp:"CdForward" keylonghelp:"CdForward"`
 		CdBack    string `keydef:"left" keyshorthelp:"CdBack" keylonghelp:"CdBack"`
 
-		SelectOne        string `keydef:" " keyshorthelp:"SelectOne" keylonghelp:"SelectOne"`
+		SelectOne        string `keydef:"space" keyshorthelp:"SelectOne" keylonghelp:"SelectOne"`
 		SelectAll        string `keydef:"A" keyshorthelp:"SelectAll" keylonghelp:"SelectAll"`
 		InvertSelection  string `keydef:"a" keyshorthelp:"InvertSelection" keylonghelp:"InvertSelection"`
 		ConfirmSelection string `keydef:"ctrl+s" keyshorthelp:"ConfirmSelection" keylonghelp:"ConfirmSelection"`
@@ -67,7 +68,7 @@ type Configuration struct {
 
 	Player struct {
 		ToggleDisplay      string `keydef:"M" keyshorthelp:"ToggleDisplay" keylonghelp:"ToggleDisplay"`
-		ToggleMediaPlaying string `keydef:" " keyshorthelp:"ToggleMediaPlaying" keylonghelp:"ToggleMediaPlaying"`
+		ToggleMediaPlaying string `keydef:"space" keyshorthelp:"ToggleMediaPlaying" keylonghelp:"ToggleMediaPlaying"`
 
 		Next         string `keydef:">" keyshorthelp:"Next" keylonghelp:"Next"`
 		Previous     string `keydef:"<" keyshorthelp:"Previous" keylonghelp:"Previous"`
@@ -76,6 +77,3 @@ type Configuration struct {
 		Stop         string `keydef:"]" keyshorthelp:"Stop" keylonghelp:"Stop"`
 	}
 }
-
-// RootConfiguration holds the root configuration for the keybindings.
-type RootConfiguration Configuration

@@ -35,6 +35,7 @@ type Keybindings struct {
 		TogglePairedState Keybinding
 		Trust             Keybinding
 
+		SendFiles      Keybinding
 		NetworkOptions Keybinding
 		AudioProfiles  Keybinding
 		Block          Keybinding
@@ -80,50 +81,51 @@ type Keybindings struct {
 }
 
 const (
-	_ KeyID = iota
-	KeyIDSwitchPanes
-	KeyIDSelectItem
-	KeyIDCloseItem
-	KeyIDFilterItems
-	KeyIDHelp
-	KeyIDSuspend
-	KeyIDQuit
-	KeyIDNavigateUp
-	KeyIDNavigateDown
-	KeyIDNavigateLeft
-	KeyIDNavigateRight
-	KeyIDNavigateTop
-	KeyIDNavigateBottom
-	KeyIDAdapterTogglePower
-	KeyIDAdapterToggleDiscoverable
-	KeyIDAdapterTogglePairable
-	KeyIDAdapterToggleScan
-	KeyIDDeviceToggleConnection
-	KeyIDDeviceTogglePairedState
-	KeyIDDeviceTrust
-	KeyIDDeviceNetworkOptions
-	KeyIDDeviceAudioProfiles
-	KeyIDDeviceBlock
-	KeyIDFilebrowserCdForward
-	KeyIDFilebrowserCdBack
-	KeyIDFilebrowserSelectOne
-	KeyIDFilebrowserSelectAll
-	KeyIDFilebrowserInvertSelection
-	KeyIDFilebrowserConfirmSelection
-	KeyIDFilebrowserRefresh
-	KeyIDFilebrowserToggleHiddenFiles
-	KeyIDADTreeToggleNodes
-	KeyIDOperationsCancel
-	KeyIDTransfersSuspend
-	KeyIDTransfersResume
-	KeyIDTransfersCancel
-	KeyIDPlayerToggleDisplay
-	KeyIDPlayerToggleMediaPlaying
-	KeyIDPlayerNext
-	KeyIDPlayerPrevious
-	KeyIDPlayerSeekForward
-	KeyIDPlayerSeekBackward
-	KeyIDPlayerStop
+	KeyNone KeyID = iota
+	KeySwitchPanes
+	KeySelectItem
+	KeyCloseItem
+	KeyFilterItems
+	KeyHelp
+	KeySuspend
+	KeyQuit
+	KeyNavigateUp
+	KeyNavigateDown
+	KeyNavigateLeft
+	KeyNavigateRight
+	KeyNavigateTop
+	KeyNavigateBottom
+	KeyAdapterTogglePower
+	KeyAdapterToggleDiscoverable
+	KeyAdapterTogglePairable
+	KeyAdapterToggleScan
+	KeyDeviceToggleConnection
+	KeyDeviceTogglePairedState
+	KeyDeviceTrust
+	KeyDeviceSendFiles
+	KeyDeviceNetworkOptions
+	KeyDeviceAudioProfiles
+	KeyDeviceBlock
+	KeyFilebrowserCdForward
+	KeyFilebrowserCdBack
+	KeyFilebrowserSelectOne
+	KeyFilebrowserSelectAll
+	KeyFilebrowserInvertSelection
+	KeyFilebrowserConfirmSelection
+	KeyFilebrowserRefresh
+	KeyFilebrowserToggleHiddenFiles
+	KeyADTreeToggleNodes
+	KeyOperationsCancel
+	KeyTransfersSuspend
+	KeyTransfersResume
+	KeyTransfersCancel
+	KeyPlayerToggleDisplay
+	KeyPlayerToggleMediaPlaying
+	KeyPlayerNext
+	KeyPlayerPrevious
+	KeyPlayerSeekForward
+	KeyPlayerSeekBackward
+	KeyPlayerStop
 )
 
 var _emptyCmpCfg = &Configuration{}
@@ -132,217 +134,222 @@ func defaultConfig() *Keybindings {
 	k := &Keybindings{}
 
 	k.SwitchPanes = NewKeybinding(
-		KeyIDSwitchPanes, "tab",
+		KeySwitchPanes, "tab",
 		"SwitchPanes",
 		"SwitchPanes",
 	)
 	k.SelectItem = NewKeybinding(
-		KeyIDSelectItem, "enter",
+		KeySelectItem, "enter",
 		"SelectItem",
 		"SelectItem",
 	)
 	k.CloseItem = NewKeybinding(
-		KeyIDCloseItem, "esc",
+		KeyCloseItem, "esc",
 		"CloseItem",
 		"CloseItem",
 	)
 	k.FilterItems = NewKeybinding(
-		KeyIDFilterItems, "/",
+		KeyFilterItems, "/",
 		"FilterItems",
 		"FilterItems",
 	)
 	k.Help = NewKeybinding(
-		KeyIDHelp, "?",
+		KeyHelp, "?",
 		"Help",
 		"Help",
 	)
 	k.Suspend = NewKeybinding(
-		KeyIDSuspend, "ctrl+z",
+		KeySuspend, "ctrl+z",
 		"Suspend",
 		"Suspend",
 	)
 	k.Quit = NewKeybinding(
-		KeyIDQuit, "q",
+		KeyQuit, "q",
 		"Quit",
 		"Quit",
 	)
 	k.NavigateUp = NewKeybinding(
-		KeyIDNavigateUp, "up",
+		KeyNavigateUp, "up",
 		"NavigateUp",
 		"NavigateUp",
 	)
 	k.NavigateDown = NewKeybinding(
-		KeyIDNavigateDown, "down",
+		KeyNavigateDown, "down",
 		"NavigateDown",
 		"NavigateDown",
 	)
 	k.NavigateLeft = NewKeybinding(
-		KeyIDNavigateLeft, "left",
+		KeyNavigateLeft, "left",
 		"NavigateLeft",
 		"NavigateLeft",
 	)
 	k.NavigateRight = NewKeybinding(
-		KeyIDNavigateRight, "right",
+		KeyNavigateRight, "right",
 		"NavigateRight",
 		"NavigateRight",
 	)
 	k.NavigateTop = NewKeybinding(
-		KeyIDNavigateTop, "pgup",
+		KeyNavigateTop, "pgup",
 		"NavigateTop",
 		"NavigateTop",
 	)
 	k.NavigateBottom = NewKeybinding(
-		KeyIDNavigateBottom, "pgdown",
+		KeyNavigateBottom, "pgdown",
 		"NavigateBottom",
 		"NavigateBottom",
 	)
 	k.Adapter.TogglePower = NewKeybinding(
-		KeyIDAdapterTogglePower, "o",
+		KeyAdapterTogglePower, "o",
 		"TogglePower",
 		"TogglePower",
 	)
 	k.Adapter.ToggleDiscoverable = NewKeybinding(
-		KeyIDAdapterToggleDiscoverable, "S",
+		KeyAdapterToggleDiscoverable, "S",
 		"ToggleDiscoverable",
 		"ToggleDiscoverable",
 	)
 	k.Adapter.TogglePairable = NewKeybinding(
-		KeyIDAdapterTogglePairable, "P",
+		KeyAdapterTogglePairable, "P",
 		"TogglePairable",
 		"TogglePairable",
 	)
 	k.Adapter.ToggleScan = NewKeybinding(
-		KeyIDAdapterToggleScan, "s",
+		KeyAdapterToggleScan, "s",
 		"ToggleScan",
 		"ToggleScan",
 	)
 	k.Device.ToggleConnection = NewKeybinding(
-		KeyIDDeviceToggleConnection, "c",
+		KeyDeviceToggleConnection, "c",
 		"ToggleConnection",
 		"ToggleConnection",
 	)
 	k.Device.TogglePairedState = NewKeybinding(
-		KeyIDDeviceTogglePairedState, "p",
+		KeyDeviceTogglePairedState, "p",
 		"TogglePairedState",
 		"TogglePairedState",
 	)
 	k.Device.Trust = NewKeybinding(
-		KeyIDDeviceTrust, "t",
+		KeyDeviceTrust, "t",
 		"Trust",
 		"Trust",
 	)
+	k.Device.SendFiles = NewKeybinding(
+		KeyDeviceSendFiles, "f",
+		"SendFiles",
+		"SendFiles",
+	)
 	k.Device.NetworkOptions = NewKeybinding(
-		KeyIDDeviceNetworkOptions, "n",
+		KeyDeviceNetworkOptions, "n",
 		"NetworkOptions",
 		"NetworkOptions",
 	)
 	k.Device.AudioProfiles = NewKeybinding(
-		KeyIDDeviceAudioProfiles, "A",
+		KeyDeviceAudioProfiles, "A",
 		"AudioProfiles",
 		"AudioProfiles",
 	)
 	k.Device.Block = NewKeybinding(
-		KeyIDDeviceBlock, "b",
+		KeyDeviceBlock, "b",
 		"Block",
 		"Block",
 	)
 	k.Filebrowser.CdForward = NewKeybinding(
-		KeyIDFilebrowserCdForward, "right",
+		KeyFilebrowserCdForward, "right",
 		"CdForward",
 		"CdForward",
 	)
 	k.Filebrowser.CdBack = NewKeybinding(
-		KeyIDFilebrowserCdBack, "left",
+		KeyFilebrowserCdBack, "left",
 		"CdBack",
 		"CdBack",
 	)
 	k.Filebrowser.SelectOne = NewKeybinding(
-		KeyIDFilebrowserSelectOne, " ",
+		KeyFilebrowserSelectOne, "space",
 		"SelectOne",
 		"SelectOne",
 	)
 	k.Filebrowser.SelectAll = NewKeybinding(
-		KeyIDFilebrowserSelectAll, "A",
+		KeyFilebrowserSelectAll, "A",
 		"SelectAll",
 		"SelectAll",
 	)
 	k.Filebrowser.InvertSelection = NewKeybinding(
-		KeyIDFilebrowserInvertSelection, "a",
+		KeyFilebrowserInvertSelection, "a",
 		"InvertSelection",
 		"InvertSelection",
 	)
 	k.Filebrowser.ConfirmSelection = NewKeybinding(
-		KeyIDFilebrowserConfirmSelection, "ctrl+s",
+		KeyFilebrowserConfirmSelection, "ctrl+s",
 		"ConfirmSelection",
 		"ConfirmSelection",
 	)
 	k.Filebrowser.Refresh = NewKeybinding(
-		KeyIDFilebrowserRefresh, "ctrl+r",
+		KeyFilebrowserRefresh, "ctrl+r",
 		"Refresh",
 		"Refresh",
 	)
 	k.Filebrowser.ToggleHiddenFiles = NewKeybinding(
-		KeyIDFilebrowserToggleHiddenFiles, ".",
+		KeyFilebrowserToggleHiddenFiles, ".",
 		"ToggleHiddenFiles",
 		"ToggleHiddenFiles",
 	)
 	k.ADTree.ToggleNodes = NewKeybinding(
-		KeyIDADTreeToggleNodes, "right",
+		KeyADTreeToggleNodes, "right",
 		"ToggleNodes",
 		"ToggleNodes",
 	)
 	k.Operations.Cancel = NewKeybinding(
-		KeyIDOperationsCancel, "x",
+		KeyOperationsCancel, "x",
 		"Cancel",
 		"Cancel",
 	)
 	k.Transfers.Suspend = NewKeybinding(
-		KeyIDTransfersSuspend, "s",
+		KeyTransfersSuspend, "s",
 		"Suspend",
 		"Suspend",
 	)
 	k.Transfers.Resume = NewKeybinding(
-		KeyIDTransfersResume, "r",
+		KeyTransfersResume, "r",
 		"Resume",
 		"Resume",
 	)
 	k.Transfers.Cancel = NewKeybinding(
-		KeyIDTransfersCancel, "x",
+		KeyTransfersCancel, "x",
 		"Cancel",
 		"Cancel",
 	)
 	k.Player.ToggleDisplay = NewKeybinding(
-		KeyIDPlayerToggleDisplay, "M",
+		KeyPlayerToggleDisplay, "M",
 		"ToggleDisplay",
 		"ToggleDisplay",
 	)
 	k.Player.ToggleMediaPlaying = NewKeybinding(
-		KeyIDPlayerToggleMediaPlaying, " ",
+		KeyPlayerToggleMediaPlaying, "space",
 		"ToggleMediaPlaying",
 		"ToggleMediaPlaying",
 	)
 	k.Player.Next = NewKeybinding(
-		KeyIDPlayerNext, ">",
+		KeyPlayerNext, ">",
 		"Next",
 		"Next",
 	)
 	k.Player.Previous = NewKeybinding(
-		KeyIDPlayerPrevious, "<",
+		KeyPlayerPrevious, "<",
 		"Previous",
 		"Previous",
 	)
 	k.Player.SeekForward = NewKeybinding(
-		KeyIDPlayerSeekForward, "right",
+		KeyPlayerSeekForward, "right",
 		"SeekForward",
 		"SeekForward",
 	)
 	k.Player.SeekBackward = NewKeybinding(
-		KeyIDPlayerSeekBackward, "left",
+		KeyPlayerSeekBackward, "left",
 		"SeekBackward",
 		"SeekBackward",
 	)
 	k.Player.Stop = NewKeybinding(
-		KeyIDPlayerStop, "]",
+		KeyPlayerStop, "]",
 		"Stop",
 		"Stop",
 	)
@@ -360,7 +367,7 @@ func iterProperties(kb *Keybindings, cfg *Configuration) iter.Seq[parseKeybindin
 	}
 
 	return func(yield func(parseKeybindingInfo) bool) {
-		for i := range 43 {
+		for i := range 44 {
 			if !yield(getProperty(kb, cfg, i)) {
 				return
 			}
@@ -453,94 +460,98 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.Device.Trust
 
 	case 20:
+		p.kb = &kb.Device.SendFiles
+		p.cmpCfg = cfg.Device.SendFiles
+
+	case 21:
 		p.kb = &kb.Device.NetworkOptions
 		p.cmpCfg = cfg.Device.NetworkOptions
 
-	case 21:
+	case 22:
 		p.kb = &kb.Device.AudioProfiles
 		p.cmpCfg = cfg.Device.AudioProfiles
 
-	case 22:
+	case 23:
 		p.kb = &kb.Device.Block
 		p.cmpCfg = cfg.Device.Block
 
-	case 23:
+	case 24:
 		p.kb = &kb.Filebrowser.CdForward
 		p.cmpCfg = cfg.Filebrowser.CdForward
 
-	case 24:
+	case 25:
 		p.kb = &kb.Filebrowser.CdBack
 		p.cmpCfg = cfg.Filebrowser.CdBack
 
-	case 25:
+	case 26:
 		p.kb = &kb.Filebrowser.SelectOne
 		p.cmpCfg = cfg.Filebrowser.SelectOne
 
-	case 26:
+	case 27:
 		p.kb = &kb.Filebrowser.SelectAll
 		p.cmpCfg = cfg.Filebrowser.SelectAll
 
-	case 27:
+	case 28:
 		p.kb = &kb.Filebrowser.InvertSelection
 		p.cmpCfg = cfg.Filebrowser.InvertSelection
 
-	case 28:
+	case 29:
 		p.kb = &kb.Filebrowser.ConfirmSelection
 		p.cmpCfg = cfg.Filebrowser.ConfirmSelection
 
-	case 29:
+	case 30:
 		p.kb = &kb.Filebrowser.Refresh
 		p.cmpCfg = cfg.Filebrowser.Refresh
 
-	case 30:
+	case 31:
 		p.kb = &kb.Filebrowser.ToggleHiddenFiles
 		p.cmpCfg = cfg.Filebrowser.ToggleHiddenFiles
 
-	case 31:
+	case 32:
 		p.kb = &kb.ADTree.ToggleNodes
 		p.cmpCfg = cfg.ADTree.ToggleNodes
 
-	case 32:
+	case 33:
 		p.kb = &kb.Operations.Cancel
 		p.cmpCfg = cfg.Operations.Cancel
 
-	case 33:
+	case 34:
 		p.kb = &kb.Transfers.Suspend
 		p.cmpCfg = cfg.Transfers.Suspend
 
-	case 34:
+	case 35:
 		p.kb = &kb.Transfers.Resume
 		p.cmpCfg = cfg.Transfers.Resume
 
-	case 35:
+	case 36:
 		p.kb = &kb.Transfers.Cancel
 		p.cmpCfg = cfg.Transfers.Cancel
 
-	case 36:
+	case 37:
 		p.kb = &kb.Player.ToggleDisplay
 		p.cmpCfg = cfg.Player.ToggleDisplay
 
-	case 37:
+	case 38:
 		p.kb = &kb.Player.ToggleMediaPlaying
 		p.cmpCfg = cfg.Player.ToggleMediaPlaying
 
-	case 38:
+	case 39:
 		p.kb = &kb.Player.Next
 		p.cmpCfg = cfg.Player.Next
 
-	case 39:
+	case 40:
 		p.kb = &kb.Player.Previous
 		p.cmpCfg = cfg.Player.Previous
 
-	case 40:
+	case 41:
 		p.kb = &kb.Player.SeekForward
 		p.cmpCfg = cfg.Player.SeekForward
 
-	case 41:
+	case 42:
 		p.kb = &kb.Player.SeekBackward
 		p.cmpCfg = cfg.Player.SeekBackward
 
-	case 42:
+	case 43:
 		p.kb = &kb.Player.Stop
 		p.cmpCfg = cfg.Player.Stop
 

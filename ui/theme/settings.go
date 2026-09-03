@@ -22,6 +22,7 @@ type Settings struct {
 }
 
 // ParseTheme parses and applies the theme configuration.
+// TODO: Parse config.
 func (s *Settings) ParseTheme() error {
 	cmpCfg := (*Configuration)(s.rootCfg)
 

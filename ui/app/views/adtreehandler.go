@@ -4,6 +4,7 @@ import (
 	"iter"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -87,10 +88,10 @@ func (a *adTreeNode) addActionsList() {
 	a.node.AddChild(alAdNode.node)
 }
 
-func (a *adTreeNode) addAction(key keybindings.KeyBindingID, state actionStateSpec, isToggleable bool, invoker actionInvoker) {
+func (a *adTreeNode) addAction(key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) {
 	actionNode := newAdNode(
 		nodeTypeAction, "",
-		false, a.id.appendSubNodeTextNib(nibAction, string(key)),
+		false, a.id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
 		a.noder, a.tree,
 	)
 
@@ -248,10 +249,10 @@ func (a *adapterAdNode) populateActions() {
 		return
 	}
 
-	node.addAction(keybindings.KeyAdapterTogglePower, boolToActionState(a.adapter.Powered.Value()), true, a.actionPowered)
-	node.addAction(keybindings.KeyAdapterToggleDiscoverable, boolToActionState(a.adapter.Discovering.Value()), true, a.actionDiscoverable)
-	node.addAction(keybindings.KeyAdapterTogglePairable, boolToActionState(a.adapter.Pairable.Value()), true, a.actionPairable)
-	node.addAction(keybindings.KeyAdapterToggleScan, boolToActionState(a.adapter.Discovering.Value()), true, a.actionScan)
+	node.addAction(kb().Adapter.TogglePower, boolToActionState(a.adapter.Powered.Value()), true, a.actionPowered)
+	node.addAction(kb().Adapter.ToggleDiscoverable, boolToActionState(a.adapter.Discovering.Value()), true, a.actionDiscoverable)
+	node.addAction(kb().Adapter.TogglePairable, boolToActionState(a.adapter.Pairable.Value()), true, a.actionPairable)
+	node.addAction(kb().Adapter.ToggleScan, boolToActionState(a.adapter.Discovering.Value()), true, a.actionScan)
 
 	for _, actionNode := range actionsListNode.Children() {
 		a.updateActionNode(actionNode, emptyActionUpdateMsg())
@@ -267,16 +268,16 @@ func (a *adapterAdNode) updateActionNode(actionNode *treeview.Node[adTreeNode], 
 	var text string
 
 	switch state.key {
-	case keybindings.KeyAdapterTogglePower:
+	case kb().Adapter.TogglePower:
 		text = "Power"
 
-	case keybindings.KeyAdapterToggleDiscoverable:
+	case kb().Adapter.ToggleDiscoverable:
 		text = "Discoverable"
 
-	case keybindings.KeyAdapterTogglePairable:
+	case kb().Adapter.TogglePairable:
 		text = "Pairable"
 
-	case keybindings.KeyAdapterToggleScan:
+	case kb().Adapter.ToggleScan:
 		text = "Device Scanning"
 
 	default:
@@ -368,34 +369,34 @@ func (d *deviceAdNode) populateActions() {
 		return
 	}
 
-	node.addAction(keybindings.KeyDeviceConnect, boolToActionState(d.device.Connected.Value()), true, d.actionConnect)
-	node.addAction(keybindings.KeyDevicePair, boolToActionState(d.device.Paired.Value()), true, d.actionPair)
+	node.addAction(kb().Device.ToggleConnection, boolToActionState(d.device.Connected.Value()), true, d.actionConnect)
+	node.addAction(kb().Device.TogglePairedState, boolToActionState(d.device.Paired.Value()), true, d.actionPair)
 
 	if d.tree.features().Has(appfeatures.FeatureSendFile, appfeatures.FeatureReceiveFile) &&
 		d.device.HaveService(bluetooth.ObexObjpushServiceClass) {
-		node.addAction(keybindings.KeyDeviceSendFiles, actionStateNone, false, d.actionSend)
+		node.addAction(kb().Device.SendFiles, actionStateNone, false, d.actionSend)
 	}
 
 	if runtime.GOOS == "linux" {
-		node.addAction(keybindings.KeyDeviceTrust, boolToActionState(d.device.Trusted.Value()), true, d.actionTrust)
-		node.addAction(keybindings.KeyDeviceBlock, boolToActionState(d.device.Blocked.Value()), true, d.actionBlock)
+		node.addAction(kb().Device.Trust, boolToActionState(d.device.Trusted.Value()), true, d.actionTrust)
+		node.addAction(kb().Device.Block, boolToActionState(d.device.Blocked.Value()), true, d.actionBlock)
 
 		if d.device.HaveService(bluetooth.AudioSourceServiceClass) ||
 			d.device.HaveService(bluetooth.AudioSinkServiceClass) {
-			node.addAction(keybindings.KeyDeviceAudioProfiles, actionStateNone, false, d.actionAudioProfiles)
+			node.addAction(kb().Device.AudioProfiles, actionStateNone, false, d.actionAudioProfiles)
 		}
 
 		if d.device.HaveService(bluetooth.AudioSourceServiceClass) &&
 			d.device.HaveService(bluetooth.AvRemoteServiceClass) &&
 			d.device.HaveService(bluetooth.AvRemoteTargetServiceClass) {
-			node.addAction(keybindings.KeyPlayerShow, actionStateDisabled, true, d.actionMediaPlayer)
+			node.addAction(kb().Player.ToggleDisplay, actionStateDisabled, true, d.actionMediaPlayer)
 		}
 
 		if d.tree.features().Has(appfeatures.FeatureNetwork) &&
 			d.device.HaveService(bluetooth.NapServiceClass) &&
 			(d.device.HaveService(bluetooth.PanuServiceClass) ||
 				d.device.HaveService(bluetooth.DialupNetServiceClass)) {
-			node.addAction(keybindings.KeyDeviceNetwork, actionStateNone, false, d.actionNetwork)
+			node.addAction(kb().Device.NetworkOptions, actionStateNone, false, d.actionNetwork)
 		}
 	}
 
@@ -413,33 +414,33 @@ func (d *deviceAdNode) updateActionNode(actionNode *treeview.Node[adTreeNode], u
 	var enabledText, disabledText string
 
 	switch state.key {
-	case keybindings.KeyDeviceConnect:
+	case kb().Device.ToggleConnection:
 		enabledText = "Connect"
 		disabledText = "Disconnect"
 
-	case keybindings.KeyDevicePair:
+	case kb().Device.TogglePairedState:
 		enabledText = "Pair"
 		disabledText = "Unpair/Remove"
 
-	case keybindings.KeyDeviceTrust:
+	case kb().Device.Trust:
 		enabledText = "Trust"
 		disabledText = "Untrust"
 
-	case keybindings.KeyDeviceBlock:
+	case kb().Device.Block:
 		enabledText = "Block"
 		disabledText = "Unblock"
 
-	case keybindings.KeyDeviceSendFiles:
+	case kb().Device.SendFiles:
 		enabledText = "Send file(s)"
 
-	case keybindings.KeyDeviceNetwork:
+	case kb().Device.NetworkOptions:
 		enabledText = "List network profiles (Bluetooth tethering)"
 
-	case keybindings.KeyDeviceAudioProfiles:
+	case kb().Device.AudioProfiles:
 		enabledText = "List audio profiles"
 
 	//TODO: Show/hide
-	case keybindings.KeyPlayerShow:
+	case kb().Player.ToggleDisplay:
 		enabledText = "Show media player"
 		disabledText = "Hide media player"
 

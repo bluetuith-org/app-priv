@@ -11,7 +11,6 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
-	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
@@ -140,23 +139,23 @@ func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		adNode := focusedNode.Data()
 
 		switch {
-		case keybindings.MatchesKey(keybindings.KeyNavigateUp, m):
+		case kb().NavigateUp.Matches(m):
 			a.tuiTree.NavigateUp()
 			return a, nil
 
-		case keybindings.MatchesKey(keybindings.KeyNavigateDown, m):
+		case kb().NavigateDown.Matches(m):
 			a.tuiTree.NavigateDown()
 			return a, nil
 
-		case keybindings.MatchesKey(keybindings.KeySwitch, m):
+		case kb().SwitchPanes.Matches(m):
 			a.v.FocusTabView()
 			return a, nil
 
-		case keybindings.MatchesKey(keybindings.KeyClose, m):
+		case kb().CloseItem.Matches(m):
 			a.endSearch()
 			return a, nil
 
-		case keybindings.MatchesKey(keybindings.KeySelect, m):
+		case kb().SelectItem.Matches(m):
 			if a.endSearch() {
 				return a, nil
 			}
@@ -168,7 +167,7 @@ func (a *adTree) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return a, acStateToOpMsg(focusedNode.ID(), adNode.actionState).sendRoutedMsg(a.v)
 
-		case keybindings.MatchesKey(keybindings.KeyFilter, m):
+		case kb().FilterItems.Matches(m):
 			if a.beginSearch() {
 				return a, nil
 			}
