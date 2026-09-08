@@ -1,6 +1,6 @@
 module github.com/bluetuith-org/bluetuith
 
-go 1.25.0
+go 1.27.0
 
 require (
 	charm.land/bubbles/v2 v2.1.1
@@ -17,6 +17,7 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.6
 	github.com/lrstanley/bubbletint/v2 v2.0.2
+	github.com/spf13/cast v1.10.0
 	github.com/urfave/cli/v2 v2.27.7
 	golang.org/x/tools v0.49.0
 )
@@ -52,6 +53,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/ugorji/go/codec v1.3.2 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
@@ -59,3 +61,5 @@ require (
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 )
+
+replace github.com/yusing/goutils => ../goutils/

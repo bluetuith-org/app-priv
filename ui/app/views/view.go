@@ -1,8 +1,10 @@
 package views
 
 import (
+	"context"
 	"fmt"
 	"iter"
+	"log/slog"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -11,7 +13,7 @@ import (
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui/config"
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
-	tint "github.com/lrstanley/bubbletint/v2"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
 // Views should be deleted.
@@ -100,10 +102,6 @@ type ViewModel struct {
 
 // NewViewModel returns the main view.
 func NewViewModel(appBinder AppBinder) (*ViewModel, error) {
-	if err := initLogger(appBinder, "", 1000); err != nil {
-		return nil, err
-	}
-
 	v := &ViewModel{
 		width:  120,
 		height: 30,
@@ -150,9 +148,9 @@ func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		msg = tea.WindowSizeMsg{Width: v.width, Height: v.height - 3}
 
 	case tea.KeyPressMsg:
-		logInfo("KEY CODE: " + m.String())
-		switch m.Code {
-		case 'q':
+		slog.LogAttrs(context.Background(), slog.LevelInfo, "", slog.Any("msg", msg))
+		switch {
+		case kb().Quit.Matches(m):
 			return v, tea.Quit
 
 		default:
@@ -177,7 +175,9 @@ func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return v, view.HandleRouterMsg(m)
 	}
 
-	return v, collectCmds(true, msg, v.modelIterator())
+	cmds := collectCmds(true, msg, v.modelIterator())
+
+	return v, cmds
 }
 
 // View renders the program's UI, which can be a string or a [Layer]. The
@@ -225,9 +225,6 @@ func (v *ViewModel) SendRoutedUpdateMsg(msg routerMsg) tea.Cmd {
 }
 
 func (v *ViewModel) initAllViews() error {
-	tint.NewDefaultRegistry()
-	tint.SetTint(tint.TintDraculaPlus)
-
 	for _, view := range [maxViews]viewer{
 		v.tabsView,
 		v.adTreeView,
@@ -284,10 +281,7 @@ func (v *ViewModel) updateViewByID(id viewID, msg tea.Msg) tea.Cmd {
 }
 
 func (v *ViewModel) renderHeader() string {
-	style := lipgloss.NewStyle().
-		Bold(true).
-		Background(lipgloss.Color("62")).
-		Foreground(lipgloss.Color("15")).
+	style := theme.Current().TitleBar.
 		Width(v.width).
 		Height(1).
 		Align(lipgloss.Left)

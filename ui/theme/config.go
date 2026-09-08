@@ -34,6 +34,8 @@ type Configuration struct {
 	Border        string `themedef:"bg:from-theme; fg:white"`
 	BorderFocused string `themedef:"bg:from-theme; fg:green; attr:bold"`
 
+	TitleBar string `themedef:"bg:purple;fg:white;attr:bold"`
+
 	ADTree struct {
 		Headers string `themedef:"bg:from-theme; fg:from-theme"`
 
@@ -62,7 +64,7 @@ type Configuration struct {
 	TabsPane struct {
 		Style      string `themedef:"bg:from-theme; fg:from-theme"`
 		Tab        string `themedef:"bg:from-theme; fg:from-theme"`
-		FocusedTab string `themedef:"bg:from-theme; fg:brightpurple"`
+		FocusedTab string `themedef:"bg:from-theme; fg:brightcyan"`
 	}
 
 	Info struct {
@@ -76,8 +78,12 @@ type Configuration struct {
 	}
 
 	Log struct {
-		Style   string `themedef:"bg:blue; fg:white"`
+		Style   string `themedef:"bg:from-theme; fg:from-theme"`
 		Heading string `themedef:"bg:from-theme; fg:from-theme"`
+
+		Info  string `themedef:"bg:from-theme; fg:blue; attr:bold,underline"`
+		Debug string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
+		Error string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
 	}
 
 	StatusBar struct {
@@ -135,7 +141,7 @@ func (r *RootConfiguration) convertToTheme() Theme {
 func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 	style := lipgloss.NewStyle()
 
-	for seg := range strings.SplitSeq(removeSpaces(*p.rootCfg), propSegmentSep) {
+	for seg := range strings.SplitSeq(*p.rootCfg, propSegmentSep) {
 		prop, val, _ := strings.Cut(seg, propValSep)
 
 		switch prop {

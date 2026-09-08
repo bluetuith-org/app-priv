@@ -1,8 +1,10 @@
 package views
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -115,7 +117,7 @@ func (o *operationsView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		o.removeOperation(m)
 
 	case opErrorMsg:
-		logError(m.err)
+		slog.LogAttrs(context.Background(), slog.LevelInfo, "Operror", slog.Any("error", m.err))
 	}
 
 	return o, cmd

@@ -15,6 +15,8 @@ type Theme struct {
 	Border        lipgloss.Style
 	BorderFocused lipgloss.Style
 
+	TitleBar lipgloss.Style
+
 	ADTree struct {
 		Headers lipgloss.Style
 
@@ -59,6 +61,10 @@ type Theme struct {
 	Log struct {
 		Style   lipgloss.Style
 		Heading lipgloss.Style
+
+		Info  lipgloss.Style
+		Debug lipgloss.Style
+		Error lipgloss.Style
 	}
 
 	StatusBar struct {
@@ -75,26 +81,30 @@ func defaultConfig() *RootConfiguration {
 	r := &RootConfiguration{}
 
 	r.Tint = "primer"
-	r.Border = "bg:from-theme; fg:white"
-	r.BorderFocused = "bg:from-theme; fg:green; attr:bold"
-	r.ADTree.Headers = "bg:from-theme; fg:from-theme"
-	r.ADTree.ExpandedIndicator = "bg:from-theme; fg:from-theme"
-	r.ADTree.ClosedIndicator = "bg:from-theme; fg:from-theme"
-	r.ADTree.Selection = "bg:from-theme; fg:blue; attr:reverse"
-	r.ADTree.Adapter.Present = "bg:from-theme; fg:from-theme"
-	r.ADTree.Device.Discovered = "bg:from-theme; fg:from-theme"
-	r.ADTree.Device.Paired = "bg:from-theme; fg:from-theme"
-	r.ADTree.DevicesList.Nodes = "bg:from-theme; fg:from-theme"
-	r.ADTree.ActionsList.Nodes = "bg:from-theme; fg:from-theme"
-	r.TabsPane.Style = "bg:from-theme; fg:from-theme"
-	r.TabsPane.Tab = "bg:from-theme; fg:from-theme"
-	r.TabsPane.FocusedTab = "bg:from-theme; fg:brightpurple"
-	r.Info.Style = "bg:blue; fg:white"
-	r.Info.Heading = "bg:from-theme; fg:from-theme"
-	r.Operations.Style = "bg:blue; fg:white"
-	r.Operations.Heading = "bg:from-theme; fg:from-theme"
-	r.Log.Style = "bg:blue; fg:white"
-	r.Log.Heading = "bg:from-theme; fg:from-theme"
+	r.Border = "bg:from-theme;fg:white"
+	r.BorderFocused = "bg:from-theme;fg:green;attr:bold"
+	r.TitleBar = "bg:purple;fg:white;attr:bold"
+	r.ADTree.Headers = "bg:from-theme;fg:from-theme"
+	r.ADTree.ExpandedIndicator = "bg:from-theme;fg:from-theme"
+	r.ADTree.ClosedIndicator = "bg:from-theme;fg:from-theme"
+	r.ADTree.Selection = "bg:from-theme;fg:blue;attr:reverse"
+	r.ADTree.Adapter.Present = "bg:from-theme;fg:from-theme"
+	r.ADTree.Device.Discovered = "bg:from-theme;fg:from-theme"
+	r.ADTree.Device.Paired = "bg:from-theme;fg:from-theme"
+	r.ADTree.DevicesList.Nodes = "bg:from-theme;fg:from-theme"
+	r.ADTree.ActionsList.Nodes = "bg:from-theme;fg:from-theme"
+	r.TabsPane.Style = "bg:from-theme;fg:from-theme"
+	r.TabsPane.Tab = "bg:from-theme;fg:from-theme"
+	r.TabsPane.FocusedTab = "bg:from-theme;fg:brightcyan"
+	r.Info.Style = "bg:blue;fg:white"
+	r.Info.Heading = "bg:from-theme;fg:from-theme"
+	r.Operations.Style = "bg:blue;fg:white"
+	r.Operations.Heading = "bg:from-theme;fg:from-theme"
+	r.Log.Style = "bg:from-theme;fg:from-theme"
+	r.Log.Heading = "bg:from-theme;fg:from-theme"
+	r.Log.Info = "bg:from-theme;fg:blue;attr:bold,underline"
+	r.Log.Debug = "bg:from-theme;fg:brightpurple;attr:bold,underline"
+	r.Log.Error = "bg:from-theme;fg:red;attr:bold,underline"
 	r.StatusBar.Style = "bg:purple;fg:white;attr:bold"
 
 	return r
@@ -119,7 +129,7 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 	}
 
 	return func(yield func(parseThemeInfo) bool) {
-		for i := range 21 {
+		for i := range 25 {
 			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
@@ -143,96 +153,116 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.BorderFocused
 
 	case 2:
+		p.rootCfg = &cfg.TitleBar
+		p.cmpCfg = cmpCfg.TitleBar
+		p.style = &t.TitleBar
+
+	case 3:
 		p.rootCfg = &cfg.ADTree.Headers
 		p.cmpCfg = cmpCfg.ADTree.Headers
 		p.style = &t.ADTree.Headers
 
-	case 3:
+	case 4:
 		p.rootCfg = &cfg.ADTree.ExpandedIndicator
 		p.cmpCfg = cmpCfg.ADTree.ExpandedIndicator
 		p.style = &t.ADTree.ExpandedIndicator
 
-	case 4:
+	case 5:
 		p.rootCfg = &cfg.ADTree.ClosedIndicator
 		p.cmpCfg = cmpCfg.ADTree.ClosedIndicator
 		p.style = &t.ADTree.ClosedIndicator
 
-	case 5:
+	case 6:
 		p.rootCfg = &cfg.ADTree.Selection
 		p.cmpCfg = cmpCfg.ADTree.Selection
 		p.style = &t.ADTree.Selection
 
-	case 6:
+	case 7:
 		p.rootCfg = &cfg.ADTree.Adapter.Present
 		p.cmpCfg = cmpCfg.ADTree.Adapter.Present
 		p.style = &t.ADTree.Adapter.Present
 
-	case 7:
+	case 8:
 		p.rootCfg = &cfg.ADTree.Device.Discovered
 		p.cmpCfg = cmpCfg.ADTree.Device.Discovered
 		p.style = &t.ADTree.Device.Discovered
 
-	case 8:
+	case 9:
 		p.rootCfg = &cfg.ADTree.Device.Paired
 		p.cmpCfg = cmpCfg.ADTree.Device.Paired
 		p.style = &t.ADTree.Device.Paired
 
-	case 9:
+	case 10:
 		p.rootCfg = &cfg.ADTree.DevicesList.Nodes
 		p.cmpCfg = cmpCfg.ADTree.DevicesList.Nodes
 		p.style = &t.ADTree.DevicesList.Nodes
 
-	case 10:
+	case 11:
 		p.rootCfg = &cfg.ADTree.ActionsList.Nodes
 		p.cmpCfg = cmpCfg.ADTree.ActionsList.Nodes
 		p.style = &t.ADTree.ActionsList.Nodes
 
-	case 11:
+	case 12:
 		p.rootCfg = &cfg.TabsPane.Style
 		p.cmpCfg = cmpCfg.TabsPane.Style
 		p.style = &t.TabsPane.Style
 
-	case 12:
+	case 13:
 		p.rootCfg = &cfg.TabsPane.Tab
 		p.cmpCfg = cmpCfg.TabsPane.Tab
 		p.style = &t.TabsPane.Tab
 
-	case 13:
+	case 14:
 		p.rootCfg = &cfg.TabsPane.FocusedTab
 		p.cmpCfg = cmpCfg.TabsPane.FocusedTab
 		p.style = &t.TabsPane.FocusedTab
 
-	case 14:
+	case 15:
 		p.rootCfg = &cfg.Info.Style
 		p.cmpCfg = cmpCfg.Info.Style
 		p.style = &t.Info.Style
 
-	case 15:
+	case 16:
 		p.rootCfg = &cfg.Info.Heading
 		p.cmpCfg = cmpCfg.Info.Heading
 		p.style = &t.Info.Heading
 
-	case 16:
+	case 17:
 		p.rootCfg = &cfg.Operations.Style
 		p.cmpCfg = cmpCfg.Operations.Style
 		p.style = &t.Operations.Style
 
-	case 17:
+	case 18:
 		p.rootCfg = &cfg.Operations.Heading
 		p.cmpCfg = cmpCfg.Operations.Heading
 		p.style = &t.Operations.Heading
 
-	case 18:
+	case 19:
 		p.rootCfg = &cfg.Log.Style
 		p.cmpCfg = cmpCfg.Log.Style
 		p.style = &t.Log.Style
 
-	case 19:
+	case 20:
 		p.rootCfg = &cfg.Log.Heading
 		p.cmpCfg = cmpCfg.Log.Heading
 		p.style = &t.Log.Heading
 
-	case 20:
+	case 21:
+		p.rootCfg = &cfg.Log.Info
+		p.cmpCfg = cmpCfg.Log.Info
+		p.style = &t.Log.Info
+
+	case 22:
+		p.rootCfg = &cfg.Log.Debug
+		p.cmpCfg = cmpCfg.Log.Debug
+		p.style = &t.Log.Debug
+
+	case 23:
+		p.rootCfg = &cfg.Log.Error
+		p.cmpCfg = cmpCfg.Log.Error
+		p.style = &t.Log.Error
+
+	case 24:
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style

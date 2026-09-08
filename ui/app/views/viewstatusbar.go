@@ -1,9 +1,12 @@
 package views
 
 import (
+	"strings"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
+	"github.com/bluetuith-org/bluetuith/internal/tlog"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
@@ -87,8 +90,10 @@ func (s *statusBarView) View() tea.View {
 		Align(lipgloss.Left)
 
 	text := ""
-	if v, ok := _log.Peek(); ok {
-		text = v.prefix.String() + " " + v.text
+	if v, ok := tlog.Peek(); ok {
+		text = useStringBuffer(v.Size(), func(b *strings.Builder) {
+			v.WriteBuffer(b)
+		})
 	}
 
 	return tea.NewView(style.Render(" " + text))

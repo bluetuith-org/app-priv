@@ -1,12 +1,14 @@
 package views
 
 import (
+	"log/slog"
 	"strings"
 
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
+	"github.com/bluetuith-org/bluetuith/internal/tlog"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
 )
 
@@ -84,7 +86,7 @@ func (l *logView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		msg = l.Resize(m.Width, m.Height)
 
-	case logUpdateMsg:
+	default:
 	}
 
 	return l, nil
@@ -93,16 +95,16 @@ func (l *logView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the program's UI, which can be a string or a [Layer]. The
 // view is rendered after every Update.
 func (l *logView) View() tea.View {
-	text := useStringBuffer(_log.Len(), func(b *strings.Builder) {
-		for v := range _log.IterAsc() {
-			b.WriteString(v.prefix.String())
-			b.WriteString(": ")
-			b.WriteString(v.text)
-			b.WriteString("\n")
+	text := useStringBuffer(1024, func(b *strings.Builder) {
+		for v := range tlog.IterateAsc() {
+			renderLogLine(l.width, b, &v)
 		}
 	})
 
-	l.vp.Style = lipgloss.NewStyle().Align(lipgloss.Left).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("62"))
+	l.vp.Style = theme.Current().Log.Style.
+		Align(lipgloss.Left).
+		Border(lipgloss.RoundedBorder())
+
 	l.vp.SetWidth(l.width)
 	l.vp.SetHeight(l.height)
 	l.vp.SetContent(text)
@@ -110,8 +112,42 @@ func (l *logView) View() tea.View {
 	return tea.NewView(l.vp.View())
 }
 
-type logUpdateMsg logData
+func renderLogLine(w int, b *strings.Builder, l *tlog.LogData) {
+	level := ""
+	var levelStyle lipgloss.Style
 
-func msgLogUpdate() routerMsg {
-	return viewIDLog.routerMessage(logUpdateMsg{})
+	switch l.Level {
+	case slog.LevelInfo:
+		level = "INFO"
+		levelStyle = theme.Current().Log.Info
+
+	case slog.LevelDebug:
+		level = "DEBUG"
+		levelStyle = theme.Current().Log.Debug
+
+	case slog.LevelError:
+		level = "ERROR"
+		levelStyle = theme.Current().Log.Error
+	}
+
+	currStyle := theme.Current().Log.Style
+
+	levelStr := levelStyle.Render(level)
+	logStr := currStyle.Render(" " + l.String())
+	width := abs(w - (lipgloss.Width(levelStr) + lipgloss.Width(logStr) + 1))
+	pad := currStyle.Render(strings.Repeat(" ", width))
+
+	b.WriteString(levelStr)
+	b.WriteString(logStr)
+	b.WriteString(pad)
+	b.WriteString("\n")
+}
+
+func abs[T ~int | ~uint](x T) T {
+	var zero T
+	if x < zero {
+		return -x
+	}
+
+	return x
 }
