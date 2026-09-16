@@ -1,11 +1,7 @@
 package tlog
 
 import (
-	"log/slog"
-	"strconv"
 	"time"
-
-	"github.com/spf13/cast"
 )
 
 const timeFmt = "2006-01-02 15:04:05"
@@ -15,60 +11,6 @@ const (
 	kvSep     = "="
 	headerSep = ": "
 )
-
-func getAttrBuf(r slog.Record) *Buffer {
-	by := NewBuffer()
-	by.Reset()
-
-	*by = append(*by, r.Message...)
-	*by = append(*by, headerSep...)
-
-	appendSep := false
-	r.Attrs(func(a slog.Attr) bool {
-		a.Value = a.Value.Resolve()
-
-		if appendSep {
-			*by = append(*by, segSep...)
-		}
-
-		*by = append(*by, a.Key...)
-		*by = append(*by, kvSep...)
-
-		switch a.Value.Kind() {
-		case slog.KindBool:
-			*by = strconv.AppendBool(*by, a.Value.Bool())
-
-		case slog.KindInt64:
-			*by = strconv.AppendInt(*by, a.Value.Int64(), 10)
-
-		case slog.KindUint64:
-			*by = strconv.AppendUint(*by, a.Value.Uint64(), 10)
-
-		case slog.KindDuration:
-			var arr [32]byte
-			n := formatDuration(a.Value.Duration(), &arr)
-			*by = append(*by, arr[n:]...)
-
-		case slog.KindTime:
-			*by = a.Value.Time().AppendFormat(*by, timeFmt)
-
-		case slog.KindFloat64:
-			*by = strconv.AppendFloat(*by, a.Value.Float64(), 'f', -1, 64)
-
-		case slog.KindString:
-			*by = append(*by, a.Value.String()...)
-
-		case slog.KindAny:
-			*by = append(*by, cast.ToString(a.Value.Any())...)
-		}
-
-		appendSep = true
-
-		return true
-	})
-
-	return by
-}
 
 // formatDuration formats the representation of d into the end of buf and
 // returns the offset of the first character.

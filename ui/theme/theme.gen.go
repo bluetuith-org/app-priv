@@ -62,6 +62,7 @@ type Theme struct {
 		Style   lipgloss.Style
 		Heading lipgloss.Style
 
+		Time  lipgloss.Style
 		Info  lipgloss.Style
 		Debug lipgloss.Style
 		Error lipgloss.Style
@@ -102,7 +103,8 @@ func defaultConfig() *RootConfiguration {
 	r.Operations.Heading = "bg:from-theme;fg:from-theme"
 	r.Log.Style = "bg:from-theme;fg:from-theme"
 	r.Log.Heading = "bg:from-theme;fg:from-theme"
-	r.Log.Info = "bg:from-theme;fg:blue;attr:bold,underline"
+	r.Log.Time = "bg:from-theme;fg:brightblack(lighten:0.1)"
+	r.Log.Info = "bg:from-theme;fg:blue(lighten:0.2);attr:bold"
 	r.Log.Debug = "bg:from-theme;fg:brightpurple;attr:bold,underline"
 	r.Log.Error = "bg:from-theme;fg:red;attr:bold,underline"
 	r.StatusBar.Style = "bg:purple;fg:white;attr:bold"
@@ -129,7 +131,7 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 	}
 
 	return func(yield func(parseThemeInfo) bool) {
-		for i := range 25 {
+		for i := range 26 {
 			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
@@ -248,21 +250,26 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.Log.Heading
 
 	case 21:
+		p.rootCfg = &cfg.Log.Time
+		p.cmpCfg = cmpCfg.Log.Time
+		p.style = &t.Log.Time
+
+	case 22:
 		p.rootCfg = &cfg.Log.Info
 		p.cmpCfg = cmpCfg.Log.Info
 		p.style = &t.Log.Info
 
-	case 22:
+	case 23:
 		p.rootCfg = &cfg.Log.Debug
 		p.cmpCfg = cmpCfg.Log.Debug
 		p.style = &t.Log.Debug
 
-	case 23:
+	case 24:
 		p.rootCfg = &cfg.Log.Error
 		p.cmpCfg = cmpCfg.Log.Error
 		p.style = &t.Log.Error
 
-	case 24:
+	case 25:
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style

@@ -1,10 +1,9 @@
-package tlog
+package buffers
 
 import (
 	"io"
 	"slices"
 	"sync"
-	"unsafe"
 )
 
 // Ref: https://cs.opensource.google/go/go/+/refs/tags/go1.27.1:src/log/slog/internal/buffer/buffer.go
@@ -64,10 +63,6 @@ func (b *Buffer) WriteString(s string) (int, error) {
 func (b *Buffer) WriteByte(c byte) error {
 	*b = append(*b, c)
 	return nil
-}
-
-func (b *Buffer) String() string {
-	return unsafe.String(unsafe.SliceData(*b), len(*b))
 }
 
 func (b *Buffer) Len() int {

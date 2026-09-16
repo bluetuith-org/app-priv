@@ -11,6 +11,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetuith/internal/tlog"
 	"github.com/bluetuith-org/bluetuith/ui/config"
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
@@ -148,7 +149,7 @@ func (v *ViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		msg = tea.WindowSizeMsg{Width: v.width, Height: v.height - 3}
 
 	case tea.KeyPressMsg:
-		slog.LogAttrs(context.Background(), slog.LevelInfo, "", slog.Any("msg", msg))
+		tlog.G().Info(context.Background(), "Info", slog.Any("msg", msg))
 		switch {
 		case kb().Quit.Matches(m):
 			return v, tea.Quit

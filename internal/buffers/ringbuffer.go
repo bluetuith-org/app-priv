@@ -1,4 +1,4 @@
-package ringbuffer
+package buffers
 
 import (
 	"iter"
@@ -50,7 +50,6 @@ func (l *RingBuffer[T]) Add(val T) {
 	}
 
 	l.buffer[l.index] = val
-	l.totalLen += val.Size()
 	l.index = (l.index + 1) % buflen
 
 	if l.count < buflen {

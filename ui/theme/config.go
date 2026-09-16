@@ -2,6 +2,8 @@ package theme
 
 import (
 	"fmt"
+	"image/color"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -20,6 +22,12 @@ const (
 	propSegmentSep = ";"
 	propValSep     = ":"
 	multiValSep    = ","
+
+	colorSpecOpen  = "("
+	colorSpecClose = ")"
+
+	colorDarkenKeyword  = "darken"
+	colorLightenKeyword = "lighten"
 )
 
 const (
@@ -81,7 +89,8 @@ type Configuration struct {
 		Style   string `themedef:"bg:from-theme; fg:from-theme"`
 		Heading string `themedef:"bg:from-theme; fg:from-theme"`
 
-		Info  string `themedef:"bg:from-theme; fg:blue; attr:bold,underline"`
+		Time  string `themedef:"bg:from-theme; fg:brightblack(lighten:0.1)"`
+		Info  string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
 		Debug string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
 		Error string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
 	}
@@ -146,24 +155,20 @@ func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 
 		switch prop {
 		case fgKeyword:
-			switch val {
-			case fromThemeKeyword:
-				style = style.Foreground(tint.Current().Fg)
-
-			default:
-				color, _ := parseColor(val)
-				style = style.Foreground(color)
+			c, _ := r.parseColorSpec(prop, val)
+			if c == nil {
+				c = tint.Current().Fg
 			}
+
+			style = style.Foreground(c)
 
 		case bgKeyword:
-			switch val {
-			case fromThemeKeyword:
-				style = style.Background(tint.Current().Bg)
-
-			default:
-				color, _ := parseColor(val)
-				style = style.Background(color)
+			c, _ := r.parseColorSpec(prop, val)
+			if c == nil {
+				c = tint.Current().Bg
 			}
+
+			style = style.Background(c)
 
 		case attrKeyword:
 			for attr := range strings.SplitSeq(val, multiValSep) {
@@ -190,6 +195,98 @@ func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 	*p.style = style
 }
 
+func (r *RootConfiguration) parseColorSpec(keyWord, colorSpec string) (color.Color, error) {
+	if colorSpec == "" {
+		return nil, fmt.Errorf("no format specified, color specification is empty")
+	}
+
+	str := colorSpec
+
+	colorName := colorSpec
+	spec := ""
+
+	var darken, lighten float64
+
+	openIdx := strings.Index(str, colorSpecOpen)
+	switch {
+	case openIdx < 0:
+		goto MatchColor
+
+	case openIdx == 0:
+		return nil, fmt.Errorf("no color specified: '%s'", colorSpec)
+
+	case openIdx > 0:
+		colorName = colorName[:openIdx]
+
+		closeIdx := strings.Index(colorSpec, colorSpecClose)
+		if closeIdx < 0 {
+			return nil, fmt.Errorf("no closing parenthesis for expression '%s'", colorSpec)
+		}
+
+		spec = colorSpec[openIdx+1 : closeIdx]
+	}
+
+	for spec := range strings.SplitSeq(spec, multiValSep) {
+		specProp, specVal, ok := strings.Cut(spec, propValSep)
+		if !ok {
+			return nil, fmt.Errorf("invalid color specifier sequence: '%s'", spec)
+		}
+
+		switch specProp {
+		case colorDarkenKeyword:
+			dark, err := strconv.ParseFloat(specVal, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid number for darken: '%s'", colorSpec)
+			}
+
+			darken = dark
+
+		case colorLightenKeyword:
+			light, err := strconv.ParseFloat(specVal, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid number for lighten: '%s'", colorSpec)
+			}
+
+			lighten = light
+
+		default:
+			return nil, fmt.Errorf("invalid format: '%s' ('%s')", spec, colorSpec)
+		}
+	}
+
+MatchColor:
+	var c color.Color
+
+	switch colorName {
+	case fromThemeKeyword:
+		switch keyWord {
+		case fgKeyword:
+			c = tint.Current().Fg
+
+		case bgKeyword:
+			c = tint.Current().Bg
+		}
+
+	default:
+		clr, ok := parseColor(colorName)
+		if !ok {
+			return nil, fmt.Errorf("invalid color specifier '%s'", colorName)
+		}
+
+		c = clr
+	}
+
+	if darken != 0 {
+		c = lipgloss.Darken(c, darken)
+	}
+
+	if lighten != 0 {
+		c = lipgloss.Lighten(c, lighten)
+	}
+
+	return c, nil
+}
+
 func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigInfo, err error) {
 	if cfgItem == "" {
 		return cfgParseInfo, nil
@@ -198,22 +295,17 @@ func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigI
 	for seg := range strings.SplitSeq(removeSpaces(cfgItem), propSegmentSep) {
 		prop, val, ok := strings.Cut(seg, propValSep)
 		if !ok {
-			return cfgParseInfo, fmt.Errorf("invalid property sequence: %s -> %s (%s)", prop, val, cfgItem)
+			return cfgParseInfo, fmt.Errorf("invalid property sequence: '%s' -> '%s' ('%s')", prop, val, cfgItem)
 		}
 
 		if val == "" {
-			return cfgParseInfo, fmt.Errorf("no value was specified for property %s (%s)", prop, cfgItem)
+			return cfgParseInfo, fmt.Errorf("no value was specified for property '%s' ('%s')", prop, cfgItem)
 		}
 
 		switch prop {
 		case fgKeyword, bgKeyword:
-			switch val {
-			case fromThemeKeyword:
-
-			default:
-				if _, ok := parseColor(val); !ok {
-					return cfgParseInfo, fmt.Errorf("invalid color specifier %s for property %s (%s)", val, prop, cfgItem)
-				}
+			if _, err := r.parseColorSpec(prop, val); err != nil {
+				return cfgParseInfo, fmt.Errorf("%w: Invalid format '%s' ('%s')", err, prop, cfgItem)
 			}
 
 			if prop == fgKeyword {
@@ -239,20 +331,20 @@ func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigI
 				case "bold", "italic", "underline", "blink", "reverse":
 					attrCount++
 					if attrCount > totalAttrs {
-						return cfgParseInfo, fmt.Errorf("invalid property length of %s in %s (%s)", val, prop, cfgItem)
+						return cfgParseInfo, fmt.Errorf("invalid property length of '%s' in '%s' ('%s')", val, prop, cfgItem)
 					}
 
 					continue
 
 				default:
-					return cfgParseInfo, fmt.Errorf("invalid attribute %s specified for property %s (%s)", attr, prop, cfgItem)
+					return cfgParseInfo, fmt.Errorf("invalid attribute '%s' specified for property '%s' ('%s')", attr, prop, cfgItem)
 				}
 			}
 
 			cfgParseInfo.attrs = val
 
 		default:
-			return cfgParseInfo, fmt.Errorf("property is not supported: %s (%s)", prop, cfgItem)
+			return cfgParseInfo, fmt.Errorf("property is not supported: '%s' ('%s')", prop, cfgItem)
 		}
 	}
 
