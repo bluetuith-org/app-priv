@@ -6,8 +6,8 @@ type IconVariant struct {
 	Unicode, ASCII string
 }
 
-// GetIcon returns the Unicode or ASCII icon depending on whether IsASCII is true.
-func (i *IconVariant) GetIcon() string {
+// String returns the Unicode or ASCII icon depending on whether IsASCII is true.
+func (i *IconVariant) String() string {
 	if i.IsASCII {
 		return i.ASCII
 	}

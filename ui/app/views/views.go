@@ -40,6 +40,9 @@ type view interface {
 	// routed messages.
 	SetRootView(v rootView)
 
+	// AttachToTabView attaches this view to the tabbed view.
+	AttachToTabView() (tabSection, bool)
+
 	// HandleRouterMsg handles the routed message.
 	HandleRouterMsg(m routerMsg) tview.Cmd
 
@@ -70,7 +73,11 @@ type rootView interface {
 type ViewModel struct {
 	AppBinder
 
-	adTreeModel *adTree
+	adTree   *adTreeModel
+	tabsView *tabsModel
+
+	infoView *infoModel
+	logView  *logModel
 
 	header *tview.TextView
 
@@ -85,7 +92,11 @@ func NewViews(appBinder AppBinder) (*ViewModel, error) {
 	v := &ViewModel{
 		AppBinder: appBinder,
 
-		adTreeModel: &adTree{},
+		adTree:   &adTreeModel{},
+		tabsView: &tabsModel{},
+
+		infoView: &infoModel{},
+		logView:  &logModel{},
 
 		header: tview.NewTextView(),
 		vflex:  flex.NewModel(),
@@ -159,7 +170,10 @@ func (v *ViewModel) UpdateStyles(init bool) {
 
 func (v *ViewModel) initAllViews() error {
 	for _, view := range []view{
-		v.adTreeModel,
+		v.tabsView,
+		v.adTree,
+		v.infoView,
+		v.logView,
 	} {
 		view.SetRootView(v)
 
@@ -168,9 +182,9 @@ func (v *ViewModel) initAllViews() error {
 		}
 
 		v.initedViews[view.ViewID()] = view
-		/*if tab, ok := view.AttachToTabView(); ok {
+		if tab, ok := view.AttachToTabView(); ok {
 			v.tabsView.AddTabSection(tab)
-		}*/
+		}
 	}
 
 	v.layout = v.arrangeViews()
@@ -186,18 +200,14 @@ func (v *ViewModel) arrangeViews() *flex.Model {
 	status := tview.NewTextView()
 	status.SetText(" status")
 
-	treeModel := v.adTreeModel
+	treeModel := v.adTree
 	treeModel.SetBorderPadding(2, 1, 1, 2)
 
-	tabsBox := tview.NewBox()
-	tabsBox.SetBackgroundColor(color.Gray)
-	tabsBox.SetBorders(tview.BordersAll)
-	tabsBox.SetBorderSet(tview.BorderSetRound())
-	tabsBox.SetBorderPadding(2, 1, 1, 2)
+	tabsBox := v.tabsView
 
 	v.hflex.SetDirection(flex.DirectionColumn)
-	v.hflex.AddItem(treeModel, 0, 1, true)
-	v.hflex.AddItem(tabsBox, 0, 1, false)
+	v.hflex.AddItem(treeModel, 0, 1, false)
+	v.hflex.AddItem(tabsBox, 0, 1, true)
 
 	v.vflex.SetDirection(flex.DirectionRow)
 	v.vflex.AddItem(v.header, 1, 0, false)

@@ -17,24 +17,6 @@ import (
 	"golang.org/x/tools/imports"
 )
 
-func buildSelectorExpr(sel string) dst.Expr {
-	if len(sel) == 0 {
-		return nil
-	}
-
-	p := strings.Split(sel, ".")
-
-	var expr dst.Expr = dst.NewIdent(p[0])
-	for _, part := range p[1:] {
-		expr = &dst.SelectorExpr{
-			X:   expr,
-			Sel: dst.NewIdent(part),
-		}
-	}
-
-	return expr
-}
-
 func getAccessor(s string) (k string, v string) {
 	idx := strings.LastIndex(s, ".")
 	if idx == -1 {
@@ -169,17 +151,4 @@ func projDirPath() (string, error) {
 func openFileToWrite(filePath string) (*os.File, error) {
 	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
 	return file, err
-}
-
-func execute(cmd string, params ...string) ([]byte, error) {
-	c := exec.Command(cmd, params...)
-
-	return c.Output()
-}
-
-//revive:disable
-func exit(msg any) {
-	fmt.Println(msg)
-
-	os.Exit(1)
 }

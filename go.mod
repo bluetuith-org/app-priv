@@ -14,6 +14,7 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.6
 	github.com/lrstanley/bubbletint/v2 v2.0.2
+	github.com/rivo/uniseg v0.4.7
 	github.com/urfave/cli/v2 v2.27.7
 	golang.org/x/tools v0.50.0
 )
@@ -40,7 +41,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
-	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect

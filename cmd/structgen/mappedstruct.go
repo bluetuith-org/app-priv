@@ -17,11 +17,6 @@ type genOptions struct {
 	newFilePath, newStructName, newStructComment string
 }
 
-type (
-	codeID      string
-	codeContent string
-)
-
 type genTempl interface {
 	AppendAccessor(s string, tag string) (genTemplRet, error)
 	GetPartialCode() string
