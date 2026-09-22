@@ -21,11 +21,11 @@ type tabSection interface {
 type tabItem struct {
 	tabSection
 
-	label string
-	width int
+	label            string
+	width, prevWidth int
 }
 
-func newTabItem(section tabSection) *tabItem {
+func newTabItem(section tabSection, prevWidth int) *tabItem {
 	n := " " + section.Icon().String() + " " + section.Label() + " "
 	width := uniseg.StringWidth(n)
 
@@ -33,6 +33,7 @@ func newTabItem(section tabSection) *tabItem {
 		tabSection: section,
 		label:      n,
 		width:      width,
+		prevWidth:  prevWidth,
 	}
 }
 
@@ -123,7 +124,7 @@ func (t *tabsModel) RefreshContent() {
 
 // AddTabSection adds a tab section to the tab view.
 func (t *tabsModel) AddTabSection(tab tabSection) {
-	item := newTabItem(tab)
+	item := newTabItem(tab, t.maxWidth)
 	t.maxWidth += item.width
 
 	t.tabs = append(t.tabs, item)
@@ -156,31 +157,7 @@ func (t *tabsModel) Update(msg tview.Msg) tview.Cmd {
 		default:
 		}
 
-	case tview.MouseMsg:
-		x, y := msg.Position()
-		if !t.InRect(x, y) {
-			return nil
-		}
-
-		if tab, ok := t.tabAt(x, y); ok {
-			switch msg.Action {
-			case tview.MouseLeftClick:
-				if tab == t.activeTab {
-					return nil
-				}
-
-				t.activeTab = tab
-				return nil
-
-			case tview.MouseScrollUp, tview.MouseScrollLeft:
-				t.Previous()
-				return nil
-
-			case tview.MouseScrollDown, tview.MouseScrollRight:
-				t.Next()
-				return nil
-			}
-		}
+	default:
 	}
 
 	return t.tabs[t.activeTab].Update(msg)
@@ -199,6 +176,7 @@ func (t *tabsModel) View(screen tview.Screen) {
 
 	defer t.setContent(screen, startX, y, maxWidth, maxHeight)
 
+	// All the tabs' labels fit within the width, draw them and exit.
 	if t.maxWidth <= maxWidth {
 		x := startX + t.stripOffset(maxWidth)
 		for active, ti := range t.tabs {
@@ -214,12 +192,14 @@ func (t *tabsModel) View(screen tview.Screen) {
 		return
 	}
 
-	leftBoundaryX := startX + t.arrowLeftWidth
-	rightBoundaryX := (startX + maxWidth) - t.arrowRightWidth
+	leftBoundaryX := startX + t.arrowLeftWidth                // reserve space for left arrow
+	rightBoundaryX := (startX + maxWidth) - t.arrowRightWidth // reserve space for right arrow
 	usableWidth := rightBoundaryX - leftBoundaryX
 
 	activeTab := t.tabs[t.activeTab]
 
+	// Only the active tab label will fit in the current width,
+	// draw and truncate from the right as necessary, then exit.
 	if activeTab.width > usableWidth {
 		t.drawTruncatedRight(screen, leftBoundaryX, y, usableWidth, t.activeLabelStyle, activeTab.label)
 		screen.PutStrStyled(startX, y, t.arrowLeft, t.arrowStyle)
@@ -227,16 +207,24 @@ func (t *tabsModel) View(screen tview.Screen) {
 		return
 	}
 
-	activeStartX := leftBoundaryX + (usableWidth-activeTab.width)/2
+	// prevWidth is the combined widths of all tab labels before the active
+	// tab label. If the prevWidth exceeds the usableWidth, just right-align the
+	// active tab's label as much as visually possible.
+	xPos := min(activeTab.prevWidth, usableWidth-activeTab.width)
+
+	activeStartX := leftBoundaryX + xPos
 	activeEndX := activeStartX + activeTab.width
 	activeIndex := t.activeTab
 
 	hasHiddenLeft := false
 	hasHiddenRight := false
-	gap := 1
+	gap := 1 // This could be a constant.
 
+	// Draw the active tab's label.
 	screen.PutStrStyled(activeStartX, y, activeTab.label, t.activeLabelStyle)
 
+	// Walk back from the active tab's position, finding labels that we can
+	// add to it's left side (after truncation, if necessary).
 	currentLeftX := activeStartX - gap
 	for i := activeIndex - 1; i >= 0; i-- {
 		if currentLeftX <= leftBoundaryX {
@@ -259,6 +247,8 @@ func (t *tabsModel) View(screen tview.Screen) {
 		screen.PutStrStyled(tabX, y, tab.label, t.labelStyle)
 	}
 
+	// Walk forward from the active tab's position, finding labels that we can
+	// add to it's right side (after truncation, if necessary).
 	currentRightX := activeEndX + gap
 	for i := activeIndex + 1; i < len(t.tabs); i++ {
 		if currentRightX >= rightBoundaryX {
@@ -341,25 +331,6 @@ func (t *tabsModel) setContent(screen tcell.Screen, startX, startY, width, heigh
 		content.SetRect(startX, startY, width, height)
 		content.View(screen)
 	}
-}
-
-// Taken from: https://github.com/ayn2op/tview
-func (t *tabsModel) tabAt(x, y int) (int, bool) {
-	innerX, innerY, width, _ := t.InnerRect()
-	if y != innerY {
-		return 0, false
-	}
-
-	tmpX := innerX + t.stripOffset(width)
-	for i, tab := range t.tabs {
-		labelWidth := tab.width
-		if x >= tmpX && x < tmpX+labelWidth {
-			return i, true
-		}
-		tmpX += labelWidth + 1
-	}
-
-	return 0, false
 }
 
 // stripOffset returns the horizontal offset at which the tab strip starts so
