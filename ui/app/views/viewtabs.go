@@ -148,7 +148,6 @@ func (t *tabsModel) Update(msg tview.Msg) tview.Cmd {
 
 	switch msg := msg.(type) {
 	case tview.KeyMsg:
-
 		switch msg.Key() {
 		case tcell.KeyTAB:
 			t.Next()

@@ -21,7 +21,7 @@ func BenchmarkKbMapIterator(b *testing.B) {
 
 	for b.Loop() {
 		for k, v := range m {
-			kbKey = k.Key
+			_ = k
 			cmpStr = v
 		}
 	}
@@ -40,7 +40,6 @@ func BenchmarkKbStructIterator(b *testing.B) {
 
 	for b.Loop() {
 		for p := range it {
-			kbKey = p.kb.Key
 			cmpStr = p.cmpCfg
 		}
 	}

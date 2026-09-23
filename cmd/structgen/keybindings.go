@@ -5,8 +5,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/fatih/structtag"
+	"github.com/gdamore/tcell/v3"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const kbConstPart = `
@@ -93,17 +97,22 @@ func (k *KbGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error) {
 		vals[idx] = t.Value()
 	}
 
+	kb, err := genTcellKey(vals[0])
+	if err != nil {
+		return emptyGenTemplRet(), err
+	}
+
 	fmt.Fprintf(&k.constSb, "%s\n", id)
 
 	fmt.Fprintf(
 		&k.defSb,
-		`k.%s = NewKeybinding(
-		%s, %q,
+		`k.%s = newKeybinding(
+		%s, %s, // %s
 		%q,
 		%q,
 		)
 		`,
-		s, id, vals[0], vals[1], vals[2],
+		s, id, kb, vals[0], vals[1], vals[2],
 	)
 
 	fmt.Fprintf(&k.sb, `
@@ -127,6 +136,132 @@ func (k *KbGenImpl) GetPartialCode() string {
 	code := fmt.Sprintf(kbPart, consts, defs, k.count, k.sb.String())
 
 	return code
+}
+
+var translateKeys = map[string]string{
+	"Pgup":      "PgUp",
+	"Pgdown":    "PgDn",
+	"Upright":   "UpRight",
+	"Downright": "DownRight",
+	"Upleft":    "UpLeft",
+	"Downleft":  "DownLeft",
+	"Prtsc":     "Print",
+	"Backspace": "Backspace2",
+}
+
+type tcellKey struct {
+	key tcell.Key
+	str string
+	mod tcell.ModMask
+}
+
+func genTcellKey(key string) (string, error) {
+	var mods []string
+
+	var tkey string
+	var keyCount int
+	var found bool
+
+	kb := tcellKey{
+		key: tcell.KeyRune,
+		mod: tcell.ModNone,
+	}
+
+	tokens := strings.FieldsFuncSeq(key, func(c rune) bool {
+		return unicode.IsSpace(c) || c == '+'
+	})
+
+	titleCase := cases.Title(language.Und, cases.NoLower)
+
+	for token := range tokens {
+		if keyCount > 1 {
+			break
+		}
+
+		if len(token) == 1 {
+			kb.str = token
+			keyCount++
+
+			continue
+		}
+
+		token = titleCase.String(token)
+
+		if translated, ok := translateKeys[token]; ok {
+			token = translated
+		}
+
+		switch token {
+		case "Ctrl":
+			kb.mod |= tcell.ModCtrl
+			mods = append(mods, "tcell.ModCtrl")
+
+		case "Alt":
+			kb.mod |= tcell.ModAlt
+			mods = append(mods, "tcell.ModAlt")
+
+		case "Hyper":
+			kb.mod |= tcell.ModHyper
+			mods = append(mods, "tcell.ModHyper")
+
+		case "Shift":
+			kb.mod |= tcell.ModShift
+			mods = append(mods, "tcell.ModShift")
+
+		case "Space", "Plus":
+			kb.str = " "
+			if token == "Plus" {
+				kb.str = "+"
+			}
+
+			keyCount++
+
+		default:
+			tkey = token
+			keyCount++
+		}
+	}
+
+	if keyCount > 1 {
+		return "", fmt.Errorf("config: More than one key entered for %s (%s)", "keybinding", key)
+	}
+
+	if kb.mod == tcell.ModCtrl && kb.str != "" && kb.str != " " && len(kb.str) == 1 {
+		tkey = "Ctrl-" + strings.ToUpper(kb.str)
+	}
+
+	if tkey == "" {
+		goto Print
+	}
+
+	for tk, ts := range tcell.KeyNames {
+		if ts == tkey {
+			kb.key = tk
+			if kb.mod == tcell.ModCtrl {
+				kb.str = ""
+			}
+
+			found = true
+
+			break
+		}
+	}
+
+	if !found {
+		return "", fmt.Errorf("config: Invalid keybinding key %s (%s)", tkey, key)
+	}
+
+Print:
+	if keyCount == 0 {
+		return "", fmt.Errorf("config: No key specified or invalid keybinding for %s (%s)", "keybinding", key)
+	}
+
+	modStr := "tcell.ModNone"
+	if kb.mod != 0 {
+		modStr = strings.Join(mods, "|")
+	}
+
+	return fmt.Sprintf("newTcellKey(tcell.Key(%d), %q, %s)", kb.key, kb.str, modStr), nil
 }
 
 func generateKeybindings() error {

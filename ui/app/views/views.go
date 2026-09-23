@@ -1,6 +1,7 @@
 package views
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ayn2op/tview"
@@ -8,6 +9,7 @@ import (
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui/config"
+	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 	"github.com/gdamore/tcell/v3"
 	"github.com/gdamore/tcell/v3/color"
 )
@@ -64,6 +66,9 @@ type view interface {
 type rootView interface {
 	AppBinder
 
+	// SendMsg sends a message to the program.
+	SendMsg(msg tview.Msg)
+
 	// SendRoutedUpdateMsg routes the message to the specified view.
 	// Should only be called from the view's [view.Update] function.
 	SendRoutedUpdateMsg(msg routerMsg) tview.Cmd
@@ -79,16 +84,22 @@ type ViewModel struct {
 	infoView *infoModel
 	logView  *logModel
 
-	header *tview.TextView
+	header *textModel
 
 	vflex, hflex *flex.Model
 	layout       *flex.Model
 
 	initedViews map[viewID]view
+
+	ctx     context.Context
+	cancel  context.CancelFunc
+	msgChan chan tview.Msg
 }
 
 // NewViews returns a new set of views with arranged layouts.
 func NewViews(appBinder AppBinder) (*ViewModel, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	v := &ViewModel{
 		AppBinder: appBinder,
 
@@ -98,12 +109,16 @@ func NewViews(appBinder AppBinder) (*ViewModel, error) {
 		infoView: &infoModel{},
 		logView:  &logModel{},
 
-		header: tview.NewTextView(),
+		header: newTextModel(),
 		vflex:  flex.NewModel(),
 		hflex:  flex.NewModel(),
 		layout: flex.NewModel(),
 
 		initedViews: make(map[viewID]view, _viewIDMax),
+
+		ctx:     ctx,
+		cancel:  cancel,
+		msgChan: make(chan tview.Msg, 1),
 	}
 
 	return v, v.initAllViews()
@@ -112,18 +127,41 @@ func NewViews(appBinder AppBinder) (*ViewModel, error) {
 // Update receives messages when this model has focus.
 func (v *ViewModel) Update(msg tview.Msg) tview.Cmd {
 	switch m := msg.(type) {
+	case tview.InitMsg:
+
 	case tview.KeyMsg:
-		switch m.Str() {
-		case "q":
-			return tview.Quit()
+		switch {
+		case kb().Quit.Matches(m):
+			return v.quitCmd()
 
 		default:
 		}
+
+		switch m.Str() {
+		case "q":
+			return v.quitCmd()
+
+		default:
+		}
+
+	case externalMsg:
+		return tview.Batch(v.parseViewMessages(m.msg), v.listenForMsg())
 
 	default:
 	}
 
 	return v.layout.Update(msg)
+}
+
+func (v *ViewModel) parseViewMessages(msg tview.Msg) tview.Cmd {
+	switch m := msg.(type) {
+	case *tcell.CellBuffer:
+		_ = m
+
+	default:
+	}
+
+	return nil
 }
 
 // View draws this model onto the screen.
@@ -168,6 +206,23 @@ func (v *ViewModel) UpdateStyles(init bool) {
 	)
 }
 
+type externalMsg struct {
+	msg tview.Msg
+}
+
+func (v *ViewModel) listenForMsg() tview.Cmd {
+	return func() tview.Msg {
+		return externalMsg{<-v.msgChan}
+	}
+}
+
+func (v *ViewModel) quitCmd() tview.Cmd {
+	return tview.Batch(func() tview.Msg {
+		v.cancel()
+		return nil
+	}, tview.Quit())
+}
+
 func (v *ViewModel) initAllViews() error {
 	for _, view := range []view{
 		v.tabsView,
@@ -206,8 +261,8 @@ func (v *ViewModel) arrangeViews() *flex.Model {
 	tabsBox := v.tabsView
 
 	v.hflex.SetDirection(flex.DirectionColumn)
-	v.hflex.AddItem(treeModel, 0, 1, false)
-	v.hflex.AddItem(tabsBox, 0, 1, true)
+	v.hflex.AddItem(treeModel, 0, 1, true)
+	v.hflex.AddItem(tabsBox, 0, 1, false)
 
 	v.vflex.SetDirection(flex.DirectionRow)
 	v.vflex.AddItem(v.header, 1, 0, false)
@@ -217,4 +272,16 @@ func (v *ViewModel) arrangeViews() *flex.Model {
 	return v.vflex
 }
 
+// SendMsg sends a message to the program.
+func (v *ViewModel) SendMsg(msg tview.Msg) {
+	select {
+	case <-v.ctx.Done():
+	case v.msgChan <- msg:
+	}
+}
+
 var _ rootView = (*ViewModel)(nil)
+
+func kb() *keybindings.Keybindings {
+	return keybindings.Current
+}
