@@ -4,7 +4,6 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
 	"github.com/gdamore/tcell/v3"
-	"github.com/gdamore/tcell/v3/color"
 	"github.com/rivo/uniseg"
 )
 
@@ -15,7 +14,7 @@ type tabSection interface {
 	Label() string
 
 	// Icon returns the icon for the tab.
-	Icon() *theme.IconVariant
+	Icon() theme.IconVariant
 }
 
 type tabItem struct {
@@ -106,16 +105,12 @@ func (t *tabsModel) GetFocus() bool {
 
 // UpdateStyles updates the styles for the view.
 func (t *tabsModel) UpdateStyles() {
-	t.Box.SetBackgroundColor(color.Gray)
+	t.Box.SetBackgroundColor(theme.Current().TabsPane.Style.GetBackground())
 
-	t.labelStyle = tcell.StyleDefault.Background(color.Gray).Foreground(color.White)
-	t.activeLabelStyle = t.labelStyle.
-		Foreground(color.Green).
-		Background(color.Gray).
-		Underline(true).
-		Bold(true)
+	t.labelStyle = theme.Current().TabsPane.Tab
+	t.activeLabelStyle = theme.Current().TabsPane.FocusedTab
 
-	t.arrowStyle = tcell.StyleDefault.Background(color.Gray).Foreground(color.White)
+	t.arrowStyle = theme.Current().TabsPane.Style
 }
 
 // RefreshContent refreshes the content of the view.

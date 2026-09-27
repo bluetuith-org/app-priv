@@ -44,28 +44,27 @@ type Configuration struct {
 	BorderFocused string `themedef:"bg:from-theme; fg:green; attr:bold"`
 
 	TitleBar string `themedef:"bg:purple;fg:white;attr:bold"`
+	Global   string `themedef:"bg:from-theme; fg:from-theme"`
 
 	ADTree struct {
-		Headers string `themedef:"bg:from-theme; fg:from-theme"`
+		Bg string `themedef:"bg:from-theme"`
 
-		ExpandedIndicator string `themedef:"bg:from-theme; fg:from-theme"`
-		ClosedIndicator   string `themedef:"bg:from-theme; fg:from-theme"`
-		Selection         string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
+		Heading    string `themedef:"bg:from-theme; fg:from-theme"`
+		Indicators string `themedef:"bg:from-theme; fg:from-theme"`
+		Selection  string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
 
-		Adapter struct {
-			Present string `themedef:"bg:from-theme; fg:from-theme"`
-		}
+		Adapter string `themedef:"bg:from-theme; fg:from-theme"`
 
 		Device struct {
-			Discovered string `themedef:"bg:from-theme; fg:from-theme"`
-			Paired     string `themedef:"bg:from-theme; fg:from-theme"`
+			Discovered string `themedef:"bg:from-theme; fg:orange"`
+			Paired     string `themedef:"bg:from-theme; fg:cyan"`
+			Unknown    string `themedef:"bg:from-theme; fg:white"`
 		}
 
-		DevicesList struct {
-			Nodes string `themedef:"bg:from-theme; fg:from-theme"`
-		}
+		DevicesList string `themedef:"bg:from-theme; fg:from-theme"`
 
 		ActionsList struct {
+			Style string `themedef:"bg:from-theme; fg:from-theme"`
 			Nodes string `themedef:"bg:from-theme; fg:from-theme"`
 		}
 	}
@@ -73,27 +72,27 @@ type Configuration struct {
 	TabsPane struct {
 		Style      string `themedef:"bg:from-theme; fg:from-theme"`
 		Tab        string `themedef:"bg:from-theme; fg:from-theme"`
-		FocusedTab string `themedef:"bg:from-theme; fg:brightcyan"`
+		FocusedTab string `themedef:"bg:from-theme; fg:brightcyan; attr:bold,underline"`
 	}
 
 	Info struct {
-		Style   string `themedef:"bg:blue; fg:white"`
+		Style   string `themedef:"bg:from-theme; fg:white"`
 		Heading string `themedef:"bg:from-theme; fg:from-theme"`
 	}
 
 	Operations struct {
-		Style   string `themedef:"bg:blue; fg:white"`
+		Bg      string `themedef:"bg:blue"`
 		Heading string `themedef:"bg:from-theme; fg:from-theme"`
 	}
 
 	Log struct {
-		Style   string `themedef:"bg:from-theme; fg:from-theme"`
-		Heading string `themedef:"bg:from-theme; fg:from-theme"`
+		Style string `themedef:"bg:from-theme; fg:from-theme"`
 
-		Time  string `themedef:"bg:from-theme; fg:brightblack(lighten:0.1)"`
-		Info  string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
-		Debug string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
-		Error string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
+		Heading string `themedef:"bg:from-theme; fg:from-theme"`
+		Time    string `themedef:"bg:from-theme; fg:brightblack(lighten:0.1)"`
+		Info    string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
+		Debug   string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
+		Error   string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
 	}
 
 	StatusBar struct {

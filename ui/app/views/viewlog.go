@@ -3,8 +3,6 @@ package views
 import (
 	"github.com/ayn2op/tview"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
-	"github.com/gdamore/tcell/v3"
-	"github.com/gdamore/tcell/v3/color"
 )
 
 type logModel struct {
@@ -57,7 +55,7 @@ func (l *logModel) GetFocus() bool {
 
 // UpdateStyles updates the styles for the view.
 func (l *logModel) UpdateStyles() {
-	l.TextView.SetTextStyle(tcell.StyleDefault.Foreground(color.Black).Background(color.Gray))
+	l.TextView.SetTextStyle(theme.Current().Log.Style)
 }
 
 // RefreshContent refreshes the content of the view.
@@ -70,7 +68,7 @@ func (l *logModel) Label() string {
 }
 
 // Icon returns the icon for the tab.
-func (l *logModel) Icon() *theme.IconVariant {
+func (l *logModel) Icon() theme.IconVariant {
 	return theme.Icons().Log
 }
 

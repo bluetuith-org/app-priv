@@ -2,7 +2,7 @@ package views
 
 import (
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/tree"
+	"github.com/bluetuith-org/bluetuith/ui/app/components/treeview"
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
 )
 
@@ -51,7 +51,7 @@ func (a *actionUpdateMsg) isValid(stateID string) bool {
 	return a.id != "" && a.id == stateID
 }
 
-func actionHandleKeyMsg(p tview.KeyMsg, node *adTreeNode) (routerMsg, bool) {
+func actionHandleKeyMsg(p tview.KeyMsg, node *treeview.Node[adTreeNode]) (routerMsg, bool) {
 	_, result, ok := keybindings.IterMatch(p, actionKeyIterator(node))
 	if !ok {
 		return emptyRouterMsg(), false
@@ -76,7 +76,7 @@ type actionKeyIterResult struct {
 	id    string
 }
 
-func actionKeyIterator(node *adTreeNode) keybindings.IterKeyMatch[*actionKeyIterResult] {
+func actionKeyIterator(node *treeview.Node[adTreeNode]) keybindings.IterKeyMatch[*actionKeyIterResult] {
 	return func(yield func(keybindings.Keybinding, *actionKeyIterResult) bool) {
 		n := node
 		if n == nil {
@@ -93,9 +93,9 @@ func actionKeyIterator(node *adTreeNode) keybindings.IterKeyMatch[*actionKeyIter
 
 		res := &actionKeyIterResult{}
 		for _, ac := range actionNodes {
-			data := getNodeReference(ac)
+			data := ac.Data()
 
-			res.id = data.id.String()
+			res.id = ac.ID()
 			res.state = data.actionState
 
 			if !yield(data.actionState.key, res) {
@@ -111,9 +111,4 @@ func boolToActionState(val bool) actionStateSpec {
 	}
 
 	return actionStateEnabled
-}
-
-//revive:disable
-func getNodeReference(n *tree.Node) *adTreeNode {
-	return n.Reference().(*adTreeNode)
 }

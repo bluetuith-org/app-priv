@@ -3,8 +3,6 @@ package views
 import (
 	"github.com/ayn2op/tview"
 	"github.com/bluetuith-org/bluetuith/ui/theme"
-	"github.com/gdamore/tcell/v3"
-	"github.com/gdamore/tcell/v3/color"
 )
 
 type infoModel struct {
@@ -24,7 +22,6 @@ func (i *infoModel) ViewID() viewID {
 func (i *infoModel) Initialize() error {
 	i.TextView = tview.NewTextView()
 	i.UpdateStyles()
-	i.TextView.SetBorders(tview.BordersAll)
 
 	i.TextView.SetText("Information")
 
@@ -60,8 +57,7 @@ func (i *infoModel) GetFocus() bool {
 
 // UpdateStyles updates the styles for the view.
 func (i *infoModel) UpdateStyles() {
-	i.TextView.SetTextStyle(tcell.StyleDefault.Foreground(color.Black).Background(color.Gray))
-	i.TextView.SetBorderStyle(tcell.StyleDefault.Background(color.Gray).Foreground(color.White))
+	i.TextView.SetTextStyle(theme.Current().Info.Style)
 }
 
 // RefreshContent refreshes the content of the view.
@@ -74,7 +70,7 @@ func (i *infoModel) Label() string {
 }
 
 // Icon returns the icon for the tab.
-func (i *infoModel) Icon() *theme.IconVariant {
+func (i *infoModel) Icon() theme.IconVariant {
 	return theme.Icons().Info
 }
 

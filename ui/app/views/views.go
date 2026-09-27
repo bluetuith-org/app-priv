@@ -8,10 +8,11 @@ import (
 	"github.com/ayn2op/tview/flex"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetuith/ui/app/components"
 	"github.com/bluetuith-org/bluetuith/ui/config"
 	"github.com/bluetuith-org/bluetuith/ui/keybindings"
+	"github.com/bluetuith-org/bluetuith/ui/theme"
 	"github.com/gdamore/tcell/v3"
-	"github.com/gdamore/tcell/v3/color"
 )
 
 // AppBinder represents an interface to interact with the root application itself.
@@ -84,7 +85,7 @@ type ViewModel struct {
 	infoView *infoModel
 	logView  *logModel
 
-	header *textModel
+	header *components.TextModel
 
 	vflex, hflex *flex.Model
 	layout       *flex.Model
@@ -109,7 +110,7 @@ func NewViews(appBinder AppBinder) (*ViewModel, error) {
 		infoView: &infoModel{},
 		logView:  &logModel{},
 
-		header: newTextModel(),
+		header: components.NewTextModel(),
 		vflex:  flex.NewModel(),
 		hflex:  flex.NewModel(),
 		layout: flex.NewModel(),
@@ -198,12 +199,10 @@ func (v *ViewModel) UpdateStyles(init bool) {
 		}
 	}
 
-	v.vflex.SetBackgroundColor(color.LightGray)
-	v.hflex.SetBackgroundColor(color.LightGray)
+	v.vflex.SetBackgroundColor(theme.Current().Global.GetBackground())
+	v.hflex.SetBackgroundColor(theme.Current().Global.GetBackground())
 
-	v.header.SetTextStyle(
-		tcell.StyleDefault.Background(color.Purple).Foreground(color.Black).Bold(true),
-	)
+	v.header.SetTextStyle(theme.Current().TitleBar)
 }
 
 type externalMsg struct {
