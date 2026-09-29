@@ -62,6 +62,10 @@ type Keybindings struct {
 		ToggleNodes Keybinding
 	}
 
+	TabPane struct {
+		SwitchSections Keybinding
+	}
+
 	Operations struct {
 		Cancel Keybinding
 	}
@@ -119,6 +123,7 @@ const (
 	KeyFilebrowserRefresh
 	KeyFilebrowserToggleHiddenFiles
 	KeyADTreeToggleNodes
+	KeyTabPaneSwitchSections
 	KeyOperationsCancel
 	KeyTransfersSuspend
 	KeyTransfersResume
@@ -302,6 +307,11 @@ func defaultConfig() *Keybindings {
 		"ToggleNodes",
 		"ToggleNodes",
 	)
+	k.TabPane.SwitchSections = newKeybinding(
+		KeyTabPaneSwitchSections, newTcellKey(tcell.Key(278), "", tcell.ModNone), // shift+tab
+		"SwitchSections",
+		"SwitchSections",
+	)
 	k.Operations.Cancel = newKeybinding(
 		KeyOperationsCancel, newTcellKey(tcell.Key(256), "x", tcell.ModNone), // x
 		"Cancel",
@@ -372,7 +382,7 @@ func iterProperties(kb *Keybindings, cfg *Configuration) iter.Seq[parseKeybindin
 	}
 
 	return func(yield func(parseKeybindingInfo) bool) {
-		for i := range 44 {
+		for i := range 45 {
 			if !yield(getProperty(kb, cfg, i)) {
 				return
 			}
@@ -517,46 +527,50 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.ADTree.ToggleNodes
 
 	case 33:
+		p.kb = &kb.TabPane.SwitchSections
+		p.cmpCfg = cfg.TabPane.SwitchSections
+
+	case 34:
 		p.kb = &kb.Operations.Cancel
 		p.cmpCfg = cfg.Operations.Cancel
 
-	case 34:
+	case 35:
 		p.kb = &kb.Transfers.Suspend
 		p.cmpCfg = cfg.Transfers.Suspend
 
-	case 35:
+	case 36:
 		p.kb = &kb.Transfers.Resume
 		p.cmpCfg = cfg.Transfers.Resume
 
-	case 36:
+	case 37:
 		p.kb = &kb.Transfers.Cancel
 		p.cmpCfg = cfg.Transfers.Cancel
 
-	case 37:
+	case 38:
 		p.kb = &kb.Player.ToggleDisplay
 		p.cmpCfg = cfg.Player.ToggleDisplay
 
-	case 38:
+	case 39:
 		p.kb = &kb.Player.ToggleMediaPlaying
 		p.cmpCfg = cfg.Player.ToggleMediaPlaying
 
-	case 39:
+	case 40:
 		p.kb = &kb.Player.Next
 		p.cmpCfg = cfg.Player.Next
 
-	case 40:
+	case 41:
 		p.kb = &kb.Player.Previous
 		p.cmpCfg = cfg.Player.Previous
 
-	case 41:
+	case 42:
 		p.kb = &kb.Player.SeekForward
 		p.cmpCfg = cfg.Player.SeekForward
 
-	case 42:
+	case 43:
 		p.kb = &kb.Player.SeekBackward
 		p.cmpCfg = cfg.Player.SeekBackward
 
-	case 43:
+	case 44:
 		p.kb = &kb.Player.Stop
 		p.cmpCfg = cfg.Player.Stop
 

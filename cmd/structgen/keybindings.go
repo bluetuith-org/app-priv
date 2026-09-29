@@ -226,6 +226,13 @@ func genTcellKey(key string) (string, error) {
 		return "", fmt.Errorf("config: More than one key entered for %s (%s)", "keybinding", key)
 	}
 
+	if kb.mod == tcell.ModShift && tkey == "Tab" && kb.str == "" {
+		kb.key = tcell.KeyBacktab
+		kb.mod = 0
+
+		tkey = ""
+	}
+
 	if kb.mod == tcell.ModCtrl && kb.str != "" && kb.str != " " && len(kb.str) == 1 {
 		tkey = "Ctrl-" + strings.ToUpper(kb.str)
 	}

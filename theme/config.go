@@ -12,7 +12,7 @@ import (
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
-//go:generate go run ../../cmd/structgen theme
+//go:generate go run ../cmd/structgen theme
 
 const (
 	fgKeyword        = "fg"

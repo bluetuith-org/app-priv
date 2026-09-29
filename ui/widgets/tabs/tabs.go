@@ -24,8 +24,11 @@ type Provider interface {
 	// ArrowConfig provides the left/right arrow icons and the style to be applied.
 	ArrowConfig() (arrowLeft string, arrowRight string, arrowStyle tcell.Style, arrowWidth int)
 
-	// HandleMsg handles the widget's message.
-	HandleMsg(msg tview.Msg) tview.Msg
+	// Keybind converts a [tview.KeyMsg] to an [Action].
+	Keybind(msg tview.KeyMsg) (Action, bool)
+
+	// OnSelect is called when a new tab item is selected.
+	OnSelect(index int) tview.Msg
 }
 
 // Tabs returns a tab widget.
@@ -168,12 +171,56 @@ func (t Tabs[T]) Draw(screen tview.Screen, area tview.Rectangle) {
 }
 
 // Handle translates an input message received within the given area into the message passed to Update. It returns nil to drop the message.
-func (t Tabs[T]) Handle(msg tview.Msg, _ tview.Rectangle) tview.Msg {
-	if !t.focused {
+func (t Tabs[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
+	switch ms := msg.(type) {
+	case tview.KeyMsg:
+		if !t.focused {
+			return msg
+		}
+
+		action, ok := t.provider.Keybind(ms)
+		if !ok {
+			return msg
+		}
+
+		switch action {
+		case ActionPrevious:
+			return t.selectTab(t.State.Previous())
+
+		case ActionNext:
+			return t.selectTab(t.State.Next())
+		}
+
+	case tview.MouseMsg:
+	}
+
+	if t.content == nil {
 		return msg
 	}
 
-	return t.provider.HandleMsg(msg)
+	return t.content.Handle(msg, t.contentArea(area))
+}
+
+func (t Tabs[T]) selectTab(index int) tview.Msg {
+	if t.State.activeTab == index {
+		return nil
+	}
+
+	return t.provider.OnSelect(index)
+}
+
+func (t Tabs[T]) contentArea(area tview.Rectangle) tview.Rectangle {
+	area.Y += 2
+	area.Height = max(area.Height-3, 0)
+
+	return area
+}
+
+func (t Tabs[T]) setContent(screen tcell.Screen, area tview.Rectangle) {
+	content := t.content
+	if content != nil {
+		content.Draw(screen, t.contentArea(area))
+	}
 }
 
 func (t Tabs[T]) drawTruncatedRight(s tcell.Screen, x, y, maxWidth int, style tcell.Style, str string) {
@@ -218,16 +265,6 @@ func (t Tabs[T]) drawTruncatedLeft(s tcell.Screen, x, y, maxWidth, stringWidth i
 
 		s.PutStrStyled(x+parsedWidth, y, cl, style)
 		parsedWidth += bw
-	}
-}
-
-func (t Tabs[T]) setContent(screen tcell.Screen, area tview.Rectangle) {
-	content := t.content
-	if content != nil {
-		area.Y += 2
-		area.Height -= 3
-
-		content.Draw(screen, area)
 	}
 }
 

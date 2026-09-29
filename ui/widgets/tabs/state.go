@@ -22,8 +22,15 @@ func (t *State) AddSection(icon, title string) {
 }
 
 // Next selects the next tab item.
-func (t *State) Next() {
+func (t *State) Next() int {
 	t.activeTab = (t.activeTab + 1) % len(t.tabs)
+	return t.activeTab
+}
+
+// Previous selects the previous tab item.
+func (t *State) Previous() int {
+	t.activeTab = ((t.activeTab - 1) + len(t.tabs)) % len(t.tabs)
+	return t.activeTab
 }
 
 // ActiveIndex returns the content of the selected tab.

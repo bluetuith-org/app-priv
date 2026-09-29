@@ -1,6 +1,6 @@
 package keybindings
 
-//go:generate go run ../../cmd/structgen keybindings
+//go:generate go run ../cmd/structgen keybindings
 
 // Configuration holds the configuration for the keybindings of the application.
 type Configuration struct {
@@ -54,6 +54,10 @@ type Configuration struct {
 
 	ADTree struct {
 		ToggleNodes string `keydef:"right" keyshorthelp:"ToggleNodes" keylonghelp:"ToggleNodes"`
+	}
+
+	TabPane struct {
+		SwitchSections string `keydef:"shift+tab" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
 	}
 
 	Operations struct {

@@ -70,19 +70,21 @@ func (m *Model) ArrowConfig() (arrowLeft string, arrowRight string, arrowStyle t
 	return m.arrowLeft, m.arrowRight, theme.Current().TabsPane.Style, m.arrowWidth
 }
 
-// HandleMsg handles the widget's message.
-func (m *Model) HandleMsg(msg tview.Msg) tview.Msg {
-	switch ms := msg.(type) {
-	case tview.KeyMsg:
-		if kb().SwitchPanes.Matches(ms) {
-			m.state.Next()
-			return nil
-		}
+// Keybind converts a [tview.KeyMsg] to an [Action].
+func (m *Model) Keybind(msg tview.KeyMsg) (tabs.Action, bool) {
+	switch {
+	case kb().SwitchPanes.Matches(msg):
+		return tabs.ActionNext, true
 
 	default:
 	}
 
-	return msg
+	return 0, false
+}
+
+// OnSelect is called when a new tab item is selected.
+func (m *Model) OnSelect(int) tview.Msg {
+	return nil
 }
 
 // Init returns a command to run when the model starts, or nil.
@@ -111,7 +113,7 @@ func (m Model) View(focused bool) tview.Element {
 	return tabs.New(&m, m.state).Focused(focused).Content(content)
 }
 
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(tview.Msg) tview.Cmd {
 	return nil
 }
 
