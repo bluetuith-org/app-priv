@@ -6,6 +6,7 @@ import (
 	"github.com/ayn2op/tview/textview"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 )
 
 // Model represents an information section.
@@ -79,5 +80,6 @@ type scrollMsg textview.Change
 
 var (
 	_ ui.Model[Model] = Model{}
+	_ tabs.TabSection = Model{}
 	_ ui.View         = (*Model)(nil)
 )

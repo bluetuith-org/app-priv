@@ -1,0 +1,32 @@
+package adtree
+
+import (
+	"github.com/ayn2op/tview"
+	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/gdamore/tcell/v3"
+)
+
+// adNoder describes an interface to get information from nodes and update node states.
+type adNoder interface {
+	// HandleKeys handles a [tview.KeyMsg] and returns a message.
+	HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool)
+
+	// NodeStyle returns the style to be applied for this node's label.
+	NodeStyle() tcell.Style
+
+	// Icon returns the Icon associated with this node.
+	Icon() string
+
+	// PopulateActions populates all actions within a node of type [nodeTypeAction].
+	PopulateActions()
+
+	// UpdateActionNode updates the node of type [nodeTypeAction] with the message.
+	UpdateActionNode(actionNode *adNode, updateMsg actionUpdateMsg)
+
+	// SetAdapterEventData sets the adapter event data for the node.
+	SetAdapterEventData(ev bluetooth.AdapterEventData)
+
+	// SetDeviceEventData sets the device event data for the node.
+	SetDeviceEventData(ev bluetooth.DeviceEventData)
+}
