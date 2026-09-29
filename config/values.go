@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
-	"github.com/bluetuith-org/bluetuith/ui/theme"
+	"github.com/bluetuith-org/bluetuith/theme"
 )
 
 // Values describes the possible configuration values that a user can

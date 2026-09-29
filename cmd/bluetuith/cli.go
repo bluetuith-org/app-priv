@@ -10,8 +10,8 @@ import (
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	scfg "github.com/bluetuith-org/bluetooth-classic/api/config"
 	"github.com/bluetuith-org/bluetooth-classic/session"
+	"github.com/bluetuith-org/bluetuith/config"
 	"github.com/bluetuith-org/bluetuith/ui/app"
-	"github.com/bluetuith-org/bluetuith/ui/config"
 	"github.com/knadh/koanf/v2"
 	"github.com/urfave/cli/v2"
 )

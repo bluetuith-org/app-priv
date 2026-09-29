@@ -3,12 +3,12 @@ module github.com/bluetuith-org/bluetuith
 go 1.27.1
 
 require (
-	github.com/ayn2op/tview v0.0.0-20260910013410-c5c039150957
+	github.com/ayn2op/tview v0.0.0-20260929045953-2b1587f8a6b4
 	github.com/bluetuith-org/bluetooth-classic v0.0.8
 	github.com/dave/dst v0.28.0
 	github.com/fatih/color v1.19.0
 	github.com/fatih/structtag v1.2.0
-	github.com/gdamore/tcell/v3 v3.4.2
+	github.com/gdamore/tcell/v3 v3.5.0
 	github.com/knadh/koanf/parsers/hjson v1.1.0
 	github.com/knadh/koanf/providers/cliflagv2 v1.0.2
 	github.com/knadh/koanf/providers/file v1.2.1

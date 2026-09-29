@@ -4,13 +4,13 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
-	"github.com/bluetuith-org/bluetuith/ui/app/views"
-	"github.com/bluetuith-org/bluetuith/ui/config"
+	"github.com/bluetuith-org/bluetuith/config"
+	"github.com/bluetuith-org/bluetuith/ui/root"
 )
 
 // Application represents an application.
 type Application struct {
-	app *tview.Application
+	app *tview.Application[root.Model]
 
 	session  bluetooth.Session
 	features *appfeatures.FeatureSet
@@ -28,12 +28,7 @@ func (a *Application) Start(session bluetooth.Session, featureSet *appfeatures.F
 	a.features = featureSet
 	a.cfg = cfg
 
-	v, err := views.NewViews(a)
-	if err != nil {
-		return err
-	}
-
-	a.app = tview.NewApplication(v)
+	a.app = tview.NewApplication(root.New(a))
 
 	return a.app.Run()
 }
@@ -57,5 +52,3 @@ func (a *Application) Configuration() *config.Config {
 func (a *Application) Authorizer() bluetooth.SessionAuthorizer {
 	return nil
 }
-
-var _ views.AppBinder = (*Application)(nil)
