@@ -11,6 +11,7 @@ import (
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/adtree"
 	"github.com/bluetuith-org/bluetuith/ui/tabpane"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 )
@@ -24,11 +25,14 @@ type Model struct {
 
 	initedViews map[ui.ViewID]ui.View
 
-	tabsModel tabpane.Model
+	adTreeModel adtree.Model
+	tabsModel   tabpane.Model
 
 	ctx     context.Context
 	cancel  context.CancelFunc
 	msgChan chan tview.Msg
+
+	panelFocused bool
 }
 
 // New returns a new root model.
@@ -46,6 +50,7 @@ func New(binder ui.AppBinder) Model {
 		msgChan: make(chan tview.Msg, 1),
 	}
 
+	m.adTreeModel = adtree.New(&m)
 	m.tabsModel = tabpane.New(&m)
 
 	return m
@@ -53,7 +58,7 @@ func New(binder ui.AppBinder) Model {
 
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
-	return m.listenForMsg()
+	return tview.Batch(m.listenForMsg(), m.adTreeModel.Init(), m.tabsModel.Init())
 }
 
 // Update receives messages when this model has focus.
@@ -64,8 +69,15 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View() tview.Element {
-	vflex := row.New(m.tabsModel.View(true))
-	hflex := column.New(m.header.SetStyle(theme.Current().TitleBar), vflex, m.header.SetStyle(theme.Current().TitleBar))
+	vflex := row.New(
+		m.adTreeModel.View(!m.panelFocused),
+		m.tabsModel.View(m.panelFocused),
+	)
+	hflex := column.New(
+		m.header.SetStyle(theme.Current().TitleBar),
+		vflex,
+		m.header.SetStyle(theme.Current().TitleBar),
+	)
 
 	return box.New(hflex).Background(theme.Current().Global.GetBackground())
 }
@@ -97,13 +109,61 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		case kb().Quit.Matches(ms):
 			return m.quitCmd()
 
+		case kb().SwitchPanes.Matches(ms):
+			if !m.panelFocused {
+				m.panelFocused = true
+			}
+
+		case kb().CloseItem.Matches(ms):
+			if m.panelFocused {
+				m.panelFocused = false
+			}
+
 		default:
 		}
+
+	case externalMsg:
+		return m.updateModel(ms.msg)
+
+	case ui.RouterMsg:
+		if !ms.IsValid() {
+			return nil
+		}
+
+		return m.routeMessageToView(ms)
+
+	default:
+		var cmds []tview.Cmd
+		var cmd tview.Cmd
+
+		m.adTreeModel, cmd = m.adTreeModel.Update(msg)
+		if cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+
+		m.tabsModel, cmd = m.tabsModel.Update(msg)
+		if cmd != nil {
+			cmds = append(cmds, cmd)
+		}
+
+		return tview.Batch(cmds...)
+	}
+
+	return nil
+}
+
+func (m *Model) routeMessageToView(routerMsg ui.RouterMsg) tview.Cmd {
+	var cmd tview.Cmd
+
+	switch routerMsg.ID {
+	case ui.ViewIDAdTree:
+		m.adTreeModel, cmd = m.adTreeModel.Update(routerMsg.Msg)
+		return cmd
 
 	default:
 	}
 
-	return nil
+	return m.tabsModel.HandleRouterMsg(routerMsg)
 }
 
 type externalMsg struct {

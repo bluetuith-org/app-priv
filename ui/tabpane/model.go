@@ -117,6 +117,20 @@ func (m *Model) updateModel(tview.Msg) tview.Cmd {
 	return nil
 }
 
+// RouteMsgToView routes a message to a view within the tab-pane.
+func (m *Model) RouteMsgToView(routerMsg ui.RouterMsg) tview.Cmd {
+	var cmd tview.Cmd
+
+	switch routerMsg.ID {
+	case ui.ViewIDInfo:
+		m.infoModel, cmd = m.infoModel.Update(routerMsg.Msg)
+
+	default:
+	}
+
+	return cmd
+}
+
 func kb() *keybindings.Keybindings {
 	return keybindings.Current
 }

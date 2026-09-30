@@ -4,6 +4,7 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/operations"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
 )
 
@@ -49,11 +50,15 @@ type adActionState struct {
 
 	currentState actionStateSpec
 	isToggleable bool
+
+	invokeAction actionInvoker
 }
 
+type actionInvoker func() (operations.CreationInfo, operations.Invoker)
+
 // newAdActionState creates a new action state, which can be mutated depending on the state of the executed action.
-func newAdActionState(key keybindings.Keybinding, state actionStateSpec, isToggleable bool) *adActionState {
-	return &adActionState{key, state, isToggleable}
+func newAdActionState(key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) *adActionState {
+	return &adActionState{key, state, isToggleable, invoker}
 }
 
 // actionHandleKeyMsg maps a keybinding to an action.
@@ -66,9 +71,15 @@ func actionHandleKeyMsg(p tview.KeyMsg, node *ctree.Node) (ui.RouterMsg, bool) {
 	return acStateToOpMsg(result.id, result.state), true
 }
 
-// TODO:
 func acStateToOpMsg(id string, state *adActionState) ui.RouterMsg {
-	return ui.EmptyRouterMsg()
+	if state == nil || id == "" {
+		return ui.EmptyRouterMsg()
+	}
+
+	createInfo, opFunc := state.invokeAction()
+	createInfo.UpdateID(id)
+
+	return operations.MsgCreate(createInfo, opFunc)
 }
 
 // actionKeyIterResult holds the action-key iteration result.
@@ -78,8 +89,8 @@ type actionKeyIterResult struct {
 }
 
 // actionKeyIterator returns an iterator that iterates over [nodeTypeAction] nodes.
-func actionKeyIterator(node *ctree.Node) keybindings.IterKeyMatch[*actionKeyIterResult] {
-	return func(yield func(keybindings.Keybinding, *actionKeyIterResult) bool) {
+func actionKeyIterator(node *ctree.Node) keybindings.IterKeyMatch[actionKeyIterResult] {
+	return func(yield func(keybindings.Keybinding, actionKeyIterResult) bool) {
 		n := node
 		if n == nil {
 			return
@@ -93,12 +104,13 @@ func actionKeyIterator(node *ctree.Node) keybindings.IterKeyMatch[*actionKeyIter
 		actionListNode := ch[relPosActionsListNode]
 		actionNodes := actionListNode.Children()
 
-		res := &actionKeyIterResult{}
 		for _, ac := range actionNodes {
 			data := ac.Data[*adNode]()
 
-			res.id = data.ID()
-			res.state = data.actionState
+			res := actionKeyIterResult{
+				id:    data.ID(),
+				state: data.actionState,
+			}
 
 			if !yield(data.actionState.key, res) {
 				return

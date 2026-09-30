@@ -30,3 +30,36 @@ type adNoder interface {
 	// SetDeviceEventData sets the device event data for the node.
 	SetDeviceEventData(ev bluetooth.DeviceEventData)
 }
+
+type emptyNoder struct{}
+
+// HandleKeys handles a [tview.KeyMsg] and returns a message.
+func (e *emptyNoder) HandleKeys(tview.KeyMsg) (ui.RouterMsg, bool) {
+	return ui.EmptyRouterMsg(), false
+}
+
+// NodeStyle returns the style to be applied for this node's label.
+func (e *emptyNoder) NodeStyle() tcell.Style {
+	return tcell.Style{}
+}
+
+// Icon returns the Icon associated with this node.
+func (e *emptyNoder) Icon() string {
+	return ""
+}
+
+// PopulateActions populates all actions within a node of type [nodeTypeAction].
+func (e *emptyNoder) PopulateActions() {
+}
+
+// UpdateActionNode updates the node of type [nodeTypeAction] with the message.
+func (e *emptyNoder) UpdateActionNode(*adNode, actionUpdateMsg) {
+}
+
+// SetAdapterEventData sets the adapter event data for the node.
+func (e *emptyNoder) SetAdapterEventData(bluetooth.AdapterEventData) {
+}
+
+// SetDeviceEventData sets the device event data for the node.
+func (e *emptyNoder) SetDeviceEventData(bluetooth.DeviceEventData) {
+}

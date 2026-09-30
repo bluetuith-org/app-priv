@@ -30,8 +30,8 @@ func (v ViewID) RouterMessage(t tview.Msg) RouterMsg {
 
 // RouterMsg describes a message to be routed to a [View].
 type RouterMsg struct {
-	id  ViewID
-	msg tview.Msg
+	ID  ViewID
+	Msg tview.Msg
 }
 
 // NewRouterMsg returns a new router message, to send a message to
@@ -47,7 +47,7 @@ func EmptyRouterMsg() RouterMsg {
 
 // IsValid returns if the message is a valid routed message.
 func (r *RouterMsg) IsValid() bool {
-	return r.id != ViewIDNone
+	return r.ID != ViewIDNone
 }
 
 // SendRoutedMsg prefixes the message with the destination view's [ViewID], and sends the message.

@@ -113,10 +113,6 @@ type row struct {
 func (w Widget) rows() (rows []row) {
 	var walk func(node *Node, parent, level, parentX int)
 	walk = func(node *Node, parent, level, parentX int) {
-		if level > 1 {
-			parentX++
-		}
-
 		gx, tx := parentX, parentX+node.indent
 		if w.graphics {
 			tx++
