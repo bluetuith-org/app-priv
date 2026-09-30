@@ -24,6 +24,12 @@ type Model struct {
 }
 
 // New returns a new tabbed pane.
+//
+// NOTE: To add a new view within this model:
+// NOTE: - First, add the view to the Model struct, and the tab state.
+// NOTE: - Then, add the view's Init() method to [Model.Init].
+// NOTE: - After that, add a handler for the view within [Model.HandleRouterMsg]
+// NOTE:   and [Model.View].
 func New(rv ui.RootView) Model {
 	leftArrow := theme.Icons().ArrowLeft.String() + " "
 	rightArrow := " " + theme.Icons().ArrowRight.String()
@@ -52,8 +58,20 @@ func (m *Model) ViewID() ui.ViewID {
 }
 
 // HandleRouterMsg handles the routed message.
-func (m *Model) HandleRouterMsg(msg ui.RouterMsg) tview.Cmd {
-	return m.updateModel(msg)
+func (m *Model) HandleRouterMsg(routerMsg ui.RouterMsg) tview.Cmd {
+	var cmd tview.Cmd
+
+	switch routerMsg.ID {
+	case ui.ViewIDTabs:
+		*m, cmd = m.Update(routerMsg.Msg)
+
+	case ui.ViewIDInfo:
+		m.infoModel, cmd = m.infoModel.Update(routerMsg.Msg)
+
+	default:
+	}
+
+	return cmd
 }
 
 // LabelStyle provides the styles for the inactive and active labels.
@@ -83,13 +101,13 @@ func (m *Model) Keybind(msg tview.KeyMsg) (tabs.Action, bool) {
 }
 
 // OnSelect is called when a new tab item is selected.
-func (m *Model) OnSelect(int) tview.Msg {
-	return nil
+func (m *Model) OnSelect(index int) tview.Msg {
+	return ui.ViewIDTabs.RouterMessage(selectedMsg{index})
 }
 
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
-	return nil
+	return tview.Batch(m.infoModel.Init())
 }
 
 // Update returns the model changed in response to a message and a command to run, or nil.
@@ -113,22 +131,19 @@ func (m Model) View(focused bool) tview.Element {
 	return tabs.New(&m, m.state).Focused(focused).Content(content)
 }
 
-func (m *Model) updateModel(tview.Msg) tview.Cmd {
-	return nil
-}
-
-// RouteMsgToView routes a message to a view within the tab-pane.
-func (m *Model) RouteMsgToView(routerMsg ui.RouterMsg) tview.Cmd {
-	var cmd tview.Cmd
-
-	switch routerMsg.ID {
-	case ui.ViewIDInfo:
-		m.infoModel, cmd = m.infoModel.Update(routerMsg.Msg)
+func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+	switch ms := msg.(type) {
+	case selectedMsg:
+		m.state.SetActiveIndex(ms.index)
 
 	default:
 	}
 
-	return cmd
+	return nil
+}
+
+type selectedMsg struct {
+	index int
 }
 
 func kb() *keybindings.Keybindings {

@@ -21,19 +21,16 @@ func (t *State) AddSection(icon, title string) {
 	t.tabs = append(t.tabs, item)
 }
 
-// Next selects the next tab item.
-func (t *State) Next() int {
-	t.activeTab = (t.activeTab + 1) % len(t.tabs)
-	return t.activeTab
-}
-
-// Previous selects the previous tab item.
-func (t *State) Previous() int {
-	t.activeTab = ((t.activeTab - 1) + len(t.tabs)) % len(t.tabs)
-	return t.activeTab
-}
-
 // ActiveIndex returns the content of the selected tab.
 func (t *State) ActiveIndex() int {
 	return t.activeTab
+}
+
+// SetActiveIndex sets the active index.
+func (t *State) SetActiveIndex(index int) {
+	if index < 0 || index >= len(t.tabs) {
+		return
+	}
+
+	t.activeTab = index
 }

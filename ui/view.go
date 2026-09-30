@@ -50,6 +50,6 @@ type RootView interface {
 	SendMsg(msg tview.Msg)
 
 	// SendRoutedUpdateMsg routes the message to the specified view.
-	// Should only be called from the view's [view.Update] function.
+	// Should only be called from the model's [Model.Update] function.
 	SendRoutedUpdateMsg(msg RouterMsg) tview.Cmd
 }

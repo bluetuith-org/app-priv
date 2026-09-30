@@ -15,6 +15,9 @@ type Provider interface {
 	// OnChange processes a change in the tree's state and returns a [tview.Msg]
 	OnChange(chg Change) tview.Msg
 
+	// OnSelect returns a message after processing the selected node.
+	OnSelect(node *Node) tview.Msg
+
 	// MarkerStyle returns the styles for the markers.
 	MarkerStyle(node *Node) tcell.Style
 

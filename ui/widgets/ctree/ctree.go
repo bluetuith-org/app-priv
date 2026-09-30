@@ -265,10 +265,7 @@ func (w Widget) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 				}
 			}
 		case ActionSelect:
-			if a.current == nil {
-				return nil
-			}
-			return SelectedMsg{Node: a.current}
+			return w.selectNode(a.current)
 		default:
 			return msg
 		}
@@ -316,4 +313,13 @@ func (v view) step(index, direction int) int {
 		}
 	}
 	return index
+}
+
+// selectNode returns the OnSelect message for node, or nil if node is nil or OnSelect is not set.
+func (w Widget) selectNode(node *Node) tview.Msg {
+	if node == nil {
+		return nil
+	}
+
+	return w.Provider.OnSelect(node)
 }

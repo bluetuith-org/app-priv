@@ -106,6 +106,11 @@ func (m *Model) OnChange(chg ctree.Change) tview.Msg {
 	return ui.ViewIDAdTree.RouterMessage(selectionChange(chg))
 }
 
+// OnSelect returns a message after processing the selected node.
+func (m *Model) OnSelect(node *ctree.Node) tview.Msg {
+	return ui.ViewIDAdTree.RouterMessage(selectedMsg{node})
+}
+
 // MarkerStyle returns the styles for the markers.
 func (m *Model) MarkerStyle(*ctree.Node) tcell.Style {
 	return theme.Current().ADTree.Bg
@@ -134,19 +139,19 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	case selectionChange:
 		m.selectionState.Apply(ctree.Change(ms))
 
-	case rootNodeUpdate:
+	case rootNodeMsg:
 		m.root = ms.node
 		m.selectionState.SetCurrentNode(m.root.Node)
 
-	case ctree.SelectedMsg:
-		data := ms.Node.Data[*adNode]()
+	case selectedMsg:
+		data := ms.node.Data[*adNode]()
 		if data.nodeType != nodeTypeAction {
-			ms.Node.SetExpanded(!ms.Node.Expanded())
-			m.selectionState.SetCurrentNode(ms.Node)
+			ms.node.SetExpanded(!ms.node.Expanded())
+			m.selectionState.SetCurrentNode(ms.node)
 			return nil
 		}
 
-		m.selectionState.SetCurrentNode(ms.Node)
+		m.selectionState.SetCurrentNode(ms.node)
 		return acStateToOpMsg(data.ID(), data.actionState).SendRoutedMsg(m.rv)
 
 	default:
@@ -173,12 +178,16 @@ func (m *Model) populate() tview.Msg {
 		root.addAdapter(adapter, devices)
 	}
 
-	return ui.ViewIDAdTree.RouterMessage(rootNodeUpdate{root})
+	return ui.ViewIDAdTree.RouterMessage(rootNodeMsg{root})
 }
 
 type selectionChange ctree.Change
 
-type rootNodeUpdate struct {
+type selectedMsg struct {
+	node *ctree.Node
+}
+
+type rootNodeMsg struct {
 	node *rootNode
 }
 

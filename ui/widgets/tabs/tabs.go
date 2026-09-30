@@ -185,10 +185,10 @@ func (t Tabs[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 
 		switch action {
 		case ActionPrevious:
-			return t.selectTab(t.State.Previous())
+			return t.selectTab(t.previous())
 
 		case ActionNext:
-			return t.selectTab(t.State.Next())
+			return t.selectTab(t.next())
 		}
 
 	case tview.MouseMsg:
@@ -199,6 +199,14 @@ func (t Tabs[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 	}
 
 	return t.content.Handle(msg, t.contentArea(area))
+}
+
+func (t Tabs[T]) next() int {
+	return (t.activeTab + 1) % len(t.tabs)
+}
+
+func (t Tabs[T]) previous() int {
+	return ((t.activeTab - 1) + len(t.tabs)) % len(t.tabs)
 }
 
 func (t Tabs[T]) selectTab(index int) tview.Msg {

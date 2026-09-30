@@ -122,7 +122,6 @@ func (a *adNode) GetIcon() string {
 }
 
 // AddDevicesList adds a devices-list node, under the adapter node.
-// TODO: Add device.
 func (a *adNode) AddDevicesList(devices []bluetooth.DeviceData) {
 	dlAdNode := newAdNode(
 		nodeTypeDevicesList, "Devices",
