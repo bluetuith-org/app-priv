@@ -11,10 +11,10 @@ type ViewID int
 const (
 	ViewIDNone ViewID = iota
 	ViewIDAdTree
+	ViewIDStatusBar
 	ViewIDTabs
 	ViewIDInfo
 	ViewIDOperations
-	ViewIDStatusBar
 	ViewIDLog
 )
 

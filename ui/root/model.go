@@ -21,9 +21,6 @@ type Model struct {
 	ui.AppBinder
 
 	header stext.Widget
-	layout box.Widget
-
-	initedViews map[ui.ViewID]ui.View
 
 	adTreeModel adtree.Model
 	tabsModel   tabpane.Model
@@ -41,9 +38,8 @@ func New(binder ui.AppBinder) Model {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	m := Model{
-		AppBinder:   binder,
-		header:      stext.New(tview.AlignmentRight).SetContent(header),
-		initedViews: make(map[ui.ViewID]ui.View),
+		AppBinder: binder,
+		header:    stext.New(tview.AlignmentRight).SetContent(header),
 
 		ctx:     ctx,
 		cancel:  cancel,
@@ -63,8 +59,8 @@ func (m Model) Init() tview.Cmd {
 
 // Update receives messages when this model has focus.
 func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	vc := m.updateModel(msg)
-	return m, vc
+	cmd := m.updateModel(msg)
+	return m, cmd
 }
 
 // View draws this model onto the screen.
@@ -136,12 +132,12 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		var cmds []tview.Cmd
 		var cmd tview.Cmd
 
-		m.adTreeModel, cmd = m.adTreeModel.Update(msg)
+		m.adTreeModel, cmd = m.adTreeModel.Update(!m.panelFocused, msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
 
-		m.tabsModel, cmd = m.tabsModel.Update(msg)
+		m.tabsModel, cmd = m.tabsModel.Update(m.panelFocused, msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
@@ -157,13 +153,13 @@ func (m *Model) routeMessageToView(routerMsg ui.RouterMsg) tview.Cmd {
 
 	switch routerMsg.ID {
 	case ui.ViewIDAdTree:
-		m.adTreeModel, cmd = m.adTreeModel.Update(routerMsg.Msg)
+		m.adTreeModel, cmd = m.adTreeModel.Update(!m.panelFocused, routerMsg.Msg)
 		return cmd
 
 	default:
 	}
 
-	return m.tabsModel.HandleRouterMsg(routerMsg)
+	return m.tabsModel.HandleRouterMsg(m.panelFocused, routerMsg)
 }
 
 type externalMsg struct {

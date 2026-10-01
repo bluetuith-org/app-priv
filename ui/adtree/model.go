@@ -55,25 +55,25 @@ func (m *Model) ViewID() ui.ViewID {
 	return ui.ViewIDAdTree
 }
 
-// HandleRouterMsg handles the routed message.
-func (m *Model) HandleRouterMsg(msg ui.RouterMsg) tview.Cmd {
-	return m.updateModel(msg)
-}
-
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
 	return m.populate
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(msg)
+func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(focused, msg)
 	return m, cmd
 }
 
 // View draws this model onto the screen.
 func (m Model) View(focused bool) tview.Element {
-	tree := ctree.New(m.root.Node, &m, &m.selectionState).
+	state := m.selectionState
+	if !focused {
+		state.SetCurrentNode(nil)
+	}
+
+	tree := ctree.New(m.root.Node, &m, &state).
 		Focused(focused).
 		Graphics(true).
 		GraphicsSet(m.graphicsSet).
@@ -94,7 +94,7 @@ func (m *Model) Keybind(msg tview.KeyMsg) (ctree.Action, bool) {
 	case kb().NavigateDown.Matches(msg):
 		return ctree.ActionDown, true
 
-	case kb().ADTree.ToggleNodes.Matches(msg):
+	case kb().ADTree.ExpandOrSelect.Matches(msg):
 		return ctree.ActionSelect, true
 	}
 
@@ -134,7 +134,7 @@ func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[string, 
 	}
 }
 
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case selectionChange:
 		m.selectionState.Apply(ctree.Change(ms))

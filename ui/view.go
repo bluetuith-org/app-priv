@@ -24,9 +24,6 @@ type AppBinder interface {
 type View interface {
 	// ViewID returns the view's ID.
 	ViewID() ViewID
-
-	// HandleRouterMsg handles the routed message.
-	HandleRouterMsg(m RouterMsg) tview.Cmd
 }
 
 // Model represents a UI model.
@@ -35,7 +32,7 @@ type Model[T any] interface {
 	Init() tview.Cmd
 
 	// Update receives messages when this model has focus.
-	Update(msg tview.Msg) (T, tview.Cmd)
+	Update(focused bool, msg tview.Msg) (T, tview.Cmd)
 
 	// View draws this model onto the screen.
 	View(focused bool) tview.Element

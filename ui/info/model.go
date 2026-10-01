@@ -38,19 +38,14 @@ func (m Model) ViewID() ui.ViewID {
 	return ui.ViewIDInfo
 }
 
-// HandleRouterMsg handles the routed message.
-func (m *Model) HandleRouterMsg(msg ui.RouterMsg) tview.Cmd {
-	return m.updateModel(msg)
-}
-
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
 	return nil
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(msg)
+func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(focused, msg)
 	return m, cmd
 }
 
@@ -65,7 +60,7 @@ func (m Model) View(focused bool) tview.Element {
 		})
 }
 
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case scrollMsg:
 		m.state.Apply(textview.Change(ms))

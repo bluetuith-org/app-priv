@@ -59,7 +59,7 @@ type Keybindings struct {
 	}
 
 	ADTree struct {
-		ToggleNodes Keybinding
+		ExpandOrSelect Keybinding
 	}
 
 	TabPane struct {
@@ -122,7 +122,7 @@ const (
 	KeyFilebrowserConfirmSelection
 	KeyFilebrowserRefresh
 	KeyFilebrowserToggleHiddenFiles
-	KeyADTreeToggleNodes
+	KeyADTreeExpandOrSelect
 	KeyTabPaneSwitchSections
 	KeyOperationsCancel
 	KeyTransfersSuspend
@@ -302,10 +302,10 @@ func defaultConfig() *Keybindings {
 		"ToggleHiddenFiles",
 		"ToggleHiddenFiles",
 	)
-	k.ADTree.ToggleNodes = newKeybinding(
-		KeyADTreeToggleNodes, newTcellKey(tcell.Key(259), "", tcell.ModNone), // right
-		"ToggleNodes",
-		"ToggleNodes",
+	k.ADTree.ExpandOrSelect = newKeybinding(
+		KeyADTreeExpandOrSelect, newTcellKey(tcell.Key(259), "", tcell.ModNone), // right
+		"ExpandOrSelect",
+		"ExpandOrSelect",
 	)
 	k.TabPane.SwitchSections = newKeybinding(
 		KeyTabPaneSwitchSections, newTcellKey(tcell.Key(278), "", tcell.ModNone), // shift+tab
@@ -523,8 +523,8 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.Filebrowser.ToggleHiddenFiles
 
 	case 32:
-		p.kb = &kb.ADTree.ToggleNodes
-		p.cmpCfg = cfg.ADTree.ToggleNodes
+		p.kb = &kb.ADTree.ExpandOrSelect
+		p.cmpCfg = cfg.ADTree.ExpandOrSelect
 
 	case 33:
 		p.kb = &kb.TabPane.SwitchSections

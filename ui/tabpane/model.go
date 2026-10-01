@@ -5,7 +5,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 	"github.com/gdamore/tcell/v3"
 	"github.com/rivo/uniseg"
@@ -13,39 +12,23 @@ import (
 
 // Model holds a tabbed pane.
 type Model struct {
-	state *tabs.State
+	handler *viewHandler
 
 	arrowLeft, arrowRight string
 	arrowWidth            int
-
-	infoModel info.Model
 
 	rv ui.RootView
 }
 
 // New returns a new tabbed pane.
-//
-// NOTE: To add a new view within this model:
-// NOTE: - First, add the view to the Model struct, and the tab state.
-// NOTE: - Then, add the view's Init() method to [Model.Init].
-// NOTE: - After that, add a handler for the view within [Model.HandleRouterMsg]
-// NOTE:   and [Model.View].
 func New(rv ui.RootView) Model {
 	leftArrow := theme.Icons().ArrowLeft.String() + " "
 	rightArrow := " " + theme.Icons().ArrowRight.String()
 
-	infoModel := info.New()
-
-	state := tabs.NewState()
-	state.AddSection(infoModel.Icon(), infoModel.Title())
-	state.AddSection(infoModel.Icon(), infoModel.Title())
-
 	return Model{
 		rv: rv,
 
-		infoModel: infoModel,
-
-		state:      state,
+		handler:    newHandler(),
 		arrowLeft:  leftArrow,
 		arrowRight: rightArrow,
 		arrowWidth: uniseg.StringWidth(leftArrow),
@@ -58,20 +41,18 @@ func (m *Model) ViewID() ui.ViewID {
 }
 
 // HandleRouterMsg handles the routed message.
-func (m *Model) HandleRouterMsg(routerMsg ui.RouterMsg) tview.Cmd {
+func (m *Model) HandleRouterMsg(focused bool, routerMsg ui.RouterMsg) tview.Cmd {
 	var cmd tview.Cmd
 
 	switch routerMsg.ID {
 	case ui.ViewIDTabs:
-		*m, cmd = m.Update(routerMsg.Msg)
-
-	case ui.ViewIDInfo:
-		m.infoModel, cmd = m.infoModel.Update(routerMsg.Msg)
+		*m, cmd = m.Update(focused, routerMsg.Msg)
+		return cmd
 
 	default:
 	}
 
-	return cmd
+	return m.handler.updateRouted(routerMsg.ID, focused, routerMsg.Msg)
 }
 
 // LabelStyle provides the styles for the inactive and active labels.
@@ -107,39 +88,32 @@ func (m *Model) OnSelect(index int) tview.Msg {
 
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
-	return tview.Batch(m.infoModel.Init())
+	return m.handler.init()
 }
 
 // Update returns the model changed in response to a message and a command to run, or nil.
-func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(msg)
+func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(focused, msg)
 	return m, cmd
 }
 
 // View returns the element that draws the model.
 func (m Model) View(focused bool) tview.Element {
-	var content tview.Element
-
-	switch m.state.ActiveIndex() {
-	case 0:
-		content = m.infoModel.View(focused)
-
-	case 1:
-		content = m.infoModel.View(focused)
-	}
-
-	return tabs.New(&m, m.state).Focused(focused).Content(content)
+	return tabs.New(&m, m.handler.State).
+		Focused(focused).
+		Content(m.handler.activeContent(focused))
 }
 
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case selectedMsg:
-		m.state.SetActiveIndex(ms.index)
+		m.handler.SetActiveIndex(ms.index)
+		return nil
 
 	default:
 	}
 
-	return nil
+	return m.handler.updateAll(focused, msg)
 }
 
 type selectedMsg struct {

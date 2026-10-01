@@ -53,7 +53,7 @@ type Configuration struct {
 	}
 
 	ADTree struct {
-		ToggleNodes string `keydef:"right" keyshorthelp:"ToggleNodes" keylonghelp:"ToggleNodes"`
+		ExpandOrSelect string `keydef:"right" keyshorthelp:"ExpandOrSelect" keylonghelp:"ExpandOrSelect"`
 	}
 
 	TabPane struct {
