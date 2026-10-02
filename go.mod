@@ -3,7 +3,7 @@ module github.com/bluetuith-org/bluetuith
 go 1.27.1
 
 require (
-	github.com/ayn2op/tview v0.0.0-20260930235645-239215f3c690
+	github.com/ayn2op/tview v0.0.0-20261002033553-436738a0b031
 	github.com/bluetuith-org/bluetooth-classic v0.0.8
 	github.com/dave/dst v0.28.0
 	github.com/fatih/color v1.19.0

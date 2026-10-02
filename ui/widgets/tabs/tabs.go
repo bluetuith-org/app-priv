@@ -2,6 +2,7 @@ package tabs
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/layout"
 	"github.com/gdamore/tcell/v3"
 	"github.com/rivo/uniseg"
 )
@@ -56,6 +57,16 @@ func (t Tabs[T]) Focused(focused bool) Tabs[T] {
 func (t Tabs[T]) Content(content tview.Element) Tabs[T] {
 	t.content = content
 	return t
+}
+
+// Size returns Fill for both axes, as the tabs takes its whole area.
+func (Tabs[T]) Size() (width, height layout.Length) {
+	return layout.Fill, layout.Fill
+}
+
+// Layout returns the size of limits, as the tabs takes its whole area.
+func (Tabs[T]) Layout(limits layout.Limits) layout.Size {
+	return layout.Atomic(limits, layout.Fill, layout.Fill)
 }
 
 // Draw draws the element onto the screen within the given area.

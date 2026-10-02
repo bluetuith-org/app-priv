@@ -2,8 +2,8 @@ github.com/Southclaws/fault v0.8.2 h1:hbQANoRWYVWnQjpwJlNlfaolM+oIihgoFowaY3EBLC
 github.com/Southclaws/fault v0.8.2/go.mod h1:VUVkAWutC59SL16s6FTqf3I6I2z77RmnaW5XRz4bLOE=
 github.com/Wifx/gonetworkmanager v0.5.0 h1:P209z0yj705bl5tmyHTlpXPSv3QzjPtIM4X0SyDAqWA=
 github.com/Wifx/gonetworkmanager v0.5.0/go.mod h1:EdhHf2O00IZXfMv9LC6CS6SgTwcMTg/ZSDhGvch0cs8=
-github.com/ayn2op/tview v0.0.0-20260930235645-239215f3c690 h1:D9rzPnRksnsHtCszkHFwSalAO8fXnK4h2bbOCT+SyUo=
-github.com/ayn2op/tview v0.0.0-20260930235645-239215f3c690/go.mod h1:oRPTSZgaEJPhv3dmmNvo6grBq/BemrLG3wFQLMTZJkY=
+github.com/ayn2op/tview v0.0.0-20261002033553-436738a0b031 h1:LDAVehU5RKMj7OMzyPoWSvLyzG+LlsPbBfksXTgtUnA=
+github.com/ayn2op/tview v0.0.0-20261002033553-436738a0b031/go.mod h1:oRPTSZgaEJPhv3dmmNvo6grBq/BemrLG3wFQLMTZJkY=
 github.com/bluetuith-org/bluetooth-classic v0.0.8 h1:YC5I/e/V3JNU7FcMBOQHofyAoPqGWna86WChGyz1EqU=
 github.com/bluetuith-org/bluetooth-classic v0.0.8/go.mod h1:aUhYDoh5Pj6vgcxUfaexcuZgJN7drA4FtDTj6sWAqnQ=
 github.com/clipperhouse/displaywidth v0.11.0 h1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=

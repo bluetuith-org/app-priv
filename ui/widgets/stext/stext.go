@@ -2,6 +2,7 @@ package stext
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/layout"
 	"github.com/gdamore/tcell/v3"
 	"github.com/rivo/uniseg"
 )
@@ -9,7 +10,7 @@ import (
 // Widget draws a single line of text.
 type Widget struct {
 	content       string
-	width, height tview.Length
+	width, height layout.Length
 	align         tview.Alignment
 	style         tcell.Style
 }
@@ -19,7 +20,7 @@ var _ tview.Element = Widget{}
 // New draws content in the style of the cells beneath it, so it takes the colors of the element it is drawn in.
 func New(align tview.Alignment) Widget {
 	return Widget{
-		height: tview.Fixed(1),
+		height: layout.Fixed(1),
 		align:  align,
 	}
 }
@@ -33,22 +34,27 @@ func (w Widget) SetStyle(style tcell.Style) Widget {
 // SetContent sets the content of the widget.
 func (w Widget) SetContent(content string) Widget {
 	w.content = content
-	w.width = tview.Fixed(uniseg.StringWidth(content))
+	w.width = layout.Fixed(uniseg.StringWidth(content))
 
 	return w
 }
 
 // SetFill sets the width and height to fill.
 func (w Widget) SetFill() Widget {
-	w.width = tview.Fill
-	w.height = tview.Fill
+	w.width = layout.Fill
+	w.height = layout.Fill
 
 	return w
 }
 
 // Size returns the width of the text and a height of one line.
-func (w Widget) Size() (width, height tview.Length) {
+func (w Widget) Size() (width, height layout.Length) {
 	return w.width, w.height
+}
+
+// Layout returns the size of the text within limits.
+func (w Widget) Layout(limits layout.Limits) layout.Size {
+	return layout.Atomic(limits, w.width, w.height)
 }
 
 // Draw draws the text from the top-left corner of area, cut off at its right edge.

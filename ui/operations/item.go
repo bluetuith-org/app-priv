@@ -3,12 +3,13 @@ package operations
 import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
+	"github.com/ayn2op/tview/layout"
 	"github.com/bluetuith-org/bluetuith/theme"
 )
 
 type cardItem struct {
 	box.Widget
-	it *item
+	it item
 }
 
 func newCardItem(running *RunningInfo) cardItem {
@@ -16,7 +17,7 @@ func newCardItem(running *RunningInfo) cardItem {
 	bx := box.New(it).
 		BorderSet(tview.BorderSetRound()).
 		Borders(tview.BordersAll).
-		Height(tview.Fixed(it.Rows(0) + 2)).
+		Height(layout.Fixed(it.Rows(0) + 2)).
 		Background(theme.Current().Global.GetBackground())
 
 	c := cardItem{
@@ -35,12 +36,22 @@ type item struct {
 	running *RunningInfo
 }
 
-func newItem(running *RunningInfo) *item {
-	return &item{running}
+func newItem(running *RunningInfo) item {
+	return item{running}
+}
+
+// Layout implements [tview.Element].
+func (i item) Layout(limits layout.Limits) layout.Size {
+	return layout.Atomic(limits, layout.Fill, layout.Fill)
+}
+
+// Size implements [tview.Element].
+func (i item) Size() (width layout.Length, height layout.Length) {
+	return layout.Fill, layout.Fill
 }
 
 // Draw draws the element onto the screen within the given area.
-func (i *item) Draw(screen tview.Screen, area tview.Rectangle) {
+func (i item) Draw(screen tview.Screen, area tview.Rectangle) {
 	x, y, width, height := area.X, area.Y, area.Width, area.Height
 
 	for _, line := range i.running.description {
@@ -61,11 +72,11 @@ func (i *item) Draw(screen tview.Screen, area tview.Rectangle) {
 }
 
 // Handle translates a message, such as input received within the given area, into the message passed to Update. It returns nil to drop the message.
-func (i *item) Handle(msg tview.Msg, _ tview.Rectangle) tview.Msg {
+func (i item) Handle(msg tview.Msg, _ tview.Rectangle) tview.Msg {
 	return msg
 }
 
 // Rows returns the number of rows needed for this item, provided a set width.
-func (i *item) Rows(int) int {
+func (i item) Rows(int) int {
 	return len(i.running.description)
 }

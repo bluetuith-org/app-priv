@@ -68,7 +68,7 @@ func (m Model) OnChange(change list.Change) tview.Msg {
 }
 
 // Item implements [ui.KcVirtualHandler].
-func (m Model) Item(index int) list.Item {
+func (m Model) Item(index int) tview.Element {
 	_, info := m.running.Nth(index)
 	if info == nil {
 		return cardItem{}
@@ -90,7 +90,7 @@ func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View(focused bool) tview.Element {
-	return list.New(&m.state, m.running.Len(), m.Item).
+	return list.New(m.state, m.running.Len(), m.Item).
 		Focused(focused).
 		OnChange(m.OnChange).
 		Keybind(m.Keybinds)
@@ -177,7 +177,7 @@ var (
 	_ ui.KcVirtualHandler[
 		list.Action,
 		list.Change,
-		list.Item,
+		tview.Element,
 	] = Model{}
 
 	_ ui.Model[Model] = Model{}

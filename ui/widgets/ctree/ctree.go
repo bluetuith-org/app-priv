@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/layout"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -21,7 +22,7 @@ type Widget struct {
 
 	root           *Node
 	selectionState *SelectionState
-	width, height  tview.Length
+	width, height  layout.Length
 	topLevel       int
 	markers        Markers
 	graphics       bool
@@ -43,20 +44,20 @@ func New(root *Node, provider Provider, selectionState *SelectionState) Widget {
 		Provider:       provider,
 		root:           root,
 		selectionState: selectionState,
-		width:          tview.Fill,
-		height:         tview.Fill,
+		width:          layout.Fill,
+		height:         layout.Fill,
 		graphics:       true,
 	}
 }
 
 // Width sets the width of the tree.
-func (w Widget) Width(width tview.Length) Widget {
+func (w Widget) Width(width layout.Length) Widget {
 	w.width = width
 	return w
 }
 
 // Height sets the height of the tree.
-func (w Widget) Height(height tview.Length) Widget {
+func (w Widget) Height(height layout.Length) Widget {
 	w.height = height
 	return w
 }
@@ -98,8 +99,13 @@ func (w Widget) Focused(focused bool) Widget {
 }
 
 // Size returns the width and height of the tree.
-func (w Widget) Size() (width, height tview.Length) {
+func (w Widget) Size() (width, height layout.Length) {
 	return w.width, w.height
+}
+
+// Layout returns the size of the tree within limits.
+func (w Widget) Layout(limits layout.Limits) layout.Size {
+	return layout.Atomic(limits, w.width, w.height)
 }
 
 // row is a node shown on one line: the row of its parent, its level, and where its lines and text start.
