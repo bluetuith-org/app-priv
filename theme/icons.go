@@ -38,6 +38,10 @@ type IconSet struct {
 	ArrowRight    IconVariant
 	TriangleRight IconVariant
 	TriangleDown  IconVariant
+
+	CheckMark IconVariant
+	Progress  IconVariant
+	Error     IconVariant
 }
 
 // NewIconSet returns a new icon set.
@@ -167,6 +171,21 @@ func (i *IconSet) populateIcons(isASCII bool) *IconSet {
 			IsASCII: isASCII,
 			Unicode: "\U00002753",
 			ASCII:   "[Unknown]",
+		},
+		CheckMark: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "\U00002714",
+			ASCII:   "",
+		},
+		Progress: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "\U000021BA",
+			ASCII:   "",
+		},
+		Error: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "\U0001F6AB",
+			ASCII:   "",
 		},
 	}
 

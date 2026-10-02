@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -125,60 +125,57 @@ func (a *adapterNode) SetAdapterEventData(ev bluetooth.AdapterEventData) {
 	a.adapter.AdapterEventData = ev
 }
 
-func (a *adapterNode) actionPowered() (operations.CreationInfo, operations.Invoker) {
-	var builder richtext.Builder
-
-	builder.Write("Adapter", tcell.StyleDefault)
-	builder.Write(a.id.String(), tcell.StyleDefault)
-	builder.NewLine()
-
-	builder.Write("Device", tcell.StyleDefault)
-	builder.NewLine()
-
-	builder.Write("Action", tcell.StyleDefault)
-	builder.NewLine()
-
-	desc := builder.Finish()
-
-	return operations.NewCreationInfo(desc), func(ov *operations.RunningInfo) tview.Msg {
-		ov.Info("Starting")
+func (a *adapterNode) actionPowered(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+	return operations.NewCreationInfo(a.getDesc("Turning adapter", state)), func(ov *operations.RunningInfo) tview.Msg {
+		ov.Info("Powering on...")
 		time.Sleep(2 * time.Second)
-		ov.Info("Done")
+		ov.Ok("Done")
 
 		return nil
 	}
 }
 
-func (a *adapterNode) actionDiscoverable() (operations.CreationInfo, operations.Invoker) {
-	var builder richtext.Builder
-
-	builder.Write("Adapter", tcell.StyleDefault)
-	builder.Write(a.id.String(), tcell.StyleDefault)
-	builder.NewLine()
-
-	builder.Write("Device", tcell.StyleDefault)
-	builder.NewLine()
-
-	builder.Write("Action", tcell.StyleDefault)
-	builder.NewLine()
-
-	desc := builder.Finish()
-
-	return operations.NewCreationInfo(desc), func(ov *operations.RunningInfo) tview.Msg {
+func (a *adapterNode) actionDiscoverable(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+	return operations.NewCreationInfo(a.getDesc("Setting adapter's discoverable", state)), func(ov *operations.RunningInfo) tview.Msg {
 		ov.Info("Starting Disc")
 		time.Sleep(2 * time.Second)
-		ov.Info("Done")
+		ov.Ok("Done")
 
 		return nil
 	}
 }
 
-func (a *adapterNode) actionPairable() (operations.CreationInfo, operations.Invoker) {
+func (a *adapterNode) actionPairable(state *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (a *adapterNode) actionScan() (operations.CreationInfo, operations.Invoker) {
+func (a *adapterNode) actionScan(state *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
+}
+
+func (a *adapterNode) getDesc(name string, state *adActionState) stext.TextPairs {
+	var builder stext.TextPairBuilder
+
+	style := theme.Current().Operations.OperationNumber
+	adapterStyle := theme.Current().ADTree.Adapter
+	msgStyle := theme.Current().Operations.Message
+	gstyle := theme.Current().Global
+
+	builder.WriteLabel("Adapter:", style)
+	builder.WriteLabel(" ", gstyle)
+	builder.WriteContent(a.GetIcon(), adapterStyle)
+	builder.WriteContent(" ", adapterStyle)
+	builder.WriteContent(getAdapterDisplayName(a.adapter), adapterStyle)
+
+	adapterText := builder.Finish()
+
+	builder.WriteLabel("Action:", style)
+	builder.WriteLabel(" ", gstyle)
+	builder.WriteContent(name, msgStyle)
+	builder.WriteLabel(" ", gstyle)
+	builder.WriteLabel(state.currentState.Format("on", "off"), msgStyle)
+
+	return stext.NewTextPairs(adapterText, builder.Finish())
 }
 
 var _ adNoder = (*adapterNode)(nil)

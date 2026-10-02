@@ -70,9 +70,9 @@ func (m Model) View() tview.Element {
 		m.tabsModel.View(m.panelFocused),
 	)
 	hflex := column.New(
-		m.header.SetStyle(theme.Current().TitleBar),
+		m.header.SetStyle(theme.Current().App.TitleBar),
 		vflex,
-		m.header.SetStyle(theme.Current().TitleBar),
+		m.header.SetStyle(theme.Current().App.TitleBar),
 	)
 
 	return box.New(hflex).Background(theme.Current().Global.GetBackground())

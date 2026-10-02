@@ -77,7 +77,7 @@ func (m Model) View(focused bool) tview.Element {
 		Focused(focused).
 		Graphics(true).
 		GraphicsSet(m.graphicsSet).
-		GraphicsStyle(theme.Current().ADTree.Bg).
+		GraphicsStyle(theme.Current().Global).
 		Markers(m.markers)
 
 	return box.New(tree).
@@ -113,7 +113,7 @@ func (m *Model) OnSelect(node *ctree.Node) tview.Msg {
 
 // MarkerStyle returns the styles for the markers.
 func (m *Model) MarkerStyle(*ctree.Node) tcell.Style {
-	return theme.Current().ADTree.Bg
+	return theme.Current().Global
 }
 
 // StyledLabels returns a sequence of text and their associated styles.

@@ -18,10 +18,11 @@ func MsgCreate(creationInfo CreationInfo, action Invoker) ui.RouterMsg {
 
 type opUpdateMsg struct {
 	id, message string
+	stage       operationStage
 }
 
-func msgOpUpdate(id, msg string) ui.RouterMsg {
-	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg})
+func msgOpUpdate(id, msg string, stage operationStage) ui.RouterMsg {
+	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg, stage})
 }
 
 type opDeleteMsg struct {

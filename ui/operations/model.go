@@ -3,6 +3,7 @@ package operations
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 	"github.com/jba/omap/ordered"
 )
@@ -20,13 +22,19 @@ type Model struct {
 	state list.SelectionState
 
 	running *ordered.Map[string, *RunningInfo]
+	focused bool
 
 	rv ui.RootView
 }
 
 // New returns a new operations view.
 func New(rv ui.RootView) Model {
+	var state list.SelectionState
+
+	state.SetCursor(0)
+
 	return Model{
+		state: state,
 		running: ordered.NewMap[string, *RunningInfo](func(s1, s2 string) int {
 			return strings.Compare(s1, s2)
 		}),
@@ -67,16 +75,6 @@ func (m Model) OnChange(change list.Change) tview.Msg {
 	return listChg(change)
 }
 
-// Item implements [ui.KcVirtualHandler].
-func (m Model) Item(index int) tview.Element {
-	_, info := m.running.Nth(index)
-	if info == nil {
-		return cardItem{}
-	}
-
-	return newCardItem(info)
-}
-
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
 	return nil
@@ -90,10 +88,35 @@ func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View(focused bool) tview.Element {
-	return list.New(m.state, m.running.Len(), m.Item).
+	ls := list.New(m.state, m.running.Len(), func(index int) tview.Element {
+		_, info := m.running.Nth(index)
+		if info == nil {
+			return card.Widget{}
+		}
+
+		header, msg, status := info.buildSegments()
+		style := theme.Current().Global
+
+		borders := tview.BorderSetRound()
+		borderStyle := style
+		if m.state.Cursor() == index && focused {
+			borders = tview.BorderSetThick()
+			borderStyle = theme.Current().Operations.Selection
+		}
+
+		return card.New(info.description).
+			Header(header.Text, header.Style).
+			Status(status.Text, status.Style).
+			Message(msg.Text, msg.Style).
+			Background(style.GetBackground()).
+			BorderStyle(borderStyle).
+			BorderSet(borders)
+	}).
 		Focused(focused).
 		OnChange(m.OnChange).
 		Keybind(m.Keybinds)
+
+	return ls
 }
 
 func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
@@ -115,7 +138,7 @@ func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
 		m.processUpdateMsg(ms)
 
 	case opDeleteMsg:
-		m.removeOperation(ms)
+		//m.removeOperation(ms)
 
 	case opErrorMsg:
 	}
@@ -133,7 +156,9 @@ func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error)
 		return nil, nil, errOpAlreadyInProgress
 	}
 
-	info := NewRunningInfo(m.rv, msg.CreationInfo)
+	header := "Operation #" + strconv.Itoa(m.running.Len()+1)
+
+	info := newRunningInfo(m.rv, msg.CreationInfo.updateHeader(header))
 	m.running.Set(msg.id, info)
 
 	return info, msg.opAction, nil
@@ -149,9 +174,7 @@ func (m *Model) processUpdateMsg(msg opUpdateMsg) bool {
 		return false
 	}
 
-	if msg.message != "" {
-		info.message = msg.message
-	}
+	info.fromUpdateMsg(msg)
 
 	return true
 }
@@ -174,12 +197,6 @@ func kb() *keybindings.Keybindings {
 }
 
 var (
-	_ ui.KcVirtualHandler[
-		list.Action,
-		list.Change,
-		tview.Element,
-	] = Model{}
-
 	_ ui.Model[Model] = Model{}
 	_ tabs.TabSection = Model{}
 )

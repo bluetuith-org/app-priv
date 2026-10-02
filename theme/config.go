@@ -40,15 +40,16 @@ const (
 type Configuration struct {
 	Tint string `themetype:"primer"`
 
-	Border        string `themedef:"bg:from-theme; fg:white"`
-	BorderFocused string `themedef:"bg:from-theme; fg:green; attr:bold"`
+	Global string `themedef:"bg:from-theme; fg:from-theme"`
 
-	TitleBar string `themedef:"bg:purple;fg:white;attr:bold"`
-	Global   string `themedef:"bg:from-theme; fg:from-theme"`
+	App struct {
+		TitleBar string `themedef:"bg:purple; fg:white; attr:bold"`
+
+		Border        string `themedef:"bg:from-theme; fg:white"`
+		BorderFocused string `themedef:"bg:from-theme; fg:green; attr:bold"`
+	}
 
 	ADTree struct {
-		Bg string `themedef:"bg:from-theme"`
-
 		Heading    string `themedef:"bg:from-theme; fg:from-theme"`
 		Indicators string `themedef:"bg:from-theme; fg:from-theme"`
 		Selection  string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
@@ -81,13 +82,17 @@ type Configuration struct {
 	}
 
 	Operations struct {
-		Bg      string `themedef:"bg:blue"`
-		Heading string `themedef:"bg:from-theme; fg:from-theme"`
+		Heading   string `themedef:"bg:from-theme; fg:from-theme"`
+		Selection string `themedef:"bg:from-theme; fg:blue"`
+
+		OperationNumber string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,italic,underline"`
+		Error           string `themedef:"bg:from-theme; fg:red; attr:bold"`
+		Completed       string `themedef:"bg:from-theme; fg:green"`
+		InProgress      string `themedef:"bg:from-theme; fg:yellow"`
+		Message         string `themedef:"bg:from-theme; fg:white; attr:bold"`
 	}
 
 	Log struct {
-		Style string `themedef:"bg:from-theme; fg:from-theme"`
-
 		Heading string `themedef:"bg:from-theme; fg:from-theme"`
 		Time    string `themedef:"bg:from-theme; fg:brightblack(lighten:0.1)"`
 		Info    string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
@@ -96,7 +101,7 @@ type Configuration struct {
 	}
 
 	StatusBar struct {
-		Style string `themedef:"bg:purple;fg:white;attr:bold"`
+		Style string `themedef:"bg:purple; fg:white; attr:bold"`
 	}
 }
 

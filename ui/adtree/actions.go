@@ -18,6 +18,30 @@ const (
 	actionStateDisabled
 )
 
+func (a actionStateSpec) String() string {
+	switch a {
+	case actionStateEnabled:
+		return "On"
+
+	case actionStateDisabled:
+		return "Off"
+	}
+
+	return ""
+}
+
+func (a actionStateSpec) Format(on, off string) string {
+	switch a {
+	case actionStateEnabled:
+		return on
+
+	case actionStateDisabled:
+		return off
+	}
+
+	return ""
+}
+
 // actionUpdateMsg holds an update to the action state matched by the action's ID.
 type actionUpdateMsg struct {
 	id        string
@@ -54,7 +78,7 @@ type adActionState struct {
 	invokeAction actionInvoker
 }
 
-type actionInvoker func() (operations.CreationInfo, operations.Invoker)
+type actionInvoker func(*adActionState) (operations.CreationInfo, operations.Invoker)
 
 // newAdActionState creates a new action state, which can be mutated depending on the state of the executed action.
 func newAdActionState(key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) *adActionState {
@@ -76,7 +100,7 @@ func acStateToOpMsg(id string, state *adActionState) ui.RouterMsg {
 		return ui.EmptyRouterMsg()
 	}
 
-	createInfo, opFunc := state.invokeAction()
+	createInfo, opFunc := state.invokeAction(state)
 	createInfo.UpdateID(id)
 
 	return operations.MsgCreate(createInfo, opFunc)
