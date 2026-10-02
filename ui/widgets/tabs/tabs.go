@@ -32,8 +32,8 @@ type Provider interface {
 	OnSelect(index int) tview.Msg
 }
 
-// Tabs returns a tab widget.
-type Tabs[T Provider] struct {
+// Widget returns a tab widget.
+type Widget[T Provider] struct {
 	*State
 
 	provider T
@@ -43,34 +43,34 @@ type Tabs[T Provider] struct {
 }
 
 // New returns a new tab widget.
-func New[T Provider](provider T, state *State) Tabs[T] {
-	return Tabs[T]{State: state, provider: provider}
+func New[T Provider](provider T, state *State) Widget[T] {
+	return Widget[T]{State: state, provider: provider}
 }
 
 // Focused sets the widget to the focused state.
-func (t Tabs[T]) Focused(focused bool) Tabs[T] {
+func (t Widget[T]) Focused(focused bool) Widget[T] {
 	t.focused = focused
 	return t
 }
 
 // Content sets the active content for the tabbed pane.
-func (t Tabs[T]) Content(content tview.Element) Tabs[T] {
+func (t Widget[T]) Content(content tview.Element) Widget[T] {
 	t.content = content
 	return t
 }
 
 // Size returns Fill for both axes, as the tabs takes its whole area.
-func (Tabs[T]) Size() (width, height layout.Length) {
+func (Widget[T]) Size() (width, height layout.Length) {
 	return layout.Fill, layout.Fill
 }
 
 // Layout returns the size of limits, as the tabs takes its whole area.
-func (Tabs[T]) Layout(limits layout.Limits) layout.Size {
+func (Widget[T]) Layout(limits layout.Limits) layout.Size {
 	return layout.Atomic(limits, layout.Fill, layout.Fill)
 }
 
 // Draw draws the element onto the screen within the given area.
-func (t Tabs[T]) Draw(screen tview.Screen, area tview.Rectangle) {
+func (t Widget[T]) Draw(screen tview.Screen, area tview.Rectangle) {
 	if area.Width <= 0 || area.Height <= 0 {
 		return
 	}
@@ -182,7 +182,7 @@ func (t Tabs[T]) Draw(screen tview.Screen, area tview.Rectangle) {
 }
 
 // Handle translates an input message received within the given area into the message passed to Update. It returns nil to drop the message.
-func (t Tabs[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
+func (t Widget[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 	switch ms := msg.(type) {
 	case tview.KeyMsg:
 		if !t.focused {
@@ -190,16 +190,14 @@ func (t Tabs[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 		}
 
 		action, ok := t.provider.Keybind(ms)
-		if !ok {
-			return msg
-		}
+		if ok {
+			switch action {
+			case ActionPrevious:
+				return t.selectTab(t.previous())
 
-		switch action {
-		case ActionPrevious:
-			return t.selectTab(t.previous())
-
-		case ActionNext:
-			return t.selectTab(t.next())
+			case ActionNext:
+				return t.selectTab(t.next())
+			}
 		}
 
 	case tview.MouseMsg:
@@ -212,15 +210,15 @@ func (t Tabs[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 	return t.content.Handle(msg, t.contentArea(area))
 }
 
-func (t Tabs[T]) next() int {
+func (t Widget[T]) next() int {
 	return (t.activeTab + 1) % len(t.tabs)
 }
 
-func (t Tabs[T]) previous() int {
+func (t Widget[T]) previous() int {
 	return ((t.activeTab - 1) + len(t.tabs)) % len(t.tabs)
 }
 
-func (t Tabs[T]) selectTab(index int) tview.Msg {
+func (t Widget[T]) selectTab(index int) tview.Msg {
 	if t.State.activeTab == index {
 		return nil
 	}
@@ -228,21 +226,21 @@ func (t Tabs[T]) selectTab(index int) tview.Msg {
 	return t.provider.OnSelect(index)
 }
 
-func (t Tabs[T]) contentArea(area tview.Rectangle) tview.Rectangle {
+func (t Widget[T]) contentArea(area tview.Rectangle) tview.Rectangle {
 	area.Y += 2
 	area.Height = max(area.Height-3, 0)
 
 	return area
 }
 
-func (t Tabs[T]) setContent(screen tcell.Screen, area tview.Rectangle) {
+func (t Widget[T]) setContent(screen tcell.Screen, area tview.Rectangle) {
 	content := t.content
 	if content != nil {
 		content.Draw(screen, t.contentArea(area))
 	}
 }
 
-func (t Tabs[T]) drawTruncatedRight(s tcell.Screen, x, y, maxWidth int, style tcell.Style, str string) {
+func (t Widget[T]) drawTruncatedRight(s tcell.Screen, x, y, maxWidth int, style tcell.Style, str string) {
 	parsedWidth := 0
 	state := -1
 
@@ -262,7 +260,7 @@ func (t Tabs[T]) drawTruncatedRight(s tcell.Screen, x, y, maxWidth int, style tc
 	}
 }
 
-func (t Tabs[T]) drawTruncatedLeft(s tcell.Screen, x, y, maxWidth, stringWidth int, style tcell.Style, str string) {
+func (t Widget[T]) drawTruncatedLeft(s tcell.Screen, x, y, maxWidth, stringWidth int, style tcell.Style, str string) {
 	parsedWidth := 0
 	state := -1
 	skipWidth := maxWidth - stringWidth
@@ -292,7 +290,7 @@ func (t Tabs[T]) drawTruncatedLeft(s tcell.Screen, x, y, maxWidth, stringWidth i
 // aligned as a group within the given width.
 //
 // Taken from: https://github.com/ayn2op/tview
-func (t Tabs[T]) stripOffset(width int) int {
+func (t Widget[T]) stripOffset(width int) int {
 	stripWidth := t.maxWidth - 1
 
 	return max((width-stripWidth)/2, 0)
