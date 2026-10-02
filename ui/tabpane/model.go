@@ -28,7 +28,7 @@ func New(rv ui.RootView) Model {
 	return Model{
 		rv: rv,
 
-		handler:    newHandler(),
+		handler:    newHandler(rv),
 		arrowLeft:  leftArrow,
 		arrowRight: rightArrow,
 		arrowWidth: uniseg.StringWidth(leftArrow),

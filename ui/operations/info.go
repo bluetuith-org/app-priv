@@ -2,6 +2,7 @@ package operations
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetuith/ui"
 )
 
@@ -12,13 +13,13 @@ type Invoker func(ov *RunningInfo) tview.Msg
 type CreationInfo struct {
 	id string
 
-	description string
+	description richtext.Text
 	message     string
 }
 
 // NewCreationInfo creates an initial operation context, to be scheduled for execution.
-func NewCreationInfo(desc, msg string) CreationInfo {
-	return CreationInfo{"", desc, msg}
+func NewCreationInfo(desc richtext.Text) CreationInfo {
+	return CreationInfo{description: desc}
 }
 
 // UpdateID updates the ID of the operation being created.
@@ -40,12 +41,7 @@ func NewRunningInfo(v ui.RootView, creationInfo CreationInfo) *RunningInfo {
 
 // Info sets the information for the current operation.
 func (o *RunningInfo) Info(msg string) {
-	o.v.SendMsg(msgOpUpdate(o.CreationInfo, "", msg))
-}
-
-// UpdateDescription updates the description for the current operation.
-func (o *RunningInfo) UpdateDescription(desc string) {
-	o.v.SendMsg(msgOpUpdate(o.CreationInfo, desc, ""))
+	o.v.SendMsg(msgOpUpdate(o.CreationInfo.id, msg))
 }
 
 // Error sends an error to the operations manager.

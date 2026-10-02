@@ -43,7 +43,7 @@ func New(binder ui.AppBinder) Model {
 
 		ctx:     ctx,
 		cancel:  cancel,
-		msgChan: make(chan tview.Msg, 1),
+		msgChan: make(chan tview.Msg),
 	}
 
 	m.adTreeModel = adtree.New(&m)
@@ -119,7 +119,7 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		}
 
 	case externalMsg:
-		return m.updateModel(ms.msg)
+		return tview.Batch(m.updateModel(ms.msg), m.listenForMsg())
 
 	case ui.RouterMsg:
 		if !ms.IsValid() {
@@ -140,6 +140,14 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		m.tabsModel, cmd = m.tabsModel.Update(m.panelFocused, msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
+		}
+
+		if cmds == nil {
+			return nil
+		}
+
+		if len(cmds) == 1 {
+			return cmds[0]
 		}
 
 		return tview.Batch(cmds...)

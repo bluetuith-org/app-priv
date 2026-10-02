@@ -2,8 +2,10 @@ package adtree
 
 import (
 	"strings"
+	"time"
 
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
@@ -124,11 +126,51 @@ func (a *adapterNode) SetAdapterEventData(ev bluetooth.AdapterEventData) {
 }
 
 func (a *adapterNode) actionPowered() (operations.CreationInfo, operations.Invoker) {
-	return operations.CreationInfo{}, nil
+	var builder richtext.Builder
+
+	builder.Write("Adapter", tcell.StyleDefault)
+	builder.Write(a.id.String(), tcell.StyleDefault)
+	builder.NewLine()
+
+	builder.Write("Device", tcell.StyleDefault)
+	builder.NewLine()
+
+	builder.Write("Action", tcell.StyleDefault)
+	builder.NewLine()
+
+	desc := builder.Finish()
+
+	return operations.NewCreationInfo(desc), func(ov *operations.RunningInfo) tview.Msg {
+		ov.Info("Starting")
+		time.Sleep(2 * time.Second)
+		ov.Info("Done")
+
+		return nil
+	}
 }
 
 func (a *adapterNode) actionDiscoverable() (operations.CreationInfo, operations.Invoker) {
-	return operations.CreationInfo{}, nil
+	var builder richtext.Builder
+
+	builder.Write("Adapter", tcell.StyleDefault)
+	builder.Write(a.id.String(), tcell.StyleDefault)
+	builder.NewLine()
+
+	builder.Write("Device", tcell.StyleDefault)
+	builder.NewLine()
+
+	builder.Write("Action", tcell.StyleDefault)
+	builder.NewLine()
+
+	desc := builder.Finish()
+
+	return operations.NewCreationInfo(desc), func(ov *operations.RunningInfo) tview.Msg {
+		ov.Info("Starting Disc")
+		time.Sleep(2 * time.Second)
+		ov.Info("Done")
+
+		return nil
+	}
 }
 
 func (a *adapterNode) actionPairable() (operations.CreationInfo, operations.Invoker) {

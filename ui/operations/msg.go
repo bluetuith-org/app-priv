@@ -4,8 +4,8 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui"
 )
 
-// OpCreateMsg holds a operation creation message.
-type OpCreateMsg struct {
+// CreateMsg holds a operation creation message.
+type CreateMsg struct {
 	CreationInfo
 
 	opAction Invoker
@@ -13,18 +13,15 @@ type OpCreateMsg struct {
 
 // MsgCreate creates a message to be sent to the operations manager, to create an operation.
 func MsgCreate(creationInfo CreationInfo, action Invoker) ui.RouterMsg {
-	return ui.ViewIDOperations.RouterMessage(OpCreateMsg{CreationInfo: creationInfo, opAction: action})
+	return ui.ViewIDOperations.RouterMessage(CreateMsg{CreationInfo: creationInfo, opAction: action})
 }
 
 type opUpdateMsg struct {
-	CreationInfo
+	id, message string
 }
 
-func msgOpUpdate(creationInfo CreationInfo, desc, msg string) ui.RouterMsg {
-	creationInfo.description = desc
-	creationInfo.message = msg
-
-	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{CreationInfo: creationInfo})
+func msgOpUpdate(id, msg string) ui.RouterMsg {
+	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg})
 }
 
 type opDeleteMsg struct {

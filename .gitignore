@@ -100,3 +100,6 @@ $RECYCLE.BIN/
 
 # dist cache
 dist/
+
+# custom files
+app.log
