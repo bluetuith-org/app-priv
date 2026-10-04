@@ -110,7 +110,12 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 		m.handler.SetActiveIndex(ms.index)
 		return nil
 
-	default:
+	case tview.KeyMsg:
+		if !focused {
+			return nil
+		}
+
+		return m.handler.updateActive(focused, msg)
 	}
 
 	return m.handler.updateAll(focused, msg)

@@ -1,11 +1,13 @@
 package operations
 
 import (
+	"time"
+
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -36,16 +38,15 @@ type Invoker func(ov *RunningInfo) tview.Msg
 type CreationInfo struct {
 	id string
 
-	header, message string
-	stage           operationStage
-	err             error
+	stage operationStage
+	err   error
 
-	description stext.TextPairs
+	cc *card.CardContent
 }
 
 // NewCreationInfo creates an initial operation context, to be scheduled for execution.
-func NewCreationInfo(desc stext.TextPairs) CreationInfo {
-	return CreationInfo{description: desc}
+func NewCreationInfo(desc richtext.Text) CreationInfo {
+	return CreationInfo{cc: card.NewCardContent(desc)}
 }
 
 // UpdateID updates the ID of the operation being created.
@@ -58,42 +59,41 @@ func (o *CreationInfo) fromUpdateMsg(msg opUpdateMsg) {
 		return
 	}
 
-	o.message = msg.message
 	o.stage = msg.stage
-
 	o.err = msg.err
-}
 
-func (o *CreationInfo) buildSegments() (header, msg, status richtext.Segment) {
-	header = richtext.NewSegment(o.header, theme.Current().Operations.OperationNumber)
+	var msgSeg richtext.Segment
 
 	switch o.stage {
 	case operationError:
-		msg = richtext.NewSegment(o.err.Error(), theme.Current().Operations.Error)
+		msgSeg = richtext.NewSegment(o.err.Error(), theme.Current().Operations.Error)
 
 	default:
-		msg = richtext.NewSegment(o.message, theme.Current().Operations.Message)
+		msgSeg = richtext.NewSegment(msg.message, theme.Current().Operations.Message)
 	}
 
-	status = richtext.NewSegment(o.stage.Format())
-
-	return
+	status := richtext.NewSegment(o.stage.Format())
+	o.cc.Message(status, msgSeg)
 }
 
-func (o CreationInfo) updateHeader(header string) CreationInfo {
-	o.header = header
+func (o *CreationInfo) updateHeader(header string) *CreationInfo {
+	hdr := richtext.NewSegment(header, theme.Current().Operations.OperationNumber)
+	tm := richtext.NewSegment(time.Now().Format("02/01/2006 15:04:05"), theme.Current().Operations.Time)
+
+	o.cc.Headers(hdr, tm)
+
 	return o
 }
 
 // RunningInfo holds the current state of the running operation.
 type RunningInfo struct {
-	CreationInfo
+	*CreationInfo
 
 	v ui.RootView
 }
 
 // newRunningInfo creates a new executing operation context.
-func newRunningInfo(v ui.RootView, creationInfo CreationInfo) *RunningInfo {
+func newRunningInfo(v ui.RootView, creationInfo *CreationInfo) *RunningInfo {
 	return &RunningInfo{CreationInfo: creationInfo, v: v}
 }
 

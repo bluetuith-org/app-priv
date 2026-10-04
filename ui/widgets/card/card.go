@@ -4,51 +4,26 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/layout"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 	"github.com/gdamore/tcell/v3/color"
 )
 
 // Widget holds a card and contents.
 type Widget struct {
-	item
+	cc *CardContent
 
 	bgColor     color.Color
 	borderStyle tcell.Style
 	borderSet   tview.BorderSet
 }
 
-var _ tview.Element = Widget{}
+var _ tview.Widget = Widget{}
 
 // New returns a new card.
-func New(desc stext.TextPairs) Widget {
+func New(cc *CardContent) Widget {
 	w := Widget{
-		desc: desc,
+		cc: cc,
 	}
-
-	return w
-}
-
-// Header sets the header of the card.
-func (w Widget) Header(text string, style tcell.Style) Widget {
-	w.header.Text = text
-	w.header.Style = style
-
-	return w
-}
-
-// Status sets the status to be displayed.
-func (w Widget) Status(text string, style tcell.Style) Widget {
-	w.status.Text = text
-	w.status.Style = style
-
-	return w
-}
-
-// Message sets the message to be displayed.
-func (w Widget) Message(text string, style tcell.Style) Widget {
-	w.msg.Text = text
-	w.msg.Style = style
 
 	return w
 }
@@ -73,28 +48,30 @@ func (w Widget) BorderSet(set tview.BorderSet) Widget {
 	return w
 }
 
-// Rows returns the number of rows this card will occupy.
-func (w Widget) Rows(width int) int {
-	return w.item.Rows(width) + 2
-}
-
-// Layout implements [tview.Element].
+// Layout implements [tview.Widget].
 func (w Widget) Layout(limits layout.Limits) layout.Size {
-	return layout.Atomic(limits, layout.Fill, layout.Fixed(w.Rows(0)))
+	return layout.Sized(limits, layout.Fill, layout.Shrink, func(l layout.Limits) layout.Size {
+		h := w.cc.ensureSize(l.Max.Width)
+		return layout.Size{Height: h + 2}
+	})
 }
 
-// Size implements [tview.Element].
+// Size implements [tview.Widget].
 func (w Widget) Size() (width layout.Length, height layout.Length) {
-	return layout.Fill, layout.Fixed(w.Rows(0))
+	return layout.Fill, layout.Shrink
 }
 
 // Draw draws the element onto the screen within the given area.
 func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
-	box.New(w.item).
-		Height(layout.Fixed(w.item.Rows(0))).
+	box.New(w.cc).
 		Borders(tview.BordersAll).
 		BorderSet(w.borderSet).
 		BorderStyle(w.borderStyle).
 		Background(w.bgColor).
 		Draw(screen, area)
+}
+
+// Handle implements [tview.Widget].
+func (w Widget) Handle(msg tview.Msg, _ tview.Rectangle) tview.Msg {
+	return msg
 }

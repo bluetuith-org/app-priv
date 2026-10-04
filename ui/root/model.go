@@ -110,12 +110,14 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 				m.panelFocused = true
 			}
 
+			return nil
+
 		case kb().CloseItem.Matches(ms):
 			if m.panelFocused {
 				m.panelFocused = false
 			}
 
-		default:
+			return nil
 		}
 
 	case externalMsg:
@@ -127,33 +129,30 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		}
 
 		return m.routeMessageToView(ms)
-
-	default:
-		var cmds []tview.Cmd
-		var cmd tview.Cmd
-
-		m.adTreeModel, cmd = m.adTreeModel.Update(!m.panelFocused, msg)
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
-
-		m.tabsModel, cmd = m.tabsModel.Update(m.panelFocused, msg)
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
-
-		if cmds == nil {
-			return nil
-		}
-
-		if len(cmds) == 1 {
-			return cmds[0]
-		}
-
-		return tview.Batch(cmds...)
 	}
 
-	return nil
+	var cmds []tview.Cmd
+	var cmd tview.Cmd
+
+	m.adTreeModel, cmd = m.adTreeModel.Update(!m.panelFocused, msg)
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	m.tabsModel, cmd = m.tabsModel.Update(m.panelFocused, msg)
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	if cmds == nil {
+		return nil
+	}
+
+	if len(cmds) == 1 {
+		return cmds[0]
+	}
+
+	return tview.Batch(cmds...)
 }
 
 func (m *Model) routeMessageToView(routerMsg ui.RouterMsg) tview.Cmd {

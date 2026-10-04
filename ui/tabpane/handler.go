@@ -81,6 +81,10 @@ func (h *viewHandler) activeContent(focused bool) tview.Widget {
 	return nil
 }
 
+func (h *viewHandler) updateActive(focused bool, msg tview.Msg) tview.Cmd {
+	return h.update(h.indexView[h.ActiveIndex()], focused, msg)
+}
+
 func (h *viewHandler) updateRouted(id ui.ViewID, focused bool, msg tview.Msg) tview.Cmd {
 	focused = focused && id == h.indexView[h.ActiveIndex()]
 

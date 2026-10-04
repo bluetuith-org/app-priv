@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -152,29 +152,29 @@ func (a *adapterNode) actionScan(state *adActionState) (operations.CreationInfo,
 	return operations.CreationInfo{}, nil
 }
 
-func (a *adapterNode) getDesc(name string, state *adActionState) stext.TextPairs {
-	var builder stext.TextPairBuilder
+func (a *adapterNode) getDesc(name string, state *adActionState) richtext.Text {
+	builder := new(richtext.Builder)
 
 	style := theme.Current().Operations.PropertyName
 	adapterStyle := theme.Current().ADTree.Adapter
 	msgStyle := theme.Current().Operations.Message
 	gstyle := theme.Current().Global
 
-	builder.WriteLabel("Adapter:", style)
-	builder.WriteLabel(" ", gstyle)
-	builder.WriteContent(a.GetIcon(), adapterStyle)
-	builder.WriteContent(" ", adapterStyle)
-	builder.WriteContent(getAdapterDisplayName(a.adapter), adapterStyle)
+	builder.Write("Adapter:", style)
+	builder.Write(" ", gstyle)
+	builder.Write(a.GetIcon(), adapterStyle)
+	builder.Write(" ", adapterStyle)
+	builder.Write(getAdapterDisplayName(a.adapter), adapterStyle)
+	builder.NewLine()
 
-	adapterText := builder.Finish()
+	builder.Write("Action:", style)
+	builder.Write(" ", gstyle)
+	builder.Write(name, msgStyle)
+	builder.Write(" ", gstyle)
+	builder.Write(state.currentState.Format("on", "off"), msgStyle)
+	builder.NewLine()
 
-	builder.WriteLabel("Action:", style)
-	builder.WriteLabel(" ", gstyle)
-	builder.WriteContent(name, msgStyle)
-	builder.WriteLabel(" ", gstyle)
-	builder.WriteLabel(state.currentState.Format("on", "off"), msgStyle)
-
-	return stext.NewTextPairs(adapterText, builder.Finish())
+	return builder.Finish()
 }
 
 var _ adNoder = (*adapterNode)(nil)
