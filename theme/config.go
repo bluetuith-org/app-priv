@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/ayn2op/tview"
+	"github.com/gdamore/tcell/v3"
 	tc "github.com/gdamore/tcell/v3/color"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
@@ -86,6 +86,7 @@ type Configuration struct {
 		Selection string `themedef:"bg:from-theme; fg:blue"`
 
 		OperationNumber string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,italic,underline"`
+		Time            string `themedef:"bg:from-theme; fg:grey; attr:italic"`
 		PropertyName    string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
 		Error           string `themedef:"bg:from-theme; fg:red; attr:bold"`
 		Completed       string `themedef:"bg:from-theme; fg:green"`
@@ -154,7 +155,7 @@ func (r *RootConfiguration) convertToTheme() Theme {
 }
 
 func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
-	style := tview.Style{}
+	style := tcell.Style{}
 
 	for seg := range strings.SplitSeq(*p.rootCfg, propSegmentSep) {
 		prop, val, _ := strings.Cut(seg, propValSep)

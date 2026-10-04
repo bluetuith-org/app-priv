@@ -67,7 +67,8 @@ type Keybindings struct {
 	}
 
 	Operations struct {
-		Cancel Keybinding
+		Cancel   Keybinding
+		ClearAll Keybinding
 	}
 
 	Transfers struct {
@@ -125,6 +126,7 @@ const (
 	KeyADTreeExpandOrSelect
 	KeyTabPaneSwitchSections
 	KeyOperationsCancel
+	KeyOperationsClearAll
 	KeyTransfersSuspend
 	KeyTransfersResume
 	KeyTransfersCancel
@@ -317,6 +319,11 @@ func defaultConfig() *Keybindings {
 		"Cancel",
 		"Cancel",
 	)
+	k.Operations.ClearAll = newKeybinding(
+		KeyOperationsClearAll, newTcellKey(tcell.Key(256), "C", tcell.ModNone), // C
+		"ClearAll",
+		"ClearAll",
+	)
 	k.Transfers.Suspend = newKeybinding(
 		KeyTransfersSuspend, newTcellKey(tcell.Key(256), "s", tcell.ModNone), // s
 		"Suspend",
@@ -382,7 +389,7 @@ func iterProperties(kb *Keybindings, cfg *Configuration) iter.Seq[parseKeybindin
 	}
 
 	return func(yield func(parseKeybindingInfo) bool) {
-		for i := range 45 {
+		for i := range 46 {
 			if !yield(getProperty(kb, cfg, i)) {
 				return
 			}
@@ -535,42 +542,46 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.Operations.Cancel
 
 	case 35:
+		p.kb = &kb.Operations.ClearAll
+		p.cmpCfg = cfg.Operations.ClearAll
+
+	case 36:
 		p.kb = &kb.Transfers.Suspend
 		p.cmpCfg = cfg.Transfers.Suspend
 
-	case 36:
+	case 37:
 		p.kb = &kb.Transfers.Resume
 		p.cmpCfg = cfg.Transfers.Resume
 
-	case 37:
+	case 38:
 		p.kb = &kb.Transfers.Cancel
 		p.cmpCfg = cfg.Transfers.Cancel
 
-	case 38:
+	case 39:
 		p.kb = &kb.Player.ToggleDisplay
 		p.cmpCfg = cfg.Player.ToggleDisplay
 
-	case 39:
+	case 40:
 		p.kb = &kb.Player.ToggleMediaPlaying
 		p.cmpCfg = cfg.Player.ToggleMediaPlaying
 
-	case 40:
+	case 41:
 		p.kb = &kb.Player.Next
 		p.cmpCfg = cfg.Player.Next
 
-	case 41:
+	case 42:
 		p.kb = &kb.Player.Previous
 		p.cmpCfg = cfg.Player.Previous
 
-	case 42:
+	case 43:
 		p.kb = &kb.Player.SeekForward
 		p.cmpCfg = cfg.Player.SeekForward
 
-	case 43:
+	case 44:
 		p.kb = &kb.Player.SeekBackward
 		p.cmpCfg = cfg.Player.SeekBackward
 
-	case 44:
+	case 45:
 		p.kb = &kb.Player.Stop
 		p.cmpCfg = cfg.Player.Stop
 

@@ -61,7 +61,8 @@ type Configuration struct {
 	}
 
 	Operations struct {
-		Cancel string `keydef:"x" keyshorthelp:"Cancel" keylonghelp:"Cancel"`
+		Cancel   string `keydef:"x" keyshorthelp:"Cancel" keylonghelp:"Cancel"`
+		ClearAll string `keydef:"C" keyshorthelp:"ClearAll" keylonghelp:"ClearAll"`
 	}
 
 	Transfers struct {

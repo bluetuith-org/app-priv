@@ -24,7 +24,7 @@ type parseThemeInfo struct {
 	rootCfg *string
   cmpCfg string
 
-	style *tview.Style
+	style *tcell.Style
 }
 
 // iterProperties iterates over the configuration's and theme's properties.
@@ -132,7 +132,7 @@ func (t *ThemeGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error)
 
 	t.count++
 
-	return newGenTemplRet("tview.Style", true, true), nil
+	return newGenTemplRet("tcell.Style", true, true), nil
 }
 
 func (t *ThemeGenImpl) GetPartialCode() string {

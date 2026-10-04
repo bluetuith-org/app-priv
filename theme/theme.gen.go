@@ -5,76 +5,77 @@ package theme
 import (
 	"iter"
 
-	"github.com/ayn2op/tview"
+	"github.com/gdamore/tcell/v3"
 )
 
 // Theme represents the settings for the app's theme.
 type Theme struct {
 	Tint string
 
-	Global tview.Style
+	Global tcell.Style
 
 	App struct {
-		TitleBar tview.Style
+		TitleBar tcell.Style
 
-		Border        tview.Style
-		BorderFocused tview.Style
+		Border        tcell.Style
+		BorderFocused tcell.Style
 	}
 
 	ADTree struct {
-		Title      tview.Style
-		Indicators tview.Style
-		Selection  tview.Style
+		Title      tcell.Style
+		Indicators tcell.Style
+		Selection  tcell.Style
 
-		Adapter tview.Style
+		Adapter tcell.Style
 
 		Device struct {
-			Discovered tview.Style
-			Paired     tview.Style
-			Unknown    tview.Style
+			Discovered tcell.Style
+			Paired     tcell.Style
+			Unknown    tcell.Style
 		}
 
-		DevicesList tview.Style
+		DevicesList tcell.Style
 
 		ActionsList struct {
-			Style tview.Style
-			Nodes tview.Style
+			Style tcell.Style
+			Nodes tcell.Style
 		}
 	}
 
 	TabsPane struct {
-		Style      tview.Style
-		Tab        tview.Style
-		FocusedTab tview.Style
+		Style      tcell.Style
+		Tab        tcell.Style
+		FocusedTab tcell.Style
 	}
 
 	Info struct {
-		Style tview.Style
-		Title tview.Style
+		Style tcell.Style
+		Title tcell.Style
 	}
 
 	Operations struct {
-		Title     tview.Style
-		Selection tview.Style
+		Title     tcell.Style
+		Selection tcell.Style
 
-		OperationNumber tview.Style
-		PropertyName    tview.Style
-		Error           tview.Style
-		Completed       tview.Style
-		InProgress      tview.Style
-		Message         tview.Style
+		OperationNumber tcell.Style
+		Time            tcell.Style
+		PropertyName    tcell.Style
+		Error           tcell.Style
+		Completed       tcell.Style
+		InProgress      tcell.Style
+		Message         tcell.Style
 	}
 
 	Log struct {
-		Title tview.Style
-		Time  tview.Style
-		Info  tview.Style
-		Debug tview.Style
-		Error tview.Style
+		Title tcell.Style
+		Time  tcell.Style
+		Info  tcell.Style
+		Debug tcell.Style
+		Error tcell.Style
 	}
 
 	StatusBar struct {
-		Style tview.Style
+		Style tcell.Style
 	}
 }
 
@@ -109,6 +110,7 @@ func defaultConfig() *RootConfiguration {
 	r.Operations.Title = "bg:from-theme;fg:from-theme"
 	r.Operations.Selection = "bg:from-theme;fg:blue"
 	r.Operations.OperationNumber = "bg:from-theme;fg:brightpurple;attr:bold,italic,underline"
+	r.Operations.Time = "bg:from-theme;fg:grey;attr:italic"
 	r.Operations.PropertyName = "bg:from-theme;fg:brightpurple;attr:bold,underline"
 	r.Operations.Error = "bg:from-theme;fg:red;attr:bold"
 	r.Operations.Completed = "bg:from-theme;fg:green"
@@ -129,7 +131,7 @@ type parseThemeInfo struct {
 	rootCfg *string
 	cmpCfg  string
 
-	style *tview.Style
+	style *tcell.Style
 }
 
 // iterProperties iterates over the configuration's and theme's properties.
@@ -143,7 +145,7 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 	}
 
 	return func(yield func(parseThemeInfo) bool) {
-		for i := range 33 {
+		for i := range 34 {
 			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
@@ -267,56 +269,61 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.Operations.OperationNumber
 
 	case 22:
+		p.rootCfg = &cfg.Operations.Time
+		p.cmpCfg = cmpCfg.Operations.Time
+		p.style = &t.Operations.Time
+
+	case 23:
 		p.rootCfg = &cfg.Operations.PropertyName
 		p.cmpCfg = cmpCfg.Operations.PropertyName
 		p.style = &t.Operations.PropertyName
 
-	case 23:
+	case 24:
 		p.rootCfg = &cfg.Operations.Error
 		p.cmpCfg = cmpCfg.Operations.Error
 		p.style = &t.Operations.Error
 
-	case 24:
+	case 25:
 		p.rootCfg = &cfg.Operations.Completed
 		p.cmpCfg = cmpCfg.Operations.Completed
 		p.style = &t.Operations.Completed
 
-	case 25:
+	case 26:
 		p.rootCfg = &cfg.Operations.InProgress
 		p.cmpCfg = cmpCfg.Operations.InProgress
 		p.style = &t.Operations.InProgress
 
-	case 26:
+	case 27:
 		p.rootCfg = &cfg.Operations.Message
 		p.cmpCfg = cmpCfg.Operations.Message
 		p.style = &t.Operations.Message
 
-	case 27:
+	case 28:
 		p.rootCfg = &cfg.Log.Title
 		p.cmpCfg = cmpCfg.Log.Title
 		p.style = &t.Log.Title
 
-	case 28:
+	case 29:
 		p.rootCfg = &cfg.Log.Time
 		p.cmpCfg = cmpCfg.Log.Time
 		p.style = &t.Log.Time
 
-	case 29:
+	case 30:
 		p.rootCfg = &cfg.Log.Info
 		p.cmpCfg = cmpCfg.Log.Info
 		p.style = &t.Log.Info
 
-	case 30:
+	case 31:
 		p.rootCfg = &cfg.Log.Debug
 		p.cmpCfg = cmpCfg.Log.Debug
 		p.style = &t.Log.Debug
 
-	case 31:
+	case 32:
 		p.rootCfg = &cfg.Log.Error
 		p.cmpCfg = cmpCfg.Log.Error
 		p.style = &t.Log.Error
 
-	case 32:
+	case 33:
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style
