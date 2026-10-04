@@ -184,7 +184,7 @@ func (i *IconSet) populateIcons(isASCII bool) *IconSet {
 		},
 		Error: IconVariant{
 			IsASCII: isASCII,
-			Unicode: "\U0001F6AB",
+			Unicode: "\U00002718",
 			ASCII:   "",
 		},
 	}

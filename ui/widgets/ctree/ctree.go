@@ -31,7 +31,7 @@ type Widget struct {
 	focused        bool
 }
 
-var _ tview.Element = Widget{}
+var _ tview.Widget = Widget{}
 
 // SelectedMsg is emitted when the user selects a node.
 type SelectedMsg struct {
@@ -193,7 +193,7 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 				parent := v.rows[a.parent].node
 				if a.gx < width && parent.children[len(parent.children)-1] != a.node {
 					if y-1 >= area.Y && a.tx > a.gx {
-						tview.PrintJoinedSemigraphics(screen, x+a.gx, y-1, set.Left, w.graphicsStyle)
+						screen.Put(x+a.gx, y, set.Right, w.graphicsStyle)
 					}
 					screen.Put(x+a.gx, y, set.Right, w.graphicsStyle)
 				}
@@ -205,7 +205,7 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 						connector = set.LeftT
 					}
 				}
-				tview.PrintJoinedSemigraphics(screen, x+current.gx, y, connector, w.graphicsStyle)
+				screen.Put(x+current.gx, y, connector, w.graphicsStyle)
 				for pos := current.gx + 1; pos < current.tx && pos < width; pos++ {
 					screen.Put(x+pos, y, set.Top, w.graphicsStyle)
 				}

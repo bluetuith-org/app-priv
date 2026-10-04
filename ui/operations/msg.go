@@ -18,11 +18,16 @@ func MsgCreate(creationInfo CreationInfo, action Invoker) ui.RouterMsg {
 
 type opUpdateMsg struct {
 	id, message string
+	err         error
 	stage       operationStage
 }
 
 func msgOpUpdate(id, msg string, stage operationStage) ui.RouterMsg {
-	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg, stage})
+	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg, nil, stage})
+}
+
+func msgOpUpdateErr(id, msg string, err error) ui.RouterMsg {
+	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg, err, operationError})
 }
 
 type opDeleteMsg struct {
@@ -31,12 +36,4 @@ type opDeleteMsg struct {
 
 func msgOpDelete(id string) ui.RouterMsg {
 	return ui.ViewIDOperations.RouterMessage(opDeleteMsg{id})
-}
-
-type opErrorMsg struct {
-	err error
-}
-
-func msgOpError(err error) ui.RouterMsg {
-	return ui.ViewIDOperations.RouterMessage(opErrorMsg{err})
 }

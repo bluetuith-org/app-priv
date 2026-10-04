@@ -37,7 +37,7 @@ func newRootNode(rv ui.RootView) *rootNode {
 
 // NodeStyle returns the style to be applied for this node's label.
 func (r *rootNode) NodeStyle() tcell.Style {
-	return theme.Current().ADTree.Heading
+	return theme.Current().ADTree.Title
 }
 
 // Icon returns the Icon associated with this node.

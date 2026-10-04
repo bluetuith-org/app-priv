@@ -38,6 +38,7 @@ type CreationInfo struct {
 
 	header, message string
 	stage           operationStage
+	err             error
 
 	description stext.TextPairs
 }
@@ -53,18 +54,27 @@ func (o *CreationInfo) UpdateID(id string) {
 }
 
 func (o *CreationInfo) fromUpdateMsg(msg opUpdateMsg) {
-	if o.id != msg.id || msg.message == "" {
+	if o.id != msg.id || msg.message == "" && msg.err == nil {
 		return
 	}
 
 	o.message = msg.message
 	o.stage = msg.stage
+
+	o.err = msg.err
 }
 
 func (o *CreationInfo) buildSegments() (header, msg, status richtext.Segment) {
 	header = richtext.NewSegment(o.header, theme.Current().Operations.OperationNumber)
 
-	msg = richtext.NewSegment(o.message, theme.Current().Operations.Message)
+	switch o.stage {
+	case operationError:
+		msg = richtext.NewSegment(o.err.Error(), theme.Current().Operations.Error)
+
+	default:
+		msg = richtext.NewSegment(o.message, theme.Current().Operations.Message)
+	}
+
 	status = richtext.NewSegment(o.stage.Format())
 
 	return
@@ -93,11 +103,11 @@ func (o *RunningInfo) Info(msg string) {
 }
 
 // Ok sets the information for the completed operation.
-func (o *RunningInfo) Ok(msg string) {
-	o.v.SendMsg(msgOpUpdate(o.CreationInfo.id, msg, operationCompleted))
+func (o *RunningInfo) Ok(msg string) ui.RouterMsg {
+	return msgOpUpdate(o.CreationInfo.id, msg, operationCompleted)
 }
 
 // Error sends an error to the operations manager.
-func (o *RunningInfo) Error(err error) ui.RouterMsg {
-	return msgOpError(err)
+func (o *RunningInfo) Error(msg string, err error) ui.RouterMsg {
+	return msgOpUpdateErr(o.id, msg, err)
 }

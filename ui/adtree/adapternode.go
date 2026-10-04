@@ -1,6 +1,7 @@
 package adtree
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -129,9 +130,8 @@ func (a *adapterNode) actionPowered(state *adActionState) (operations.CreationIn
 	return operations.NewCreationInfo(a.getDesc("Turning adapter", state)), func(ov *operations.RunningInfo) tview.Msg {
 		ov.Info("Powering on...")
 		time.Sleep(2 * time.Second)
-		ov.Ok("Done")
 
-		return nil
+		return ov.Ok("Done")
 	}
 }
 
@@ -139,9 +139,8 @@ func (a *adapterNode) actionDiscoverable(state *adActionState) (operations.Creat
 	return operations.NewCreationInfo(a.getDesc("Setting adapter's discoverable", state)), func(ov *operations.RunningInfo) tview.Msg {
 		ov.Info("Starting Disc")
 		time.Sleep(2 * time.Second)
-		ov.Ok("Done")
 
-		return nil
+		return ov.Error("An error: ", errors.New("error"))
 	}
 }
 
@@ -156,7 +155,7 @@ func (a *adapterNode) actionScan(state *adActionState) (operations.CreationInfo,
 func (a *adapterNode) getDesc(name string, state *adActionState) stext.TextPairs {
 	var builder stext.TextPairBuilder
 
-	style := theme.Current().Operations.OperationNumber
+	style := theme.Current().Operations.PropertyName
 	adapterStyle := theme.Current().ADTree.Adapter
 	msgStyle := theme.Current().Operations.Message
 	gstyle := theme.Current().Global

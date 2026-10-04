@@ -35,7 +35,7 @@ type Model[T any] interface {
 	Update(focused bool, msg tview.Msg) (T, tview.Cmd)
 
 	// View draws this model onto the screen.
-	View(focused bool) tview.Element
+	View(focused bool) tview.Widget
 }
 
 // RootView represents the root view. All views must inherit this interface,

@@ -24,6 +24,8 @@ type Model struct {
 	running *ordered.Map[string, *RunningInfo]
 	focused bool
 
+	count int
+
 	rv ui.RootView
 }
 
@@ -58,16 +60,16 @@ func (m Model) ViewID() ui.ViewID {
 }
 
 // Keybinds implements [ui.KcVirtualHandler].
-func (m Model) Keybinds(msg tview.KeyMsg) (list.Action, bool) {
+func (m Model) Keybinds(msg tview.KeyMsg) list.Action {
 	switch {
 	case kb().NavigateUp.Matches(msg):
-		return list.ActionSelectUp, true
+		return list.ActionSelectUp
 
 	case kb().NavigateDown.Matches(msg):
-		return list.ActionSelectDown, true
+		return list.ActionSelectDown
 	}
 
-	return 0, false
+	return list.ActionNone
 }
 
 // OnChange implements [ui.KcVirtualHandler].
@@ -87,8 +89,8 @@ func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
 }
 
 // View draws this model onto the screen.
-func (m Model) View(focused bool) tview.Element {
-	ls := list.New(m.state, m.running.Len(), func(index int) tview.Element {
+func (m Model) View(focused bool) tview.Widget {
+	ls := list.New(m.state, m.running.Len(), func(index int) tview.Widget {
 		_, info := m.running.Nth(index)
 		if info == nil {
 			return card.Widget{}
@@ -138,9 +140,7 @@ func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
 		m.processUpdateMsg(ms)
 
 	case opDeleteMsg:
-		//m.removeOperation(ms)
-
-	case opErrorMsg:
+		m.removeOperation(ms)
 	}
 
 	return nil
@@ -151,15 +151,17 @@ func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error)
 		return nil, nil, fmt.Errorf("%w: msg ID empty on create", errOpInternal)
 	}
 
-	_, ok := m.running.Get(msg.id)
-	if ok {
+	runInfo, ok := m.running.Get(msg.id)
+	if ok && runInfo.stage == operationInProgress {
 		return nil, nil, errOpAlreadyInProgress
 	}
 
-	header := "Operation #" + strconv.Itoa(m.running.Len()+1)
+	header := "Operation #" + strconv.Itoa(m.count+1)
 
 	info := newRunningInfo(m.rv, msg.CreationInfo.updateHeader(header))
 	m.running.Set(msg.id, info)
+
+	m.count++
 
 	return info, msg.opAction, nil
 }
@@ -180,6 +182,11 @@ func (m *Model) processUpdateMsg(msg opUpdateMsg) bool {
 }
 
 func (m *Model) removeOperation(msg opDeleteMsg) {
+	info, ok := m.running.Get(msg.id)
+	if !ok || ok && info.stage == operationInProgress {
+		return
+	}
+
 	m.running.Delete(msg.id)
 }
 

@@ -64,7 +64,7 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 }
 
 // View draws this model onto the screen.
-func (m Model) View() tview.Element {
+func (m Model) View() tview.Widget {
 	vflex := row.New(
 		m.adTreeModel.View(!m.panelFocused),
 		m.tabsModel.View(m.panelFocused),

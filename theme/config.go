@@ -50,7 +50,7 @@ type Configuration struct {
 	}
 
 	ADTree struct {
-		Heading    string `themedef:"bg:from-theme; fg:from-theme"`
+		Title      string `themedef:"bg:from-theme; fg:from-theme"`
 		Indicators string `themedef:"bg:from-theme; fg:from-theme"`
 		Selection  string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
 
@@ -77,15 +77,16 @@ type Configuration struct {
 	}
 
 	Info struct {
-		Style   string `themedef:"bg:from-theme; fg:white"`
-		Heading string `themedef:"bg:from-theme; fg:from-theme"`
+		Style string `themedef:"bg:from-theme; fg:white"`
+		Title string `themedef:"bg:from-theme; fg:from-theme"`
 	}
 
 	Operations struct {
-		Heading   string `themedef:"bg:from-theme; fg:from-theme"`
+		Title     string `themedef:"bg:from-theme; fg:from-theme"`
 		Selection string `themedef:"bg:from-theme; fg:blue"`
 
 		OperationNumber string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,italic,underline"`
+		PropertyName    string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
 		Error           string `themedef:"bg:from-theme; fg:red; attr:bold"`
 		Completed       string `themedef:"bg:from-theme; fg:green"`
 		InProgress      string `themedef:"bg:from-theme; fg:yellow"`
@@ -93,11 +94,11 @@ type Configuration struct {
 	}
 
 	Log struct {
-		Heading string `themedef:"bg:from-theme; fg:from-theme"`
-		Time    string `themedef:"bg:from-theme; fg:brightblack(lighten:0.1)"`
-		Info    string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
-		Debug   string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
-		Error   string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
+		Title string `themedef:"bg:from-theme; fg:from-theme"`
+		Time  string `themedef:"bg:from-theme; fg:brightblack(lighten:0.1)"`
+		Info  string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
+		Debug string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
+		Error string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
 	}
 
 	StatusBar struct {

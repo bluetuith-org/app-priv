@@ -98,7 +98,7 @@ func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
 }
 
 // View returns the element that draws the model.
-func (m Model) View(focused bool) tview.Element {
+func (m Model) View(focused bool) tview.Widget {
 	return tabs.New(&m, m.handler.State).
 		Focused(focused).
 		Content(m.handler.activeContent(focused))

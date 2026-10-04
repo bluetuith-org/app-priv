@@ -50,7 +50,7 @@ func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
 }
 
 // View draws this model onto the screen.
-func (m Model) View(focused bool) tview.Element {
+func (m Model) View(focused bool) tview.Widget {
 	return textview.New(m.text).
 		Focused(focused).
 		ScrollState(&m.state).

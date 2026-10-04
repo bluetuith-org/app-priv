@@ -39,7 +39,7 @@ type Widget[T Provider] struct {
 	provider T
 
 	focused bool
-	content tview.Element
+	content tview.Widget
 }
 
 // New returns a new tab widget.
@@ -54,7 +54,7 @@ func (t Widget[T]) Focused(focused bool) Widget[T] {
 }
 
 // Content sets the active content for the tabbed pane.
-func (t Widget[T]) Content(content tview.Element) Widget[T] {
+func (t Widget[T]) Content(content tview.Widget) Widget[T] {
 	t.content = content
 	return t
 }

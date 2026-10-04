@@ -29,11 +29,11 @@ func newHandler(rv ui.RootView) *viewHandler {
 		indexView: make(map[int]ui.ViewID),
 	}
 
-	h.infoModel = info.New()
-	h.addModel(h.infoModel)
-
 	h.operationsModel = operations.New(rv)
 	h.addModel(h.operationsModel)
+
+	h.infoModel = info.New()
+	h.addModel(h.infoModel)
 
 	return h
 }
@@ -65,7 +65,7 @@ func (h *viewHandler) update(id ui.ViewID, focused bool, msg tview.Msg) tview.Cm
 	return cmd
 }
 
-func (h *viewHandler) activeContent(focused bool) tview.Element {
+func (h *viewHandler) activeContent(focused bool) tview.Widget {
 	id := h.indexView[h.ActiveIndex()]
 
 	switch id {
