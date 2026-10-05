@@ -26,7 +26,7 @@ type Provider interface {
 	ArrowConfig() (arrowLeft string, arrowRight string, arrowStyle tcell.Style, arrowWidth int)
 
 	// Keybind converts a [tview.KeyMsg] to an [Action].
-	Keybind(msg tview.KeyMsg) (Action, bool)
+	Keybind(msg tview.KeyMsg) Action
 
 	// OnSelect is called when a new tab item is selected.
 	OnSelect(index int) tview.Msg
@@ -189,8 +189,8 @@ func (t Widget[T]) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 			return msg
 		}
 
-		action, ok := t.provider.Keybind(ms)
-		if ok {
+		action := t.provider.Keybind(ms)
+		if action != ActionNone {
 			switch action {
 			case ActionPrevious:
 				return t.selectTab(t.previous())

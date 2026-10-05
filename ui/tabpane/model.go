@@ -70,15 +70,16 @@ func (m *Model) ArrowConfig() (arrowLeft string, arrowRight string, arrowStyle t
 }
 
 // Keybind converts a [tview.KeyMsg] to an [Action].
-func (m *Model) Keybind(msg tview.KeyMsg) (tabs.Action, bool) {
+func (m *Model) Keybind(msg tview.KeyMsg) tabs.Action {
 	switch {
-	case kb().SwitchPanes.Matches(msg):
-		return tabs.ActionNext, true
+	case kb().TabPane.Next.Matches(msg):
+		return tabs.ActionNext
 
-	default:
+	case kb().TabPane.Previous.Matches(msg):
+		return tabs.ActionPrevious
 	}
 
-	return 0, false
+	return tabs.ActionNone
 }
 
 // OnSelect is called when a new tab item is selected.

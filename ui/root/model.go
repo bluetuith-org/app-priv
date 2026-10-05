@@ -105,14 +105,14 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		case kb().Quit.Matches(ms):
 			return m.quitCmd()
 
-		case kb().SwitchPanes.Matches(ms):
+		case kb().ADTree.TabPane.Matches(ms):
 			if !m.panelFocused {
 				m.panelFocused = true
 			}
 
 			return nil
 
-		case kb().CloseItem.Matches(ms):
+		case kb().TabPane.ADTree.Matches(ms):
 			if m.panelFocused {
 				m.panelFocused = false
 			}

@@ -4,8 +4,6 @@ package keybindings
 
 // Configuration holds the configuration for the keybindings of the application.
 type Configuration struct {
-	SwitchPanes string `keydef:"tab" keyshorthelp:"SwitchPanes" keylonghelp:"SwitchPanes"`
-
 	SelectItem  string `keydef:"enter" keyshorthelp:"SelectItem" keylonghelp:"SelectItem"`
 	CloseItem   string `keydef:"esc" keyshorthelp:"CloseItem" keylonghelp:"CloseItem"`
 	FilterItems string `keydef:"/" keyshorthelp:"FilterItems" keylonghelp:"FilterItems"`
@@ -54,10 +52,13 @@ type Configuration struct {
 
 	ADTree struct {
 		ExpandOrSelect string `keydef:"right" keyshorthelp:"ExpandOrSelect" keylonghelp:"ExpandOrSelect"`
+		TabPane        string `keydef:"tab" keyshorthelp:"SwitchPanes" keylonghelp:"SwitchPanes"`
 	}
 
 	TabPane struct {
-		SwitchSections string `keydef:"shift+tab" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
+		Next     string `keydef:"tab" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
+		Previous string `keydef:"shift+tab" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
+		ADTree   string `keydef:"esc" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
 	}
 
 	Operations struct {

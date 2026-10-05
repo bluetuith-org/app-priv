@@ -5,6 +5,7 @@ type Action int
 
 // The different types of actions.
 const (
-	ActionPrevious Action = iota
+	ActionNone Action = iota
+	ActionPrevious
 	ActionNext
 )

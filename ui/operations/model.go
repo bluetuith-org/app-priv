@@ -97,7 +97,6 @@ func (m Model) View(focused bool) tview.Widget {
 		borders := tview.BorderSetRound()
 		borderStyle := style
 		if m.state.Cursor() == index && focused {
-			borders = tview.BorderSetThick()
 			borderStyle = theme.Current().Operations.Selection
 		}
 
@@ -162,10 +161,8 @@ func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error)
 	header := "#" + strconv.Itoa(m.count)
 
 	info := newRunningInfo(m.rv, msg.CreationInfo.updateHeader(header))
-	for range 10 {
-		m.run[info.id] = info
-		m.ord = slices.Insert(m.ord, 0, info)
-	}
+	m.run[info.id] = info
+	m.ord = slices.Insert(m.ord, 0, info)
 
 	return info, msg.opAction, nil
 }
