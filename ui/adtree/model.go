@@ -1,16 +1,19 @@
 package adtree
 
 import (
-	"iter"
+	"time"
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
-	"github.com/bluetuith-org/bluetuith/keybindings"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
 	"github.com/gdamore/tcell/v3"
 )
+
+const dbTime = 750 * time.Millisecond
 
 // Model represents an adapter-device tree.
 type Model struct {
@@ -21,6 +24,10 @@ type Model struct {
 	graphicsSet tview.BorderSet
 	markers     ctree.Markers
 
+	tm        *time.Timer
+	reset     bool
+	rootident string
+
 	rv ui.RootView
 }
 
@@ -29,7 +36,6 @@ func New(rv ui.RootView) Model {
 	root := newRootNode(rv)
 
 	state := ctree.SelectionState{}
-	state.SetCurrentNode(root.Node)
 
 	graphicsSet := tview.BorderSetRound()
 	markers := ctree.Markers{
@@ -38,6 +44,9 @@ func New(rv ui.RootView) Model {
 		Leaf:      " ",
 	}
 
+	tm := time.NewTimer(dbTime)
+	tm.Reset(dbTime)
+
 	return Model{
 		root: root,
 
@@ -45,6 +54,8 @@ func New(rv ui.RootView) Model {
 
 		graphicsSet: graphicsSet,
 		markers:     markers,
+
+		tm: tm,
 
 		rv: rv,
 	}
@@ -57,7 +68,7 @@ func (m *Model) ViewID() ui.ViewID {
 
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
-	return m.populate
+	return tview.Batch(m.populate, m.dbTimer)
 }
 
 // Update receives messages when this model has focus.
@@ -78,7 +89,8 @@ func (m Model) View(focused bool) tview.Widget {
 		Graphics(true).
 		GraphicsSet(m.graphicsSet).
 		GraphicsStyle(theme.Current().Global).
-		Markers(m.markers)
+		Markers(m.markers).
+		SelectedStyle(theme.Current().ADTree.Selection)
 
 	return box.New(tree).
 		Background(theme.Current().Global.GetBackground()).
@@ -88,13 +100,13 @@ func (m Model) View(focused bool) tview.Widget {
 // Keybind converts keybindings to actions.
 func (m *Model) Keybind(msg tview.KeyMsg) (ctree.Action, bool) {
 	switch {
-	case kb().NavigateUp.Matches(msg):
+	case ui.Kb().NavigateUp.Matches(msg):
 		return ctree.ActionUp, true
 
-	case kb().NavigateDown.Matches(msg):
+	case ui.Kb().NavigateDown.Matches(msg):
 		return ctree.ActionDown, true
 
-	case kb().ADTree.ExpandOrSelect.Matches(msg):
+	case ui.Kb().ADTree.ExpandOrSelect.Matches(msg):
 		return ctree.ActionSelect, true
 	}
 
@@ -117,47 +129,60 @@ func (m *Model) MarkerStyle(*ctree.Node) tcell.Style {
 }
 
 // StyledLabels returns a sequence of text and their associated styles.
-func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[string, tcell.Style] {
-	return func(yield func(string, tcell.Style) bool) {
-		data := node.Data[*adNode]()
-
-		style := data.GetStyle()
-		if selected {
-			style = theme.Current().ADTree.Selection
-		}
-
-		for _, segment := range [3]string{data.GetIcon(), " ", data.Name()} {
-			if !yield(segment, style) {
-				return
-			}
-		}
-	}
+func (m *Model) StyledLabels(node *ctree.Node) richtext.Line {
+	return node.Data[*adNode]().Content()
 }
 
-func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
+	case dbEvent:
+		return m.dbHandler()
+
 	case selectionChange:
 		m.selectionState.Apply(ctree.Change(ms))
+		m.resetTimer()
+		return m.resetInformation()
 
 	case rootNodeMsg:
 		m.root = ms.node
 		m.selectionState.SetCurrentNode(m.root.Node)
+		m.resetTimer()
+		return m.resetInformation()
 
 	case selectedMsg:
 		data := ms.node.Data[*adNode]()
 		if data.nodeType != nodeTypeAction {
 			ms.node.SetExpanded(!ms.node.Expanded())
 			m.selectionState.SetCurrentNode(ms.node)
-			return nil
+			return m.sendFocusMsg(focused)
 		}
 
 		m.selectionState.SetCurrentNode(ms.node)
-		return acStateToOpMsg(data.ID(), data.actionState).SendRoutedMsg(m.rv)
+		return tview.Batch(
+			m.sendFocusMsg(focused),
+			acStateToOpMsg(data.ID(), data.actionState).SendRoutedMsg(m.rv),
+		)
+
+	case tview.KeyMsg:
+		data := m.selectionState.CurrentNode().Data[*adNode]()
+		if rmsg, ok := data.Noder().HandleKeys(ms); ok {
+			return func() tview.Msg {
+				return rmsg
+			}
+		}
 
 	default:
 	}
 
 	return nil
+}
+
+func (m *Model) sendFocusMsg(focused bool) tview.Cmd {
+	if focused {
+		return nil
+	}
+
+	return ui.FocusViewCmd(ui.ViewIDAdTree)
 }
 
 func (m *Model) populate() tview.Msg {
@@ -181,19 +206,73 @@ func (m *Model) populate() tview.Msg {
 	return ui.ViewIDAdTree.RouterMessage(rootNodeMsg{root})
 }
 
-type selectionChange ctree.Change
+func (m *Model) dbHandler() tview.Cmd {
+	currNode := m.selectionState.CurrentNode()
+	if currNode == nil {
+		return m.dbTimer
+	}
 
-type selectedMsg struct {
-	node *ctree.Node
+	node := currNode.Data[*adNode]()
+	rootID := node.noder.RootID()
+	if m.rootident == rootID && !m.reset {
+		return m.dbTimer
+	}
+
+	m.rootident = rootID
+	m.reset = false
+
+	id, inf := node.noder.Information()
+
+	return tview.Batch(func() tview.Msg {
+		return info.Msg(id, inf)
+	}, m.dbTimer)
 }
 
-type rootNodeMsg struct {
-	node *rootNode
+func (m *Model) resetTimer() {
+	m.tm.Reset(dbTime)
 }
 
-func kb() *keybindings.Keybindings {
-	return keybindings.Current
+func (m *Model) resetInformation() tview.Cmd {
+	if m.reset {
+		return nil
+	}
+
+	currNode := m.selectionState.CurrentNode()
+	if currNode == nil {
+		return nil
+	}
+
+	node := currNode.Data[*adNode]()
+	rootID := node.noder.RootID()
+	if m.rootident == rootID {
+		return nil
+	}
+
+	m.reset = true
+	return func() tview.Msg {
+		return info.ResetMsg()
+	}
 }
+
+func (m *Model) dbTimer() tview.Msg {
+	<-m.tm.C
+	return dbEvent{}
+}
+
+type (
+	selectionChange ctree.Change
+	selectedMsg     struct {
+		node *ctree.Node
+	}
+)
+
+type (
+	rootNodeMsg struct {
+		node *rootNode
+	}
+
+	dbEvent struct{}
+)
 
 var (
 	_ ui.Model[Model] = Model{}

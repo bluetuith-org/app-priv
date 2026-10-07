@@ -1,11 +1,7 @@
 package adtree
 
 import (
-	"strconv"
-
-	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
-	"github.com/bluetuith-org/bluetuith/keybindings"
-	"github.com/bluetuith-org/bluetuith/theme"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
 	"github.com/gdamore/tcell/v3"
@@ -22,6 +18,7 @@ const (
 	nodeTypeDevicesList
 	nodeTypeAction
 	nodeTypeActionsList
+	nodeTypeStatus
 )
 
 // adSubNodePos specifies the position of sub-nodes under
@@ -45,17 +42,16 @@ type adNode struct {
 	noder       adNoder
 	actionState *adActionState
 
-	name string
+	content richtext.Line
 
 	rv ui.RootView
 }
 
-func newAdNode(ntype adTreeNodeType, name string, expanded bool, id nodeID, noder adNoder, rv ui.RootView) *adNode {
+func newAdNode(ntype adTreeNodeType, expanded bool, id nodeID, noder adNoder, rv ui.RootView) *adNode {
 	data := &adNode{}
 
 	node := ctree.NewNode(data).SetIndent(5).SetExpanded(expanded)
 	data.Node = node
-	data.SetName(name)
 
 	data.id = id
 	data.nodeType = ntype
@@ -70,14 +66,19 @@ func (a *adNode) ID() string {
 	return a.id.String()
 }
 
-// Name returns the name of the node.
-func (a *adNode) Name() string {
-	return a.name
+// Noder returns the interface that implements [adNoder].
+func (a *adNode) Noder() adNoder {
+	return a.noder
 }
 
-// SetName sets the name for the node.
-func (a *adNode) SetName(name string) {
-	a.name = name
+// Content returns the name of the node.
+func (a *adNode) Content() richtext.Line {
+	return a.content
+}
+
+// SetContent sets the name for the node.
+func (a *adNode) SetContent(content richtext.Line) {
+	a.content = content
 }
 
 func (a *adNode) ParentNode() (*adNode, bool) {
@@ -89,76 +90,24 @@ func (a *adNode) ParentNode() (*adNode, bool) {
 	return parent.Data[*adNode](), true
 }
 
-// GetStyle returns a style to be applied for this node's label.
-func (a *adNode) GetStyle() tcell.Style {
-	switch a.nodeType {
-	case nodeTypeAction:
-		return theme.Current().ADTree.ActionsList.Nodes
+func buildLabel(icon, name string, style tcell.Style) richtext.Line {
+	return richtext.NewLine(
+		richtext.NewSegment(icon, style),
+		richtext.NewSegment(" ", style),
+		richtext.NewSegment(name, style),
+	)
+}
 
-	case nodeTypeActionsList:
-		return theme.Current().ADTree.ActionsList.Style
-
-	case nodeTypeDevicesList:
-		return theme.Current().ADTree.DevicesList
+func pushSeg(line richtext.Line, bgStyle tcell.Style, yield func(richtext.Segment) bool) bool {
+	if !yield(richtext.NewSegment(" ", bgStyle)) {
+		return false
 	}
 
-	return a.noder.NodeStyle()
-}
-
-// GetIcon returns an icon for this node.
-func (a *adNode) GetIcon() string {
-	switch a.nodeType {
-	case nodeTypeAction:
-		return theme.Icons().Actions.String()
-
-	case nodeTypeActionsList:
-		return theme.Icons().Actions.String()
-
-	case nodeTypeDevicesList:
-		return theme.Icons().Devices.String()
+	for _, seg := range line {
+		if !yield(seg) {
+			return false
+		}
 	}
 
-	return a.noder.Icon()
-}
-
-// AddDevicesList adds a devices-list node, under the adapter node.
-func (a *adNode) AddDevicesList(devices []bluetooth.DeviceData) {
-	dlAdNode := newAdNode(
-		nodeTypeDevicesList, "Devices",
-		true, a.id.appendSubNodeNib(nibDevicesList),
-		a.noder, a.rv,
-	)
-
-	for _, device := range devices {
-		newDeviceNode(a.rv, dlAdNode, device)
-	}
-
-	a.AddChild(dlAdNode.Node)
-}
-
-// AddActionsList adds an actions-list node to the tree,
-// under adapter or device nodes.
-func (a *adNode) AddActionsList() {
-	alAdNode := newAdNode(
-		nodeTypeActionsList, "Actions",
-		false, a.id.appendSubNodeNib(nibActionsList),
-		a.noder, a.rv,
-	)
-
-	alAdNode.SetChildren(make([]*ctree.Node, 0, 5))
-
-	a.AddChild(alAdNode.Node)
-}
-
-// AddAction adds an action node to the tree, under the actions-list node.
-func (a *adNode) AddAction(key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) {
-	actionNode := newAdNode(
-		nodeTypeAction, "",
-		false, a.id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
-		a.noder, a.rv,
-	)
-
-	actionNode.actionState = newAdActionState(key, state, isToggleable, invoker)
-
-	a.AddChild(actionNode.Node)
+	return true
 }

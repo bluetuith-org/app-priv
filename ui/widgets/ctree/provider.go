@@ -1,9 +1,8 @@
 package ctree
 
 import (
-	"iter"
-
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -22,5 +21,5 @@ type Provider interface {
 	MarkerStyle(node *Node) tcell.Style
 
 	// StyledLabels returns a sequence of text and their associated styles.
-	StyledLabels(node *Node, selected bool) iter.Seq2[string, tcell.Style]
+	StyledLabels(node *Node) richtext.Line
 }

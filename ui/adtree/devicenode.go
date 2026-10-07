@@ -1,23 +1,27 @@
 package adtree
 
 import (
+	"iter"
 	"runtime"
 
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetooth-classic/api/optional"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
 	"github.com/gdamore/tcell/v3"
+	"github.com/gdamore/tcell/v3/color"
 )
 
 // deviceNode describes a device node.
 type deviceNode struct {
 	*adNode
-	emptyNoder
 
-	device bluetooth.DeviceData
+	parentNoder adNoder
+	device      bluetooth.DeviceData
 }
 
 // newDeviceNode creates a new device node.
@@ -25,25 +29,36 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 	dn := &deviceNode{}
 
 	deviceNode := newAdNode(
-		nodeTypeDevice, getDeviceDisplayName(device.DeviceEventData),
+		nodeTypeDevice,
 		true, newDeviceNodeID(device.DeviceAddress),
 		dn, rv,
 	)
 
 	dn.device = device
 	dn.adNode = deviceNode
+	dn.parentNoder = parentNode.noder
 
-	dn.AddActionsList()
-	dn.PopulateActions()
-
+	newActionsListNode(dn.adNode)
 	parentNode.AddChild(dn.Node)
+
+	dn.Refresh()
 
 	return deviceNode
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
 func (d *deviceNode) HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool) {
-	return actionHandleKeyMsg(p, d.Node)
+	if msg, ok := actionHandleKeyMsg(p, d.Node); ok {
+		return msg, ok
+	}
+
+	return d.parentNoder.HandleKeys(p)
+}
+
+// Refresh refreshes the content of the node.
+func (d *deviceNode) Refresh() {
+	d.SetContent(buildLabel(d.Icon(), getDeviceDisplayName(d.device.DeviceEventData), d.NodeStyle()))
+	d.PopulateActions()
 }
 
 // NodeStyle returns the style to be applied for this node's label.
@@ -64,6 +79,59 @@ func (d *deviceNode) Icon() string {
 	return theme.DeviceClassToIcon(theme.Icons(), d.device.Class).String()
 }
 
+// RootID returns the root ID for the subnodes of an adapter or device node.
+func (d *deviceNode) RootID() string {
+	return d.id.String()
+}
+
+// Information returns a message to print adapter/device information.
+func (d *deviceNode) Information() (string, richtext.Text) {
+	return d.id.String(), nil
+}
+
+// StatusIcons returns the status icon pills for this node.
+func (d *deviceNode) StatusIcons(bgStyle tcell.Style) iter.Seq[richtext.Segment] {
+	return func(yield func(richtext.Segment) bool) {
+		style := tcell.StyleDefault.Foreground(color.Black).Background(color.Green)
+
+		for i, state := range [4]struct {
+			Name string
+			Opt  optional.Optional[bool]
+		}{
+			{"New", d.device.Paired},
+			{"Connected", d.device.Connected},
+			{"Trusted", d.device.Trusted},
+
+			{"Blocked", d.device.Blocked},
+		} {
+			v, ok := state.Opt.Get()
+			if !ok {
+				continue
+			}
+
+			if i != 0 && !v {
+				continue
+			}
+
+			if i == 0 {
+				paired := "Paired"
+				if !v {
+					paired = "New"
+				}
+
+				state.Name = paired
+			}
+
+			if !pushSeg(
+				ui.RenderPillIcon(state.Name, style),
+				bgStyle, yield,
+			) {
+				return
+			}
+		}
+	}
+}
+
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (d *deviceNode) PopulateActions() {
 	actionsListNode := d.Children()[relPosActionsListNode]
@@ -74,34 +142,34 @@ func (d *deviceNode) PopulateActions() {
 		return
 	}
 
-	node.AddAction(kb().Device.ToggleConnection, boolToActionState(d.device.Connected.Value()), true, d.actionConnect)
-	node.AddAction(kb().Device.TogglePairedState, boolToActionState(d.device.Paired.Value()), true, d.actionPair)
+	newActionNode(node, ui.Kb().Device.ToggleConnection, boolToActionState(d.device.Connected.Value()), true, d.actionConnect)
+	newActionNode(node, ui.Kb().Device.TogglePairedState, boolToActionState(d.device.Paired.Value()), true, d.actionPair)
 
 	if d.rv.Features().Has(appfeatures.FeatureSendFile, appfeatures.FeatureReceiveFile) &&
 		d.device.HaveService(bluetooth.ObexObjpushServiceClass) {
-		node.AddAction(kb().Device.SendFiles, actionStateNone, false, d.actionSend)
+		newActionNode(node, ui.Kb().Device.SendFiles, actionStateNone, false, d.actionSend)
 	}
 
 	if runtime.GOOS == "linux" {
-		node.AddAction(kb().Device.Trust, boolToActionState(d.device.Trusted.Value()), true, d.actionTrust)
-		node.AddAction(kb().Device.Block, boolToActionState(d.device.Blocked.Value()), true, d.actionBlock)
+		newActionNode(node, ui.Kb().Device.Trust, boolToActionState(d.device.Trusted.Value()), true, d.actionTrust)
+		newActionNode(node, ui.Kb().Device.Block, boolToActionState(d.device.Blocked.Value()), true, d.actionBlock)
 
 		if d.device.HaveService(bluetooth.AudioSourceServiceClass) ||
 			d.device.HaveService(bluetooth.AudioSinkServiceClass) {
-			node.AddAction(kb().Device.AudioProfiles, actionStateNone, false, d.actionAudioProfiles)
+			newActionNode(node, ui.Kb().Device.AudioProfiles, actionStateNone, false, d.actionAudioProfiles)
 		}
 
 		if d.device.HaveService(bluetooth.AudioSourceServiceClass) &&
 			d.device.HaveService(bluetooth.AvRemoteServiceClass) &&
 			d.device.HaveService(bluetooth.AvRemoteTargetServiceClass) {
-			node.AddAction(kb().Player.ToggleDisplay, actionStateDisabled, true, d.actionMediaPlayer)
+			newActionNode(node, ui.Kb().Player.ToggleDisplay, actionStateDisabled, true, d.actionMediaPlayer)
 		}
 
 		if d.rv.Features().Has(appfeatures.FeatureNetwork) &&
 			d.device.HaveService(bluetooth.NapServiceClass) &&
 			(d.device.HaveService(bluetooth.PanuServiceClass) ||
 				d.device.HaveService(bluetooth.DialupNetServiceClass)) {
-			node.AddAction(kb().Device.NetworkOptions, actionStateNone, false, d.actionNetwork)
+			newActionNode(node, ui.Kb().Device.NetworkOptions, actionStateNone, false, d.actionNetwork)
 		}
 	}
 
@@ -118,33 +186,33 @@ func (d *deviceNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdate
 	var enabledText, disabledText string
 
 	switch state.key {
-	case kb().Device.ToggleConnection:
+	case ui.Kb().Device.ToggleConnection:
 		enabledText = "Connect"
 		disabledText = "Disconnect"
 
-	case kb().Device.TogglePairedState:
+	case ui.Kb().Device.TogglePairedState:
 		enabledText = "Pair"
 		disabledText = "Unpair/Remove"
 
-	case kb().Device.Trust:
+	case ui.Kb().Device.Trust:
 		enabledText = "Trust"
 		disabledText = "Untrust"
 
-	case kb().Device.Block:
+	case ui.Kb().Device.Block:
 		enabledText = "Block"
 		disabledText = "Unblock"
 
-	case kb().Device.SendFiles:
+	case ui.Kb().Device.SendFiles:
 		enabledText = "Send file(s)"
 
-	case kb().Device.NetworkOptions:
+	case ui.Kb().Device.NetworkOptions:
 		enabledText = "List network profiles (Bluetooth tethering)"
 
-	case kb().Device.AudioProfiles:
+	case ui.Kb().Device.AudioProfiles:
 		enabledText = "List audio profiles"
 
 	//TODO: Show/hide
-	case kb().Player.ToggleDisplay:
+	case ui.Kb().Player.ToggleDisplay:
 		enabledText = "Show media player"
 		disabledText = "Hide media player"
 
@@ -157,7 +225,11 @@ func (d *deviceNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdate
 		actionText = disabledText
 	}
 
-	actionNode.SetName(actionText)
+	actionNode.SetContent(buildLabel(actionNode.noder.Icon(), actionText, actionNode.noder.NodeStyle()))
+}
+
+// SetAdapterEventData sets the adapter event data for the node.
+func (d *deviceNode) SetAdapterEventData(bluetooth.AdapterEventData) {
 }
 
 // SetDeviceEventData sets the device event data for the node.

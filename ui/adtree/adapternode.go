@@ -2,22 +2,24 @@ package adtree
 
 import (
 	"errors"
+	"iter"
 	"strings"
 	"time"
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetooth-classic/api/optional"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
 	"github.com/gdamore/tcell/v3"
+	"github.com/gdamore/tcell/v3/color"
 )
 
 // adapterNode describes an adapter node.
 type adapterNode struct {
 	*adNode
-	emptyNoder
 
 	adapter bluetooth.AdapterData
 }
@@ -27,7 +29,7 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	an := &adapterNode{}
 
 	adapterNode := newAdNode(
-		nodeTypeAdapter, getAdapterDisplayName(adapter),
+		nodeTypeAdapter,
 		true, newAdapterNodeID(adapter.AdapterAddress),
 		an, rv,
 	)
@@ -35,14 +37,19 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	an.adNode = adapterNode
 	an.adapter = adapter
 
-	an.AddActionsList()
-	an.AddDevicesList(devices)
-
-	an.PopulateActions()
+	newActionsListNode(an.adNode)
+	newDeviceListNode(adapterNode, devices)
 
 	rootNode.AddChild(adapterNode.Node)
+	an.Refresh()
 
 	return adapterNode
+}
+
+// Refresh refreshes the content of the node.
+func (a *adapterNode) Refresh() {
+	a.SetContent(buildLabel(a.Icon(), getAdapterDisplayName(a.adapter), a.NodeStyle()))
+	a.PopulateActions()
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
@@ -60,6 +67,54 @@ func (a *adapterNode) Icon() string {
 	return theme.Icons().Adapter.String()
 }
 
+// RootID returns the root ID for the subnodes of an adapter or device node.
+func (a *adapterNode) RootID() string {
+	return a.id.String()
+}
+
+// Information returns a message to print adapter/device information.
+func (a *adapterNode) Information() (string, richtext.Text) {
+	return a.id.String(), nil
+}
+
+// StatusIcons returns the status icon pills for this node.
+func (a *adapterNode) StatusIcons(bgStyle tcell.Style) iter.Seq[richtext.Segment] {
+	return func(yield func(richtext.Segment) bool) {
+		style := tcell.StyleDefault.Foreground(color.Black).Background(color.Green)
+
+		if powered, ok := a.adapter.Powered.Get(); ok {
+			en, enStyle := "Enabled", style
+			if !powered {
+				en, enStyle = "Disabled", style
+			}
+
+			if !pushSeg(ui.RenderPillIcon(en, enStyle), bgStyle, yield) {
+				return
+			}
+		}
+
+		for _, state := range [3]struct {
+			Name string
+			Opt  optional.Optional[bool]
+		}{
+			{"Scanning", a.adapter.Discovering},
+			{"Discoverable", a.adapter.Discoverable},
+			{"Pairable", a.adapter.Pairable},
+		} {
+			if v, ok := state.Opt.Get(); !ok || !v {
+				continue
+			}
+
+			if !pushSeg(
+				ui.RenderPillIcon(state.Name, style),
+				bgStyle, yield,
+			) {
+				return
+			}
+		}
+	}
+}
+
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (a *adapterNode) PopulateActions() {
 	actionsListNode := a.Children()[relPosActionsListNode]
@@ -70,10 +125,10 @@ func (a *adapterNode) PopulateActions() {
 		return
 	}
 
-	node.AddAction(kb().Adapter.TogglePower, boolToActionState(a.adapter.Powered.Value()), true, a.actionPowered)
-	node.AddAction(kb().Adapter.ToggleDiscoverable, boolToActionState(a.adapter.Discovering.Value()), true, a.actionDiscoverable)
-	node.AddAction(kb().Adapter.TogglePairable, boolToActionState(a.adapter.Pairable.Value()), true, a.actionPairable)
-	node.AddAction(kb().Adapter.ToggleScan, boolToActionState(a.adapter.Discovering.Value()), true, a.actionScan)
+	newActionNode(node, ui.Kb().Adapter.TogglePower, boolToActionState(a.adapter.Powered.Value()), true, a.actionPowered)
+	newActionNode(node, ui.Kb().Adapter.ToggleDiscoverable, boolToActionState(a.adapter.Discovering.Value()), true, a.actionDiscoverable)
+	newActionNode(node, ui.Kb().Adapter.TogglePairable, boolToActionState(a.adapter.Pairable.Value()), true, a.actionPairable)
+	newActionNode(node, ui.Kb().Adapter.ToggleScan, boolToActionState(a.adapter.Discovering.Value()), true, a.actionScan)
 
 	for _, actionNode := range actionsListNode.Children() {
 		a.UpdateActionNode(actionNode.Data[*adNode](), emptyActionUpdateMsg())
@@ -88,16 +143,16 @@ func (a *adapterNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdat
 	var text string
 
 	switch state.key {
-	case kb().Adapter.TogglePower:
+	case ui.Kb().Adapter.TogglePower:
 		text = "Power"
 
-	case kb().Adapter.ToggleDiscoverable:
+	case ui.Kb().Adapter.ToggleDiscoverable:
 		text = "Discoverable"
 
-	case kb().Adapter.TogglePairable:
+	case ui.Kb().Adapter.TogglePairable:
 		text = "Pairable"
 
-	case kb().Adapter.ToggleScan:
+	case ui.Kb().Adapter.ToggleScan:
 		text = "Device Scanning"
 
 	default:
@@ -118,12 +173,16 @@ func (a *adapterNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdat
 		b.WriteString(actionText)
 	})
 
-	actionNode.SetName(displayName)
+	actionNode.SetContent(buildLabel(actionNode.noder.Icon(), displayName, actionNode.noder.NodeStyle()))
 }
 
 // SetAdapterEventData sets the adapter event data for the node.
 func (a *adapterNode) SetAdapterEventData(ev bluetooth.AdapterEventData) {
 	a.adapter.AdapterEventData = ev
+}
+
+// SetDeviceEventData sets the device event data for the node.
+func (a *adapterNode) SetDeviceEventData(bluetooth.DeviceEventData) {
 }
 
 func (a *adapterNode) actionPowered(state *adActionState) (operations.CreationInfo, operations.Invoker) {
@@ -153,28 +212,27 @@ func (a *adapterNode) actionScan(state *adActionState) (operations.CreationInfo,
 }
 
 func (a *adapterNode) getDesc(name string, state *adActionState) richtext.Text {
-	builder := new(richtext.Builder)
+	builder := ui.NewBuilder(
+		theme.Current().Global,
+	)
 
 	style := theme.Current().Operations.PropertyName
 	adapterStyle := theme.Current().ADTree.Adapter
 	msgStyle := theme.Current().Operations.Message
-	gstyle := theme.Current().Global
 
-	builder.Write("Adapter:", style)
-	builder.Write(" ", gstyle)
-	builder.Write(a.GetIcon(), adapterStyle)
-	builder.Write(" ", adapterStyle)
-	builder.Write(getAdapterDisplayName(a.adapter), adapterStyle)
-	builder.NewLine()
+	builder.AddKVFunc("Adapter:", style, func(bb *ui.Builder) {
+		bb.Append(a.Icon(), adapterStyle)
+		bb.Space()
+		bb.Append(getAdapterDisplayName(a.adapter), adapterStyle)
+	})
 
-	builder.Write("Action:", style)
-	builder.Write(" ", gstyle)
-	builder.Write(name, msgStyle)
-	builder.Write(" ", gstyle)
-	builder.Write(state.currentState.Format("on", "off"), msgStyle)
-	builder.NewLine()
+	builder.AddKVFunc("Action:", style, func(bb *ui.Builder) {
+		bb.Append(name, msgStyle)
+		bb.Space()
+		bb.Append(state.currentState.Format("on", "off"), msgStyle)
+	})
 
-	return builder.Finish()
+	return builder.Text()
 }
 
 var _ adNoder = (*adapterNode)(nil)

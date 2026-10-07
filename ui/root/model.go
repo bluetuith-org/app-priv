@@ -8,7 +8,6 @@ import (
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/column"
 	"github.com/ayn2op/tview/row"
-	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/adtree"
@@ -102,23 +101,38 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case tview.KeyMsg:
 		switch {
-		case kb().Quit.Matches(ms):
+		case ui.Kb().Quit.Matches(ms):
 			return m.quitCmd()
 
-		case kb().ADTree.TabPane.Matches(ms):
+		case ui.Kb().ADTree.TabPane.Matches(ms):
 			if !m.panelFocused {
 				m.panelFocused = true
 			}
 
 			return nil
 
-		case kb().TabPane.ADTree.Matches(ms):
+		case ui.Kb().TabPane.ADTree.Matches(ms):
 			if m.panelFocused {
 				m.panelFocused = false
 			}
 
 			return nil
 		}
+
+	case ui.FocusMsg:
+		switch ms.ID {
+		case ui.ViewIDAdTree:
+			if m.panelFocused {
+				m.panelFocused = false
+			}
+
+		case ui.ViewIDTabs:
+			if !m.panelFocused {
+				m.panelFocused = true
+			}
+		}
+
+		return nil
 
 	case externalMsg:
 		return tview.Batch(m.updateModel(ms.msg), m.listenForMsg())
@@ -184,10 +198,6 @@ func (m *Model) quitCmd() tview.Cmd {
 		m.cancel()
 		return nil
 	}, tview.Quit())
-}
-
-func kb() *keybindings.Keybindings {
-	return keybindings.Current
 }
 
 var (

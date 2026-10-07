@@ -2,6 +2,7 @@ package adtree
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/gdamore/tcell/v3"
@@ -18,8 +19,17 @@ type adNoder interface {
 	// Icon returns the Icon associated with this node.
 	Icon() string
 
+	// RootID returns the root ID for the subnodes of an adapter or device node.
+	RootID() string
+
+	// Information returns a message to print adapter/device information.
+	Information() (string, richtext.Text)
+
 	// PopulateActions populates all actions within a node of type [nodeTypeAction].
 	PopulateActions()
+
+	// Refresh refreshes the content of the node.
+	Refresh()
 
 	// UpdateActionNode updates the node of type [nodeTypeAction] with the message.
 	UpdateActionNode(actionNode *adNode, updateMsg actionUpdateMsg)
@@ -52,6 +62,20 @@ func (e *emptyNoder) Icon() string {
 func (e *emptyNoder) PopulateActions() {
 }
 
+// RootID implements [adNoder].
+func (e *emptyNoder) RootID() string {
+	return ""
+}
+
+// Information implements [adNoder].
+func (e *emptyNoder) Information() (string, richtext.Text) {
+	return "", nil
+}
+
+// Refresh implements [adNoder].
+func (e *emptyNoder) Refresh() {
+}
+
 // UpdateActionNode updates the node of type [nodeTypeAction] with the message.
 func (e *emptyNoder) UpdateActionNode(*adNode, actionUpdateMsg) {
 }
@@ -63,3 +87,5 @@ func (e *emptyNoder) SetAdapterEventData(bluetooth.AdapterEventData) {
 // SetDeviceEventData sets the device event data for the node.
 func (e *emptyNoder) SetDeviceEventData(bluetooth.DeviceEventData) {
 }
+
+var _ adNoder = (*emptyNoder)(nil)

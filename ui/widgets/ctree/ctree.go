@@ -28,15 +28,11 @@ type Widget struct {
 	graphics       bool
 	graphicsSet    tview.BorderSet
 	graphicsStyle  tcell.Style
+	selectedStyle  tcell.Style
 	focused        bool
 }
 
 var _ tview.Widget = Widget{}
-
-// SelectedMsg is emitted when the user selects a node.
-type SelectedMsg struct {
-	Node *Node
-}
 
 // New returns a tree of the nodes under root, with selectionState as its current node and scroll position, that draws lines between nodes and fills its parent. It is interactive only once OnChange is set.
 func New(root *Node, provider Provider, selectionState *SelectionState) Widget {
@@ -89,6 +85,12 @@ func (w Widget) GraphicsSet(set tview.BorderSet) Widget {
 // GraphicsStyle sets the style of the lines.
 func (w Widget) GraphicsStyle(style tcell.Style) Widget {
 	w.graphicsStyle = style
+	return w
+}
+
+// SelectedStyle sets the style of the selected node.
+func (w Widget) SelectedStyle(style tcell.Style) Widget {
+	w.selectedStyle = style
 	return w
 }
 
@@ -230,11 +232,17 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 			markerWidth := tview.Print(screen, marker, x+textX, y, width-textX, tview.AlignmentLeft, markerStyle)
 			textX += markerWidth
 		}
-		for segment, style := range w.Provider.StyledLabels(node, index == v.current) {
+		for _, segment := range w.Provider.StyledLabels(node) {
 			if textX >= width {
 				break
 			}
-			segmentWidth := tview.Print(screen, segment, x+textX, y, width-textX, tview.AlignmentLeft, style)
+
+			style := segment.Style
+			if index == v.current {
+				style = w.selectedStyle
+			}
+
+			segmentWidth := tview.Print(screen, segment.Text, x+textX, y, width-textX, tview.AlignmentLeft, style)
 			textX += segmentWidth
 		}
 	}
@@ -249,6 +257,7 @@ func (w Widget) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 	}
 	v := w.resolve(area.Height)
 	a := Change{current: v.node(v.current), offset: v.offset, dragging: w.selectionState.dragging, dragY: w.selectionState.dragY}
+
 	center := false
 	switch m := msg.(type) {
 	case ActionMsg:
@@ -291,7 +300,7 @@ func (w Widget) Handle(msg tview.Msg, area tview.Rectangle) tview.Msg {
 			a.dragging = false
 		case tview.MouseLeftClick:
 			if node := v.node(v.offset + y - area.Y); node != nil && node.selectable {
-				return SelectedMsg{Node: node}
+				return w.selectNode(node)
 			}
 			return nil
 		case tview.MouseScrollUp:
