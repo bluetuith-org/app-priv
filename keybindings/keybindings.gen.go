@@ -67,15 +67,25 @@ type Keybindings struct {
 		ADTree   Keybinding
 	}
 
+	Information struct {
+		Show Keybinding
+	}
+
 	Operations struct {
+		Show     Keybinding
 		Cancel   Keybinding
 		ClearAll Keybinding
 	}
 
 	Transfers struct {
+		Show    Keybinding
 		Suspend Keybinding
 		Resume  Keybinding
 		Cancel  Keybinding
+	}
+
+	Log struct {
+		Show Keybinding
 	}
 
 	Player struct {
@@ -128,11 +138,15 @@ const (
 	KeyTabPaneNext
 	KeyTabPanePrevious
 	KeyTabPaneADTree
+	KeyInformationShow
+	KeyOperationsShow
 	KeyOperationsCancel
 	KeyOperationsClearAll
+	KeyTransfersShow
 	KeyTransfersSuspend
 	KeyTransfersResume
 	KeyTransfersCancel
+	KeyLogShow
 	KeyPlayerToggleDisplay
 	KeyPlayerToggleMediaPlaying
 	KeyPlayerNext
@@ -148,242 +162,262 @@ func defaultConfig() *Keybindings {
 	k := &Keybindings{}
 
 	k.SelectItem = newKeybinding(
-		KeySelectItem, newTcellKey(tcell.Key(13), "", tcell.ModNone), // enter
+		KeySelectItem, newTcellKey(tcell.Key(13), "", tcell.ModNone), "enter",
 		"SelectItem",
 		"SelectItem",
 	)
 	k.CloseItem = newKeybinding(
-		KeyCloseItem, newTcellKey(tcell.Key(27), "", tcell.ModNone), // esc
+		KeyCloseItem, newTcellKey(tcell.Key(27), "", tcell.ModNone), "esc",
 		"CloseItem",
 		"CloseItem",
 	)
 	k.FilterItems = newKeybinding(
-		KeyFilterItems, newTcellKey(tcell.Key(256), "/", tcell.ModNone), // /
+		KeyFilterItems, newTcellKey(tcell.Key(256), "/", tcell.ModNone), "/",
 		"FilterItems",
 		"FilterItems",
 	)
 	k.Help = newKeybinding(
-		KeyHelp, newTcellKey(tcell.Key(256), "?", tcell.ModNone), // ?
+		KeyHelp, newTcellKey(tcell.Key(256), "?", tcell.ModNone), "?",
 		"Help",
 		"Help",
 	)
 	k.Suspend = newKeybinding(
-		KeySuspend, newTcellKey(tcell.Key(90), "", tcell.ModCtrl), // ctrl+z
+		KeySuspend, newTcellKey(tcell.Key(90), "", tcell.ModCtrl), "ctrl+z",
 		"Suspend",
 		"Suspend",
 	)
 	k.Quit = newKeybinding(
-		KeyQuit, newTcellKey(tcell.Key(256), "q", tcell.ModNone), // q
+		KeyQuit, newTcellKey(tcell.Key(256), "q", tcell.ModNone), "q",
 		"Quit",
 		"Quit",
 	)
 	k.NavigateUp = newKeybinding(
-		KeyNavigateUp, newTcellKey(tcell.Key(257), "", tcell.ModNone), // up
+		KeyNavigateUp, newTcellKey(tcell.Key(257), "", tcell.ModNone), "up",
 		"NavigateUp",
 		"NavigateUp",
 	)
 	k.NavigateDown = newKeybinding(
-		KeyNavigateDown, newTcellKey(tcell.Key(258), "", tcell.ModNone), // down
+		KeyNavigateDown, newTcellKey(tcell.Key(258), "", tcell.ModNone), "down",
 		"NavigateDown",
 		"NavigateDown",
 	)
 	k.NavigateLeft = newKeybinding(
-		KeyNavigateLeft, newTcellKey(tcell.Key(260), "", tcell.ModNone), // left
+		KeyNavigateLeft, newTcellKey(tcell.Key(260), "", tcell.ModNone), "left",
 		"NavigateLeft",
 		"NavigateLeft",
 	)
 	k.NavigateRight = newKeybinding(
-		KeyNavigateRight, newTcellKey(tcell.Key(259), "", tcell.ModNone), // right
+		KeyNavigateRight, newTcellKey(tcell.Key(259), "", tcell.ModNone), "right",
 		"NavigateRight",
 		"NavigateRight",
 	)
 	k.NavigateTop = newKeybinding(
-		KeyNavigateTop, newTcellKey(tcell.Key(266), "", tcell.ModNone), // pgup
+		KeyNavigateTop, newTcellKey(tcell.Key(266), "", tcell.ModNone), "pgup",
 		"NavigateTop",
 		"NavigateTop",
 	)
 	k.NavigateBottom = newKeybinding(
-		KeyNavigateBottom, newTcellKey(tcell.Key(267), "", tcell.ModNone), // pgdown
+		KeyNavigateBottom, newTcellKey(tcell.Key(267), "", tcell.ModNone), "pgdn",
 		"NavigateBottom",
 		"NavigateBottom",
 	)
 	k.Adapter.TogglePower = newKeybinding(
-		KeyAdapterTogglePower, newTcellKey(tcell.Key(256), "o", tcell.ModNone), // o
+		KeyAdapterTogglePower, newTcellKey(tcell.Key(256), "o", tcell.ModNone), "o",
 		"TogglePower",
 		"TogglePower",
 	)
 	k.Adapter.ToggleDiscoverable = newKeybinding(
-		KeyAdapterToggleDiscoverable, newTcellKey(tcell.Key(256), "S", tcell.ModNone), // S
+		KeyAdapterToggleDiscoverable, newTcellKey(tcell.Key(256), "S", tcell.ModNone), "S",
 		"ToggleDiscoverable",
 		"ToggleDiscoverable",
 	)
 	k.Adapter.TogglePairable = newKeybinding(
-		KeyAdapterTogglePairable, newTcellKey(tcell.Key(256), "P", tcell.ModNone), // P
+		KeyAdapterTogglePairable, newTcellKey(tcell.Key(256), "P", tcell.ModNone), "P",
 		"TogglePairable",
 		"TogglePairable",
 	)
 	k.Adapter.ToggleScan = newKeybinding(
-		KeyAdapterToggleScan, newTcellKey(tcell.Key(256), "s", tcell.ModNone), // s
+		KeyAdapterToggleScan, newTcellKey(tcell.Key(256), "s", tcell.ModNone), "s",
 		"ToggleScan",
 		"ToggleScan",
 	)
 	k.Device.ToggleConnection = newKeybinding(
-		KeyDeviceToggleConnection, newTcellKey(tcell.Key(256), "c", tcell.ModNone), // c
+		KeyDeviceToggleConnection, newTcellKey(tcell.Key(256), "c", tcell.ModNone), "c",
 		"ToggleConnection",
 		"ToggleConnection",
 	)
 	k.Device.TogglePairedState = newKeybinding(
-		KeyDeviceTogglePairedState, newTcellKey(tcell.Key(256), "p", tcell.ModNone), // p
+		KeyDeviceTogglePairedState, newTcellKey(tcell.Key(256), "p", tcell.ModNone), "p",
 		"TogglePairedState",
 		"TogglePairedState",
 	)
 	k.Device.Trust = newKeybinding(
-		KeyDeviceTrust, newTcellKey(tcell.Key(256), "t", tcell.ModNone), // t
+		KeyDeviceTrust, newTcellKey(tcell.Key(256), "t", tcell.ModNone), "t",
 		"Trust",
 		"Trust",
 	)
 	k.Device.SendFiles = newKeybinding(
-		KeyDeviceSendFiles, newTcellKey(tcell.Key(256), "f", tcell.ModNone), // f
+		KeyDeviceSendFiles, newTcellKey(tcell.Key(256), "f", tcell.ModNone), "f",
 		"SendFiles",
 		"SendFiles",
 	)
 	k.Device.NetworkOptions = newKeybinding(
-		KeyDeviceNetworkOptions, newTcellKey(tcell.Key(256), "n", tcell.ModNone), // n
+		KeyDeviceNetworkOptions, newTcellKey(tcell.Key(256), "n", tcell.ModNone), "n",
 		"NetworkOptions",
 		"NetworkOptions",
 	)
 	k.Device.AudioProfiles = newKeybinding(
-		KeyDeviceAudioProfiles, newTcellKey(tcell.Key(256), "A", tcell.ModNone), // A
+		KeyDeviceAudioProfiles, newTcellKey(tcell.Key(256), "A", tcell.ModNone), "A",
 		"AudioProfiles",
 		"AudioProfiles",
 	)
 	k.Device.Block = newKeybinding(
-		KeyDeviceBlock, newTcellKey(tcell.Key(256), "b", tcell.ModNone), // b
+		KeyDeviceBlock, newTcellKey(tcell.Key(256), "b", tcell.ModNone), "b",
 		"Block",
 		"Block",
 	)
 	k.Filebrowser.CdForward = newKeybinding(
-		KeyFilebrowserCdForward, newTcellKey(tcell.Key(259), "", tcell.ModNone), // right
+		KeyFilebrowserCdForward, newTcellKey(tcell.Key(259), "", tcell.ModNone), "right",
 		"CdForward",
 		"CdForward",
 	)
 	k.Filebrowser.CdBack = newKeybinding(
-		KeyFilebrowserCdBack, newTcellKey(tcell.Key(260), "", tcell.ModNone), // left
+		KeyFilebrowserCdBack, newTcellKey(tcell.Key(260), "", tcell.ModNone), "left",
 		"CdBack",
 		"CdBack",
 	)
 	k.Filebrowser.SelectOne = newKeybinding(
-		KeyFilebrowserSelectOne, newTcellKey(tcell.Key(256), " ", tcell.ModNone), // space
+		KeyFilebrowserSelectOne, newTcellKey(tcell.Key(256), " ", tcell.ModNone), " ",
 		"SelectOne",
 		"SelectOne",
 	)
 	k.Filebrowser.SelectAll = newKeybinding(
-		KeyFilebrowserSelectAll, newTcellKey(tcell.Key(256), "A", tcell.ModNone), // A
+		KeyFilebrowserSelectAll, newTcellKey(tcell.Key(256), "A", tcell.ModNone), "A",
 		"SelectAll",
 		"SelectAll",
 	)
 	k.Filebrowser.InvertSelection = newKeybinding(
-		KeyFilebrowserInvertSelection, newTcellKey(tcell.Key(256), "a", tcell.ModNone), // a
+		KeyFilebrowserInvertSelection, newTcellKey(tcell.Key(256), "a", tcell.ModNone), "a",
 		"InvertSelection",
 		"InvertSelection",
 	)
 	k.Filebrowser.ConfirmSelection = newKeybinding(
-		KeyFilebrowserConfirmSelection, newTcellKey(tcell.Key(83), "", tcell.ModCtrl), // ctrl+s
+		KeyFilebrowserConfirmSelection, newTcellKey(tcell.Key(83), "", tcell.ModCtrl), "ctrl+s",
 		"ConfirmSelection",
 		"ConfirmSelection",
 	)
 	k.Filebrowser.Refresh = newKeybinding(
-		KeyFilebrowserRefresh, newTcellKey(tcell.Key(82), "", tcell.ModCtrl), // ctrl+r
+		KeyFilebrowserRefresh, newTcellKey(tcell.Key(82), "", tcell.ModCtrl), "ctrl+r",
 		"Refresh",
 		"Refresh",
 	)
 	k.Filebrowser.ToggleHiddenFiles = newKeybinding(
-		KeyFilebrowserToggleHiddenFiles, newTcellKey(tcell.Key(256), ".", tcell.ModNone), // .
+		KeyFilebrowserToggleHiddenFiles, newTcellKey(tcell.Key(256), ".", tcell.ModNone), ".",
 		"ToggleHiddenFiles",
 		"ToggleHiddenFiles",
 	)
 	k.ADTree.ExpandOrSelect = newKeybinding(
-		KeyADTreeExpandOrSelect, newTcellKey(tcell.Key(259), "", tcell.ModNone), // right
+		KeyADTreeExpandOrSelect, newTcellKey(tcell.Key(259), "", tcell.ModNone), "right",
 		"ExpandOrSelect",
 		"ExpandOrSelect",
 	)
 	k.ADTree.TabPane = newKeybinding(
-		KeyADTreeTabPane, newTcellKey(tcell.Key(9), "", tcell.ModNone), // tab
+		KeyADTreeTabPane, newTcellKey(tcell.Key(9), "", tcell.ModNone), "tab",
 		"SwitchPanes",
 		"SwitchPanes",
 	)
 	k.TabPane.Next = newKeybinding(
-		KeyTabPaneNext, newTcellKey(tcell.Key(9), "", tcell.ModNone), // tab
+		KeyTabPaneNext, newTcellKey(tcell.Key(9), "", tcell.ModNone), "tab",
 		"SwitchSections",
 		"SwitchSections",
 	)
 	k.TabPane.Previous = newKeybinding(
-		KeyTabPanePrevious, newTcellKey(tcell.Key(278), "", tcell.ModNone), // shift+tab
+		KeyTabPanePrevious, newTcellKey(tcell.Key(278), "", tcell.ModNone), "shift+tab",
 		"SwitchSections",
 		"SwitchSections",
 	)
 	k.TabPane.ADTree = newKeybinding(
-		KeyTabPaneADTree, newTcellKey(tcell.Key(27), "", tcell.ModNone), // esc
+		KeyTabPaneADTree, newTcellKey(tcell.Key(27), "", tcell.ModNone), "esc",
 		"SwitchSections",
 		"SwitchSections",
 	)
+	k.Information.Show = newKeybinding(
+		KeyInformationShow, newTcellKey(tcell.Key(256), "I", tcell.ModNone), "I",
+		"Information",
+		"Information",
+	)
+	k.Operations.Show = newKeybinding(
+		KeyOperationsShow, newTcellKey(tcell.Key(256), "O", tcell.ModNone), "O",
+		"Operations",
+		"Operations",
+	)
 	k.Operations.Cancel = newKeybinding(
-		KeyOperationsCancel, newTcellKey(tcell.Key(256), "x", tcell.ModNone), // x
+		KeyOperationsCancel, newTcellKey(tcell.Key(256), "x", tcell.ModNone), "x",
 		"Cancel",
 		"Cancel",
 	)
 	k.Operations.ClearAll = newKeybinding(
-		KeyOperationsClearAll, newTcellKey(tcell.Key(256), "C", tcell.ModNone), // C
+		KeyOperationsClearAll, newTcellKey(tcell.Key(256), "C", tcell.ModNone), "C",
 		"ClearAll",
 		"ClearAll",
 	)
+	k.Transfers.Show = newKeybinding(
+		KeyTransfersShow, newTcellKey(tcell.Key(256), "T", tcell.ModNone), "T",
+		"Transfers",
+		"Transfers",
+	)
 	k.Transfers.Suspend = newKeybinding(
-		KeyTransfersSuspend, newTcellKey(tcell.Key(256), "s", tcell.ModNone), // s
+		KeyTransfersSuspend, newTcellKey(tcell.Key(256), "s", tcell.ModNone), "s",
 		"Suspend",
 		"Suspend",
 	)
 	k.Transfers.Resume = newKeybinding(
-		KeyTransfersResume, newTcellKey(tcell.Key(256), "r", tcell.ModNone), // r
+		KeyTransfersResume, newTcellKey(tcell.Key(256), "r", tcell.ModNone), "r",
 		"Resume",
 		"Resume",
 	)
 	k.Transfers.Cancel = newKeybinding(
-		KeyTransfersCancel, newTcellKey(tcell.Key(256), "x", tcell.ModNone), // x
+		KeyTransfersCancel, newTcellKey(tcell.Key(256), "x", tcell.ModNone), "x",
 		"Cancel",
 		"Cancel",
 	)
+	k.Log.Show = newKeybinding(
+		KeyLogShow, newTcellKey(tcell.Key(256), "L", tcell.ModNone), "L",
+		"Transfers",
+		"Transfers",
+	)
 	k.Player.ToggleDisplay = newKeybinding(
-		KeyPlayerToggleDisplay, newTcellKey(tcell.Key(256), "M", tcell.ModNone), // M
+		KeyPlayerToggleDisplay, newTcellKey(tcell.Key(256), "M", tcell.ModNone), "M",
 		"ToggleDisplay",
 		"ToggleDisplay",
 	)
 	k.Player.ToggleMediaPlaying = newKeybinding(
-		KeyPlayerToggleMediaPlaying, newTcellKey(tcell.Key(256), " ", tcell.ModNone), // space
+		KeyPlayerToggleMediaPlaying, newTcellKey(tcell.Key(256), " ", tcell.ModNone), " ",
 		"ToggleMediaPlaying",
 		"ToggleMediaPlaying",
 	)
 	k.Player.Next = newKeybinding(
-		KeyPlayerNext, newTcellKey(tcell.Key(256), ">", tcell.ModNone), // >
+		KeyPlayerNext, newTcellKey(tcell.Key(256), ">", tcell.ModNone), ">",
 		"Next",
 		"Next",
 	)
 	k.Player.Previous = newKeybinding(
-		KeyPlayerPrevious, newTcellKey(tcell.Key(256), "<", tcell.ModNone), // <
+		KeyPlayerPrevious, newTcellKey(tcell.Key(256), "<", tcell.ModNone), "<",
 		"Previous",
 		"Previous",
 	)
 	k.Player.SeekForward = newKeybinding(
-		KeyPlayerSeekForward, newTcellKey(tcell.Key(259), "", tcell.ModNone), // right
+		KeyPlayerSeekForward, newTcellKey(tcell.Key(259), "", tcell.ModNone), "right",
 		"SeekForward",
 		"SeekForward",
 	)
 	k.Player.SeekBackward = newKeybinding(
-		KeyPlayerSeekBackward, newTcellKey(tcell.Key(260), "", tcell.ModNone), // left
+		KeyPlayerSeekBackward, newTcellKey(tcell.Key(260), "", tcell.ModNone), "left",
 		"SeekBackward",
 		"SeekBackward",
 	)
 	k.Player.Stop = newKeybinding(
-		KeyPlayerStop, newTcellKey(tcell.Key(256), "]", tcell.ModNone), // ]
+		KeyPlayerStop, newTcellKey(tcell.Key(256), "]", tcell.ModNone), "]",
 		"Stop",
 		"Stop",
 	)
@@ -402,7 +436,7 @@ func iterProperties(kb *Keybindings, cfg *Configuration) iter.Seq[parseKeybindin
 	}
 
 	return func(yield func(parseKeybindingInfo) bool) {
-		for i := range 48 {
+		for i := range 52 {
 			if !yield(getProperty(kb, cfg, i)) {
 				return
 			}
@@ -559,50 +593,66 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.TabPane.ADTree
 
 	case 36:
+		p.kb = &kb.Information.Show
+		p.cmpCfg = cfg.Information.Show
+
+	case 37:
+		p.kb = &kb.Operations.Show
+		p.cmpCfg = cfg.Operations.Show
+
+	case 38:
 		p.kb = &kb.Operations.Cancel
 		p.cmpCfg = cfg.Operations.Cancel
 
-	case 37:
+	case 39:
 		p.kb = &kb.Operations.ClearAll
 		p.cmpCfg = cfg.Operations.ClearAll
 
-	case 38:
+	case 40:
+		p.kb = &kb.Transfers.Show
+		p.cmpCfg = cfg.Transfers.Show
+
+	case 41:
 		p.kb = &kb.Transfers.Suspend
 		p.cmpCfg = cfg.Transfers.Suspend
 
-	case 39:
+	case 42:
 		p.kb = &kb.Transfers.Resume
 		p.cmpCfg = cfg.Transfers.Resume
 
-	case 40:
+	case 43:
 		p.kb = &kb.Transfers.Cancel
 		p.cmpCfg = cfg.Transfers.Cancel
 
-	case 41:
+	case 44:
+		p.kb = &kb.Log.Show
+		p.cmpCfg = cfg.Log.Show
+
+	case 45:
 		p.kb = &kb.Player.ToggleDisplay
 		p.cmpCfg = cfg.Player.ToggleDisplay
 
-	case 42:
+	case 46:
 		p.kb = &kb.Player.ToggleMediaPlaying
 		p.cmpCfg = cfg.Player.ToggleMediaPlaying
 
-	case 43:
+	case 47:
 		p.kb = &kb.Player.Next
 		p.cmpCfg = cfg.Player.Next
 
-	case 44:
+	case 48:
 		p.kb = &kb.Player.Previous
 		p.cmpCfg = cfg.Player.Previous
 
-	case 45:
+	case 49:
 		p.kb = &kb.Player.SeekForward
 		p.cmpCfg = cfg.Player.SeekForward
 
-	case 46:
+	case 50:
 		p.kb = &kb.Player.SeekBackward
 		p.cmpCfg = cfg.Player.SeekBackward
 
-	case 47:
+	case 51:
 		p.kb = &kb.Player.Stop
 		p.cmpCfg = cfg.Player.Stop
 

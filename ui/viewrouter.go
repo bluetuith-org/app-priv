@@ -16,6 +16,7 @@ const (
 	ViewIDInfo
 	ViewIDOperations
 	ViewIDLog
+	ViewIDTransfers
 )
 
 // IsValid checks if the [ViewID] is valid.

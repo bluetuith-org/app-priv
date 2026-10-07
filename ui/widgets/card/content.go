@@ -10,7 +10,7 @@ import (
 
 //revive:disable
 
-type CardContent struct {
+type Content struct {
 	headerRight, headerLeft richtext.Segment
 
 	content richtext.Text
@@ -22,22 +22,22 @@ type CardContent struct {
 	width int
 }
 
-var _ tview.Widget = (*CardContent)(nil)
+var _ tview.Widget = (*Content)(nil)
 
-func NewCardContent(content richtext.Text) *CardContent {
-	c := &CardContent{content: content}
+func NewCardContent(content richtext.Text) *Content {
+	c := &Content{content: content}
 
 	return c
 }
 
-func (c *CardContent) Headers(left, right richtext.Segment) *CardContent {
+func (c *Content) Headers(left, right richtext.Segment) *Content {
 	c.headerLeft = left
 	c.headerRight = right
 
 	return c
 }
 
-func (c *CardContent) Message(marker richtext.Segment, msg richtext.Segment) *CardContent {
+func (c *Content) Message(marker richtext.Segment, msg richtext.Segment) *Content {
 	spaceBg := msg.Style.GetBackground()
 	spaceSeg := richtext.NewSegment(" ", tcell.Style{}.Background(spaceBg))
 
@@ -48,7 +48,7 @@ func (c *CardContent) Message(marker richtext.Segment, msg richtext.Segment) *Ca
 }
 
 // Draw implements [tview.Widget].
-func (c *CardContent) Draw(screen tview.Screen, area tview.Rectangle) {
+func (c *Content) Draw(screen tview.Screen, area tview.Rectangle) {
 	x, y, width, _ := area.X, area.Y, area.Width, area.Height
 	_, style, _ := screen.Get(x+width/2, y+area.Height/2)
 
@@ -63,21 +63,21 @@ func (c *CardContent) Draw(screen tview.Screen, area tview.Rectangle) {
 }
 
 // Handle implements [tview.Widget].
-func (c *CardContent) Handle(msg tview.Msg, _ tview.Rectangle) tview.Msg {
+func (c *Content) Handle(msg tview.Msg, _ tview.Rectangle) tview.Msg {
 	return msg
 }
 
 // Layout implements [tview.Widget].
-func (c *CardContent) Layout(limits layout.Limits) layout.Size {
+func (c *Content) Layout(limits layout.Limits) layout.Size {
 	return layout.Atomic(limits, layout.Fill, layout.Fixed(c.height()))
 }
 
 // Size implements [tview.Widget].
-func (c *CardContent) Size() (width layout.Length, height layout.Length) {
+func (c *Content) Size() (width layout.Length, height layout.Length) {
 	return layout.Fill, layout.Shrink
 }
 
-func (c *CardContent) ensureSize(width int) int {
+func (c *Content) ensureSize(width int) int {
 	if c.width == width && c.cRendered && c.mRendered {
 		return c.height()
 	}
@@ -110,10 +110,10 @@ func (c *CardContent) ensureSize(width int) int {
 	return c.height()
 }
 
-func (c *CardContent) height() int {
+func (c *Content) height() int {
 	return 3 + len(c.cWrapped) + len(c.mWrapped)
 }
 
-func (c *CardContent) tv(align tview.Alignment, style tcell.Style, content richtext.Text) textview.Widget {
+func (c *Content) tv(align tview.Alignment, style tcell.Style, content richtext.Text) textview.Widget {
 	return textview.New(content).Alignment(align).Wrap(false).Style(style)
 }

@@ -47,6 +47,8 @@ type Configuration struct {
 
 		Border        string `themedef:"bg:from-theme; fg:white"`
 		BorderFocused string `themedef:"bg:from-theme; fg:green; attr:bold"`
+
+		PlaceHolder string `themedef:"bg:from-theme; fg:grey; attr:italic"`
 	}
 
 	ADTree struct {
@@ -71,14 +73,15 @@ type Configuration struct {
 	}
 
 	TabsPane struct {
-		Style      string `themedef:"bg:from-theme; fg:from-theme"`
+		ArrowStyle string `themedef:"bg:from-theme; fg:from-theme"`
 		Tab        string `themedef:"bg:from-theme; fg:from-theme"`
 		FocusedTab string `themedef:"bg:from-theme; fg:brightcyan; attr:bold,underline"`
 	}
 
 	Info struct {
-		Style string `themedef:"bg:from-theme; fg:white"`
-		Title string `themedef:"bg:from-theme; fg:from-theme"`
+		Title         string `themedef:"bg:purple; fg:white"`
+		PropertyName  string `themedef:"bg:from-theme; fg:brightpurple; attr:bold"`
+		PropertyValue string `themedef:"bg:from-theme; fg:white"`
 	}
 
 	Operations struct {

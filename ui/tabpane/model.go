@@ -2,7 +2,6 @@ package tabpane
 
 import (
 	"github.com/ayn2op/tview"
-	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
@@ -66,16 +65,16 @@ func (m *Model) LabelStyle(active bool) tcell.Style {
 
 // ArrowConfig provides the left/right arrow icons and the style to be applied.
 func (m *Model) ArrowConfig() (arrowLeft string, arrowRight string, arrowStyle tcell.Style, arrowWidth int) {
-	return m.arrowLeft, m.arrowRight, theme.Current().TabsPane.Style, m.arrowWidth
+	return m.arrowLeft, m.arrowRight, theme.Current().TabsPane.ArrowStyle, m.arrowWidth
 }
 
 // Keybind converts a [tview.KeyMsg] to an [Action].
 func (m *Model) Keybind(msg tview.KeyMsg) tabs.Action {
 	switch {
-	case kb().TabPane.Next.Matches(msg):
+	case ui.Kb().TabPane.Next.Matches(msg):
 		return tabs.ActionNext
 
-	case kb().TabPane.Previous.Matches(msg):
+	case ui.Kb().TabPane.Previous.Matches(msg):
 		return tabs.ActionPrevious
 	}
 
@@ -112,6 +111,10 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 		return nil
 
 	case tview.KeyMsg:
+		if m.handler.setActive(ms) {
+			return ui.FocusViewCmd(ui.ViewIDTabs)
+		}
+
 		if !focused {
 			return nil
 		}
@@ -124,10 +127,6 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 
 type selectedMsg struct {
 	index int
-}
-
-func kb() *keybindings.Keybindings {
-	return keybindings.Current
 }
 
 var (

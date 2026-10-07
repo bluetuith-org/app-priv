@@ -18,11 +18,13 @@ type Keybinding struct {
 
 	ID                  KeyID
 	ShortHelp, LongHelp string
+
+	KeyName string
 }
 
 // newKeybinding returns a new keybinding.
-func newKeybinding(id KeyID, keyCombo tcellKey, shorthelp, longhelp string) Keybinding {
-	return Keybinding{tcellKey: keyCombo, ID: id, ShortHelp: shorthelp, LongHelp: longhelp}
+func newKeybinding(id KeyID, keyCombo tcellKey, keyName, shorthelp, longhelp string) Keybinding {
+	return Keybinding{tcellKey: keyCombo, ID: id, KeyName: keyName, ShortHelp: shorthelp, LongHelp: longhelp}
 }
 
 // Matches returns if the keybinding matches the [tea.KeyPressMsg].

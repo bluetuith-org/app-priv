@@ -42,6 +42,8 @@ type IconSet struct {
 	CheckMark IconVariant
 	Progress  IconVariant
 	Error     IconVariant
+
+	PillLeft, PillRight IconVariant
 }
 
 // NewIconSet returns a new icon set.
@@ -186,6 +188,16 @@ func (i *IconSet) populateIcons(isASCII bool) *IconSet {
 			IsASCII: isASCII,
 			Unicode: "\U00002718",
 			ASCII:   "",
+		},
+		PillLeft: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "",
+			ASCII:   "(",
+		},
+		PillRight: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "",
+			ASCII:   ")",
 		},
 	}
 

@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"unicode"
 
+	"github.com/ayn2op/tview/keybind"
 	"github.com/fatih/structtag"
 	"github.com/gdamore/tcell/v3"
 	"golang.org/x/text/cases"
@@ -97,7 +100,7 @@ func (k *KbGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error) {
 		vals[idx] = t.Value()
 	}
 
-	kb, err := genTcellKey(vals[0])
+	kb, keyStr, err := genTcellKey(vals[0])
 	if err != nil {
 		return emptyGenTemplRet(), err
 	}
@@ -107,12 +110,12 @@ func (k *KbGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error) {
 	fmt.Fprintf(
 		&k.defSb,
 		`k.%s = newKeybinding(
-		%s, %s, // %s
+		%s, %s, %q,
 		%q,
 		%q,
 		)
 		`,
-		s, id, kb, vals[0], vals[1], vals[2],
+		s, id, kb, keyStr, vals[1], vals[2],
 	)
 
 	fmt.Fprintf(&k.sb, `
@@ -140,7 +143,7 @@ func (k *KbGenImpl) GetPartialCode() string {
 
 var translateKeys = map[string]string{
 	"Pgup":      "PgUp",
-	"Pgdown":    "PgDn",
+	"Pgdn":      "PgDn",
 	"Upright":   "UpRight",
 	"Downright": "DownRight",
 	"Upleft":    "UpLeft",
@@ -155,8 +158,8 @@ type tcellKey struct {
 	mod tcell.ModMask
 }
 
-func genTcellKey(key string) (string, error) {
-	var mods []string
+func genTcellKey(key string) (keyRep string, keyStr string, err error) {
+	mods := make(map[string]struct{})
 
 	var tkey string
 	var keyCount int
@@ -194,19 +197,19 @@ func genTcellKey(key string) (string, error) {
 		switch token {
 		case "Ctrl":
 			kb.mod |= tcell.ModCtrl
-			mods = append(mods, "tcell.ModCtrl")
+			mods["tcell.ModCtrl"] = struct{}{}
 
 		case "Alt":
 			kb.mod |= tcell.ModAlt
-			mods = append(mods, "tcell.ModAlt")
+			mods["tcell.ModAlt"] = struct{}{}
 
 		case "Hyper":
 			kb.mod |= tcell.ModHyper
-			mods = append(mods, "tcell.ModHyper")
+			mods["tcell.ModHyper"] = struct{}{}
 
 		case "Shift":
 			kb.mod |= tcell.ModShift
-			mods = append(mods, "tcell.ModShift")
+			mods["tcell.ModShift"] = struct{}{}
 
 		case "Space", "Plus":
 			kb.str = " "
@@ -223,11 +226,18 @@ func genTcellKey(key string) (string, error) {
 	}
 
 	if keyCount > 1 {
-		return "", fmt.Errorf("config: More than one key entered for %s (%s)", "keybinding", key)
+		return "", "", fmt.Errorf("config: More than one key entered for %s (%s)", "keybinding", key)
 	}
 
 	if kb.mod == tcell.ModShift && tkey == "Tab" && kb.str == "" {
 		kb.key = tcell.KeyBacktab
+		kb.mod = 0
+
+		tkey = ""
+	}
+
+	if kb.mod == tcell.ModShift && len(kb.str) == 1 && unicode.IsUpper(rune(kb.str[0])) {
+		kb.key = tcell.KeyRune
 		kb.mod = 0
 
 		tkey = ""
@@ -255,20 +265,26 @@ func genTcellKey(key string) (string, error) {
 	}
 
 	if !found {
-		return "", fmt.Errorf("config: Invalid keybinding key %s (%s)", tkey, key)
+		return "", "", fmt.Errorf("config: Invalid keybinding key %s (%s)", tkey, key)
 	}
 
 Print:
 	if keyCount == 0 {
-		return "", fmt.Errorf("config: No key specified or invalid keybinding for %s (%s)", "keybinding", key)
+		return "", "", fmt.Errorf("config: No key specified or invalid keybinding for %s (%s)", "keybinding", key)
 	}
 
 	modStr := "tcell.ModNone"
 	if kb.mod != 0 {
-		modStr = strings.Join(mods, "|")
+		modStr = strings.Join(slices.Collect(maps.Keys(mods)), "|")
 	}
 
-	return fmt.Sprintf("newTcellKey(tcell.Key(%d), %q, %s)", kb.key, kb.str, modStr), nil
+	fmt.Println()
+
+	return fmt.Sprintf(
+			"newTcellKey(tcell.Key(%d), %q, %s)",
+			kb.key, kb.str, modStr,
+		),
+		keybind.String(tcell.NewEventKey(kb.key, kb.str, kb.mod)), nil
 }
 
 func generateKeybindings() error {

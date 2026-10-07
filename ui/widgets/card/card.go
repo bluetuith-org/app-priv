@@ -10,7 +10,7 @@ import (
 
 // Widget holds a card and contents.
 type Widget struct {
-	cc *CardContent
+	cc *Content
 
 	bgColor     color.Color
 	borderStyle tcell.Style
@@ -20,7 +20,7 @@ type Widget struct {
 var _ tview.Widget = Widget{}
 
 // New returns a new card.
-func New(cc *CardContent) Widget {
+func New(cc *Content) Widget {
 	w := Widget{
 		cc: cc,
 	}

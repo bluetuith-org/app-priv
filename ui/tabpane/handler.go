@@ -46,7 +46,7 @@ func (h *viewHandler) addModel[T vm](v T) {
 }
 
 func (h *viewHandler) init() tview.Cmd {
-	return tview.Batch(h.infoModel.Init())
+	return tview.Batch(h.infoModel.Init(), h.operationsModel.Init())
 }
 
 func (h *viewHandler) update(id ui.ViewID, focused bool, msg tview.Msg) tview.Cmd {
@@ -63,6 +63,43 @@ func (h *viewHandler) update(id ui.ViewID, focused bool, msg tview.Msg) tview.Cm
 	}
 
 	return cmd
+}
+
+func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
+	var id ui.ViewID
+
+	switch {
+	case ui.Kb().Information.Show.Matches(msg):
+		id = ui.ViewIDInfo
+
+	case ui.Kb().Operations.Show.Matches(msg):
+		id = ui.ViewIDOperations
+
+	case ui.Kb().Transfers.Show.Matches(msg):
+		id = ui.ViewIDTransfers
+
+	case ui.Kb().Log.Show.Matches(msg):
+		id = ui.ViewIDLog
+
+	default:
+		return false
+	}
+
+	idx := -1
+	for i, vid := range h.indexView {
+		if vid == id {
+			idx = i
+			break
+		}
+	}
+
+	if idx < 0 {
+		return false
+	}
+
+	h.State.SetActiveIndex(idx)
+
+	return true
 }
 
 func (h *viewHandler) activeContent(focused bool) tview.Widget {

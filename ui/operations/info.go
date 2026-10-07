@@ -41,7 +41,7 @@ type CreationInfo struct {
 	stage operationStage
 	err   error
 
-	cc *card.CardContent
+	cc *card.Content
 }
 
 // NewCreationInfo creates an initial operation context, to be scheduled for execution.

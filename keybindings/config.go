@@ -17,7 +17,7 @@ type Configuration struct {
 	NavigateLeft   string `keydef:"left" keyshorthelp:"NavigateLeft" keylonghelp:"NavigateLeft"`
 	NavigateRight  string `keydef:"right" keyshorthelp:"NavigateRight" keylonghelp:"NavigateRight"`
 	NavigateTop    string `keydef:"pgup" keyshorthelp:"NavigateTop" keylonghelp:"NavigateTop"`
-	NavigateBottom string `keydef:"pgdown" keyshorthelp:"NavigateBottom" keylonghelp:"NavigateBottom"`
+	NavigateBottom string `keydef:"pgdn" keyshorthelp:"NavigateBottom" keylonghelp:"NavigateBottom"`
 
 	Adapter struct {
 		TogglePower        string `keydef:"o" keyshorthelp:"TogglePower" keylonghelp:"TogglePower"`
@@ -61,15 +61,25 @@ type Configuration struct {
 		ADTree   string `keydef:"esc" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
 	}
 
+	Information struct {
+		Show string `keydef:"I" keyshorthelp:"Information" keylonghelp:"Information"`
+	}
+
 	Operations struct {
+		Show     string `keydef:"O" keyshorthelp:"Operations" keylonghelp:"Operations"`
 		Cancel   string `keydef:"x" keyshorthelp:"Cancel" keylonghelp:"Cancel"`
 		ClearAll string `keydef:"C" keyshorthelp:"ClearAll" keylonghelp:"ClearAll"`
 	}
 
 	Transfers struct {
+		Show    string `keydef:"T" keyshorthelp:"Transfers" keylonghelp:"Transfers"`
 		Suspend string `keydef:"s" keyshorthelp:"Suspend" keylonghelp:"Suspend"`
 		Resume  string `keydef:"r" keyshorthelp:"Resume" keylonghelp:"Resume"`
 		Cancel  string `keydef:"x" keyshorthelp:"Cancel" keylonghelp:"Cancel"`
+	}
+
+	Log struct {
+		Show string `keydef:"L" keyshorthelp:"Transfers" keylonghelp:"Transfers"`
 	}
 
 	Player struct {
