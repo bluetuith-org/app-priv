@@ -1,7 +1,6 @@
 package adtree
 
 import (
-	"iter"
 	"runtime"
 
 	"github.com/ayn2op/tview"
@@ -13,13 +12,13 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
 	"github.com/gdamore/tcell/v3"
-	"github.com/gdamore/tcell/v3/color"
 )
 
 // deviceNode describes a device node.
 type deviceNode struct {
 	*adNode
 
+	stn         *stNode
 	parentNoder adNoder
 	device      bluetooth.DeviceData
 }
@@ -30,18 +29,21 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 
 	deviceNode := newAdNode(
 		nodeTypeDevice,
-		true, newDeviceNodeID(device.DeviceAddress),
+		true, 10,
+		newDeviceNodeID(device.DeviceAddress),
 		dn, rv,
 	)
 
 	dn.device = device
 	dn.adNode = deviceNode
 	dn.parentNoder = parentNode.noder
+	dn.stn = newStatusNode(deviceNode, false)
 
 	newActionsListNode(dn.adNode)
 	parentNode.AddChild(dn.Node)
 
 	dn.Refresh()
+	dn.PopulateActions()
 
 	return deviceNode
 }
@@ -57,8 +59,9 @@ func (d *deviceNode) HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool) {
 
 // Refresh refreshes the content of the node.
 func (d *deviceNode) Refresh() {
+	d.stn.SetContent(d.StatusIcons())
+
 	d.SetContent(buildLabel(d.Icon(), getDeviceDisplayName(d.device.DeviceEventData), d.NodeStyle()))
-	d.PopulateActions()
 }
 
 // NodeStyle returns the style to be applied for this node's label.
@@ -84,57 +87,64 @@ func (d *deviceNode) RootID() string {
 	return d.id.String()
 }
 
+// SubnodePosition returns the position of the subnode within the parent node.
+func (d *deviceNode) SubnodePosition(relpos adSubNodePos) (int, bool) {
+	switch relpos {
+	case relPosStatusNode:
+		return 0, true
+
+	case relPosActionsListNode:
+		return 1, true
+	}
+
+	return -1, false
+}
+
 // Information returns a message to print adapter/device information.
 func (d *deviceNode) Information() (string, richtext.Text) {
 	return d.id.String(), nil
 }
 
 // StatusIcons returns the status icon pills for this node.
-func (d *deviceNode) StatusIcons(bgStyle tcell.Style) iter.Seq[richtext.Segment] {
-	return func(yield func(richtext.Segment) bool) {
-		style := tcell.StyleDefault.Foreground(color.Black).Background(color.Green)
+func (d *deviceNode) StatusIcons() richtext.Line {
+	var line richtext.Line
 
-		for i, state := range [4]struct {
-			Name string
-			Opt  optional.Optional[bool]
-		}{
-			{"New", d.device.Paired},
-			{"Connected", d.device.Connected},
-			{"Trusted", d.device.Trusted},
+	for i, state := range [4]struct {
+		Name  string
+		Opt   optional.Optional[bool]
+		Style tcell.Style
+	}{
+		{" New ", d.device.Paired, theme.Current().ADTree.Device.NewDevicePill},
+		{" Connected ", d.device.Connected, theme.Current().ADTree.Device.ConnectedPill},
+		{" Trusted ", d.device.Trusted, theme.Current().ADTree.Device.TrustedPill},
 
-			{"Blocked", d.device.Blocked},
-		} {
-			v, ok := state.Opt.Get()
-			if !ok {
-				continue
-			}
-
-			if i != 0 && !v {
-				continue
-			}
-
-			if i == 0 {
-				paired := "Paired"
-				if !v {
-					paired = "New"
-				}
-
-				state.Name = paired
-			}
-
-			if !pushSeg(
-				ui.RenderPillIcon(state.Name, style),
-				bgStyle, yield,
-			) {
-				return
-			}
+		{" Blocked ", d.device.Blocked, theme.Current().ADTree.Device.BlockedPill},
+	} {
+		v, ok := state.Opt.Get()
+		if !ok {
+			continue
 		}
+
+		switch {
+		case i != 0 && !v:
+			continue
+
+		case i == 0 && v:
+			state.Name = " Paired "
+			state.Style = theme.Current().ADTree.Device.PairedPill
+		}
+
+		line = append(line, richtext.NewSegment(state.Name, state.Style))
 	}
+
+	return ui.RenderMergedPill(line)
 }
 
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (d *deviceNode) PopulateActions() {
-	actionsListNode := d.Children()[relPosActionsListNode]
+	pos, _ := d.SubnodePosition(relPosActionsListNode)
+
+	actionsListNode := d.Children()[pos]
 	actionsListNode.SetChildren(nil)
 
 	node := actionsListNode.Data[*adNode]()
@@ -235,6 +245,9 @@ func (d *deviceNode) SetAdapterEventData(bluetooth.AdapterEventData) {
 // SetDeviceEventData sets the device event data for the node.
 func (d *deviceNode) SetDeviceEventData(ev bluetooth.DeviceEventData) {
 	d.device.DeviceEventData = ev
+
+	d.Refresh()
+	d.PopulateActions()
 }
 
 func (d *deviceNode) actionConnect(state *adActionState) (operations.CreationInfo, operations.Invoker) {

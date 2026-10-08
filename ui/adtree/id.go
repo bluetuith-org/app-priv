@@ -12,11 +12,13 @@ type nodeIDNib = string
 
 // The different types of node ID nibs.
 const (
-	nibDevicesList nodeIDNib = "dl"
-	nibActionsList nodeIDNib = "al"
-	nibAction      nodeIDNib = "ac"
-	nibAdapter     nodeIDNib = "ad"
-	nibDevice      nodeIDNib = "dv"
+	nibDevicesList   nodeIDNib = "dl"
+	nibActionsList   nodeIDNib = "al"
+	nibAction        nodeIDNib = "ac"
+	nibAdapter       nodeIDNib = "ad"
+	nibDevice        nodeIDNib = "dv"
+	nibStatus        nodeIDNib = "st"
+	nibStatusContent nodeIDNib = "stc"
 )
 
 const (

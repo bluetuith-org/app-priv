@@ -32,6 +32,11 @@ func (s *subNode) RootID() string {
 	return s.noder.RootID()
 }
 
+// SubnodePosition returns the position of the subnode within the parent node.
+func (s *subNode) SubnodePosition(adSubNodePos) (int, bool) {
+	return -1, false
+}
+
 // Information returns a message to print adapter/device information.
 func (s *subNode) Information() (string, richtext.Text) {
 	return s.noder.Information()
@@ -76,7 +81,8 @@ func newActionsListNode(a *adNode) {
 
 	alAdNode := newAdNode(
 		nodeTypeActionsList,
-		false, a.id.appendSubNodeNib(nibActionsList),
+		false, 2,
+		a.id.appendSubNodeNib(nibActionsList),
 		al, a.rv,
 	)
 
@@ -106,7 +112,8 @@ func newDeviceListNode(a *adNode, devices []bluetooth.DeviceData) {
 
 	dlAdNode := newAdNode(
 		nodeTypeDevicesList,
-		true, a.id.appendSubNodeNib(nibDevicesList),
+		true, 2,
+		a.id.appendSubNodeNib(nibDevicesList),
 		dl, a.rv,
 	)
 
@@ -139,7 +146,8 @@ func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec,
 
 	actionNode := newAdNode(
 		nodeTypeAction,
-		false, a.id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
+		false, 5,
+		a.id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
 		ac, a.rv,
 	)
 
@@ -157,4 +165,53 @@ func (a *acNode) NodeStyle() tcell.Style {
 // Icon returns the Icon associated with this node.
 func (a *acNode) Icon() string {
 	return theme.Icons().Actions.String()
+}
+
+type stNode struct {
+	*subNode
+	content *adNode
+}
+
+func newStatusNode(a *adNode, expanded bool) *stNode {
+	st := &stNode{}
+
+	statusNode := newAdNode(
+		nodeTypeStatus,
+		expanded, 2,
+		a.id.appendSubNodeNib(nibStatus),
+		st, a.rv,
+	)
+
+	statusContent := newAdNode(
+		nodeTypeStatus,
+		false, 5,
+		statusNode.id.appendSubNodeNib(nibStatusContent),
+		st, a.rv,
+	)
+
+	st.subNode = newSubNode(statusNode, a.noder)
+	st.content = statusContent
+
+	a.AddChild(statusNode.Node)
+	st.adn.AddChild(statusContent.Node)
+
+	st.adn.SetContent(buildLabel(st.Icon(), "Status", st.NodeStyle()))
+	st.content.SetSelectable(false)
+
+	return st
+}
+
+// SetContent sets the content for the status node.
+func (s *stNode) SetContent(content richtext.Line) {
+	s.content.SetContent(content)
+}
+
+// NodeStyle returns the style to be applied for this node's label.
+func (s *stNode) NodeStyle() tcell.Style {
+	return theme.Current().ADTree.Status
+}
+
+// Icon returns the Icon associated with this node.
+func (s *stNode) Icon() string {
+	return theme.Icons().AdStatus.String()
 }

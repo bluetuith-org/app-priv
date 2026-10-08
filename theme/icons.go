@@ -20,6 +20,7 @@ type IconSet struct {
 	Adapters, Adapter IconVariant
 	Devices           IconVariant
 	Actions           IconVariant
+	AdStatus          IconVariant
 
 	Camera, VideoCamera     IconVariant
 	Printer                 IconVariant
@@ -198,6 +199,11 @@ func (i *IconSet) populateIcons(isASCII bool) *IconSet {
 			IsASCII: isASCII,
 			Unicode: "",
 			ASCII:   ")",
+		},
+		AdStatus: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "\U000025C9",
+			ASCII:   "*",
 		},
 	}
 

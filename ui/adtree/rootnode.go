@@ -26,7 +26,8 @@ func newRootNode(rv ui.RootView) *rootNode {
 
 	rootAdNode := newAdNode(
 		nodeTypeRoot,
-		true, newRootNodeID(),
+		true, 2,
+		newRootNodeID(),
 		rn, rv,
 	)
 

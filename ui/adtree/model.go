@@ -94,7 +94,7 @@ func (m Model) View(focused bool) tview.Widget {
 
 	return box.New(tree).
 		Background(theme.Current().Global.GetBackground()).
-		Padding(2, 1, 1, 1)
+		Padding(2, 0, 2, 1)
 }
 
 // Keybind converts keybindings to actions.

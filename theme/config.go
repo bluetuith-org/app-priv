@@ -56,12 +56,26 @@ type Configuration struct {
 		Indicators string `themedef:"bg:from-theme; fg:from-theme"`
 		Selection  string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
 
-		Adapter string `themedef:"bg:from-theme; fg:from-theme"`
+		Adapter struct {
+			Name string `themedef:"bg:from-theme; fg:from-theme"`
+
+			PoweredOnPill    string `themedef:"bg:green; fg:black"`
+			PoweredOffPill   string `themedef:"bg:red; fg:white"`
+			DiscoverablePill string `themedef:"bg:blue; fg:white"`
+			ScanningPill     string `themedef:"bg:yellow; fg:black"`
+			PairablePill     string `themedef:"bg:cyan; fg:black"`
+		}
 
 		Device struct {
 			Discovered string `themedef:"bg:from-theme; fg:orange"`
 			Paired     string `themedef:"bg:from-theme; fg:cyan"`
 			Unknown    string `themedef:"bg:from-theme; fg:white"`
+
+			NewDevicePill string `themedef:"bg:orange; fg:black"`
+			PairedPill    string `themedef:"bg:cyan; fg:black"`
+			TrustedPill   string `themedef:"bg:purple; fg:white"`
+			ConnectedPill string `themedef:"bg:green; fg:black"`
+			BlockedPill   string `themedef:"bg:red; fg:white"`
 		}
 
 		DevicesList string `themedef:"bg:from-theme; fg:from-theme"`
@@ -70,6 +84,8 @@ type Configuration struct {
 			Style string `themedef:"bg:from-theme; fg:from-theme"`
 			Nodes string `themedef:"bg:from-theme; fg:from-theme"`
 		}
+
+		Status string `themedef:"bg:from-theme; fg:from-theme"`
 	}
 
 	TabsPane struct {

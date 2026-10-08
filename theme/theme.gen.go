@@ -28,12 +28,26 @@ type Theme struct {
 		Indicators tcell.Style
 		Selection  tcell.Style
 
-		Adapter tcell.Style
+		Adapter struct {
+			Name tcell.Style
+
+			PoweredOnPill    tcell.Style
+			PoweredOffPill   tcell.Style
+			DiscoverablePill tcell.Style
+			ScanningPill     tcell.Style
+			PairablePill     tcell.Style
+		}
 
 		Device struct {
 			Discovered tcell.Style
 			Paired     tcell.Style
 			Unknown    tcell.Style
+
+			NewDevicePill tcell.Style
+			PairedPill    tcell.Style
+			TrustedPill   tcell.Style
+			ConnectedPill tcell.Style
+			BlockedPill   tcell.Style
 		}
 
 		DevicesList tcell.Style
@@ -42,6 +56,8 @@ type Theme struct {
 			Style tcell.Style
 			Nodes tcell.Style
 		}
+
+		Status tcell.Style
 	}
 
 	TabsPane struct {
@@ -99,13 +115,24 @@ func defaultConfig() *RootConfiguration {
 	r.ADTree.Title = "bg:from-theme;fg:from-theme"
 	r.ADTree.Indicators = "bg:from-theme;fg:from-theme"
 	r.ADTree.Selection = "bg:from-theme;fg:blue;attr:reverse"
-	r.ADTree.Adapter = "bg:from-theme;fg:from-theme"
+	r.ADTree.Adapter.Name = "bg:from-theme;fg:from-theme"
+	r.ADTree.Adapter.PoweredOnPill = "bg:green;fg:black"
+	r.ADTree.Adapter.PoweredOffPill = "bg:red;fg:white"
+	r.ADTree.Adapter.DiscoverablePill = "bg:blue;fg:white"
+	r.ADTree.Adapter.ScanningPill = "bg:yellow;fg:black"
+	r.ADTree.Adapter.PairablePill = "bg:cyan;fg:black"
 	r.ADTree.Device.Discovered = "bg:from-theme;fg:orange"
 	r.ADTree.Device.Paired = "bg:from-theme;fg:cyan"
 	r.ADTree.Device.Unknown = "bg:from-theme;fg:white"
+	r.ADTree.Device.NewDevicePill = "bg:orange;fg:black"
+	r.ADTree.Device.PairedPill = "bg:cyan;fg:black"
+	r.ADTree.Device.TrustedPill = "bg:purple;fg:white"
+	r.ADTree.Device.ConnectedPill = "bg:green;fg:black"
+	r.ADTree.Device.BlockedPill = "bg:red;fg:white"
 	r.ADTree.DevicesList = "bg:from-theme;fg:from-theme"
 	r.ADTree.ActionsList.Style = "bg:from-theme;fg:from-theme"
 	r.ADTree.ActionsList.Nodes = "bg:from-theme;fg:from-theme"
+	r.ADTree.Status = "bg:from-theme;fg:from-theme"
 	r.TabsPane.ArrowStyle = "bg:from-theme;fg:from-theme"
 	r.TabsPane.Tab = "bg:from-theme;fg:from-theme"
 	r.TabsPane.FocusedTab = "bg:from-theme;fg:brightcyan;attr:bold,underline"
@@ -150,7 +177,7 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 	}
 
 	return func(yield func(parseThemeInfo) bool) {
-		for i := range 36 {
+		for i := range 47 {
 			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
@@ -204,141 +231,196 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.ADTree.Selection
 
 	case 8:
-		p.rootCfg = &cfg.ADTree.Adapter
-		p.cmpCfg = cmpCfg.ADTree.Adapter
-		p.style = &t.ADTree.Adapter
+		p.rootCfg = &cfg.ADTree.Adapter.Name
+		p.cmpCfg = cmpCfg.ADTree.Adapter.Name
+		p.style = &t.ADTree.Adapter.Name
 
 	case 9:
+		p.rootCfg = &cfg.ADTree.Adapter.PoweredOnPill
+		p.cmpCfg = cmpCfg.ADTree.Adapter.PoweredOnPill
+		p.style = &t.ADTree.Adapter.PoweredOnPill
+
+	case 10:
+		p.rootCfg = &cfg.ADTree.Adapter.PoweredOffPill
+		p.cmpCfg = cmpCfg.ADTree.Adapter.PoweredOffPill
+		p.style = &t.ADTree.Adapter.PoweredOffPill
+
+	case 11:
+		p.rootCfg = &cfg.ADTree.Adapter.DiscoverablePill
+		p.cmpCfg = cmpCfg.ADTree.Adapter.DiscoverablePill
+		p.style = &t.ADTree.Adapter.DiscoverablePill
+
+	case 12:
+		p.rootCfg = &cfg.ADTree.Adapter.ScanningPill
+		p.cmpCfg = cmpCfg.ADTree.Adapter.ScanningPill
+		p.style = &t.ADTree.Adapter.ScanningPill
+
+	case 13:
+		p.rootCfg = &cfg.ADTree.Adapter.PairablePill
+		p.cmpCfg = cmpCfg.ADTree.Adapter.PairablePill
+		p.style = &t.ADTree.Adapter.PairablePill
+
+	case 14:
 		p.rootCfg = &cfg.ADTree.Device.Discovered
 		p.cmpCfg = cmpCfg.ADTree.Device.Discovered
 		p.style = &t.ADTree.Device.Discovered
 
-	case 10:
+	case 15:
 		p.rootCfg = &cfg.ADTree.Device.Paired
 		p.cmpCfg = cmpCfg.ADTree.Device.Paired
 		p.style = &t.ADTree.Device.Paired
 
-	case 11:
+	case 16:
 		p.rootCfg = &cfg.ADTree.Device.Unknown
 		p.cmpCfg = cmpCfg.ADTree.Device.Unknown
 		p.style = &t.ADTree.Device.Unknown
 
-	case 12:
+	case 17:
+		p.rootCfg = &cfg.ADTree.Device.NewDevicePill
+		p.cmpCfg = cmpCfg.ADTree.Device.NewDevicePill
+		p.style = &t.ADTree.Device.NewDevicePill
+
+	case 18:
+		p.rootCfg = &cfg.ADTree.Device.PairedPill
+		p.cmpCfg = cmpCfg.ADTree.Device.PairedPill
+		p.style = &t.ADTree.Device.PairedPill
+
+	case 19:
+		p.rootCfg = &cfg.ADTree.Device.TrustedPill
+		p.cmpCfg = cmpCfg.ADTree.Device.TrustedPill
+		p.style = &t.ADTree.Device.TrustedPill
+
+	case 20:
+		p.rootCfg = &cfg.ADTree.Device.ConnectedPill
+		p.cmpCfg = cmpCfg.ADTree.Device.ConnectedPill
+		p.style = &t.ADTree.Device.ConnectedPill
+
+	case 21:
+		p.rootCfg = &cfg.ADTree.Device.BlockedPill
+		p.cmpCfg = cmpCfg.ADTree.Device.BlockedPill
+		p.style = &t.ADTree.Device.BlockedPill
+
+	case 22:
 		p.rootCfg = &cfg.ADTree.DevicesList
 		p.cmpCfg = cmpCfg.ADTree.DevicesList
 		p.style = &t.ADTree.DevicesList
 
-	case 13:
+	case 23:
 		p.rootCfg = &cfg.ADTree.ActionsList.Style
 		p.cmpCfg = cmpCfg.ADTree.ActionsList.Style
 		p.style = &t.ADTree.ActionsList.Style
 
-	case 14:
+	case 24:
 		p.rootCfg = &cfg.ADTree.ActionsList.Nodes
 		p.cmpCfg = cmpCfg.ADTree.ActionsList.Nodes
 		p.style = &t.ADTree.ActionsList.Nodes
 
-	case 15:
+	case 25:
+		p.rootCfg = &cfg.ADTree.Status
+		p.cmpCfg = cmpCfg.ADTree.Status
+		p.style = &t.ADTree.Status
+
+	case 26:
 		p.rootCfg = &cfg.TabsPane.ArrowStyle
 		p.cmpCfg = cmpCfg.TabsPane.ArrowStyle
 		p.style = &t.TabsPane.ArrowStyle
 
-	case 16:
+	case 27:
 		p.rootCfg = &cfg.TabsPane.Tab
 		p.cmpCfg = cmpCfg.TabsPane.Tab
 		p.style = &t.TabsPane.Tab
 
-	case 17:
+	case 28:
 		p.rootCfg = &cfg.TabsPane.FocusedTab
 		p.cmpCfg = cmpCfg.TabsPane.FocusedTab
 		p.style = &t.TabsPane.FocusedTab
 
-	case 18:
+	case 29:
 		p.rootCfg = &cfg.Info.Title
 		p.cmpCfg = cmpCfg.Info.Title
 		p.style = &t.Info.Title
 
-	case 19:
+	case 30:
 		p.rootCfg = &cfg.Info.PropertyName
 		p.cmpCfg = cmpCfg.Info.PropertyName
 		p.style = &t.Info.PropertyName
 
-	case 20:
+	case 31:
 		p.rootCfg = &cfg.Info.PropertyValue
 		p.cmpCfg = cmpCfg.Info.PropertyValue
 		p.style = &t.Info.PropertyValue
 
-	case 21:
+	case 32:
 		p.rootCfg = &cfg.Operations.Title
 		p.cmpCfg = cmpCfg.Operations.Title
 		p.style = &t.Operations.Title
 
-	case 22:
+	case 33:
 		p.rootCfg = &cfg.Operations.Selection
 		p.cmpCfg = cmpCfg.Operations.Selection
 		p.style = &t.Operations.Selection
 
-	case 23:
+	case 34:
 		p.rootCfg = &cfg.Operations.OperationNumber
 		p.cmpCfg = cmpCfg.Operations.OperationNumber
 		p.style = &t.Operations.OperationNumber
 
-	case 24:
+	case 35:
 		p.rootCfg = &cfg.Operations.Time
 		p.cmpCfg = cmpCfg.Operations.Time
 		p.style = &t.Operations.Time
 
-	case 25:
+	case 36:
 		p.rootCfg = &cfg.Operations.PropertyName
 		p.cmpCfg = cmpCfg.Operations.PropertyName
 		p.style = &t.Operations.PropertyName
 
-	case 26:
+	case 37:
 		p.rootCfg = &cfg.Operations.Error
 		p.cmpCfg = cmpCfg.Operations.Error
 		p.style = &t.Operations.Error
 
-	case 27:
+	case 38:
 		p.rootCfg = &cfg.Operations.Completed
 		p.cmpCfg = cmpCfg.Operations.Completed
 		p.style = &t.Operations.Completed
 
-	case 28:
+	case 39:
 		p.rootCfg = &cfg.Operations.InProgress
 		p.cmpCfg = cmpCfg.Operations.InProgress
 		p.style = &t.Operations.InProgress
 
-	case 29:
+	case 40:
 		p.rootCfg = &cfg.Operations.Message
 		p.cmpCfg = cmpCfg.Operations.Message
 		p.style = &t.Operations.Message
 
-	case 30:
+	case 41:
 		p.rootCfg = &cfg.Log.Title
 		p.cmpCfg = cmpCfg.Log.Title
 		p.style = &t.Log.Title
 
-	case 31:
+	case 42:
 		p.rootCfg = &cfg.Log.Time
 		p.cmpCfg = cmpCfg.Log.Time
 		p.style = &t.Log.Time
 
-	case 32:
+	case 43:
 		p.rootCfg = &cfg.Log.Info
 		p.cmpCfg = cmpCfg.Log.Info
 		p.style = &t.Log.Info
 
-	case 33:
+	case 44:
 		p.rootCfg = &cfg.Log.Debug
 		p.cmpCfg = cmpCfg.Log.Debug
 		p.style = &t.Log.Debug
 
-	case 34:
+	case 45:
 		p.rootCfg = &cfg.Log.Error
 		p.cmpCfg = cmpCfg.Log.Error
 		p.style = &t.Log.Error
 
-	case 35:
+	case 46:
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style

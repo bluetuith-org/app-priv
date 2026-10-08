@@ -22,6 +22,9 @@ type adNoder interface {
 	// RootID returns the root ID for the subnodes of an adapter or device node.
 	RootID() string
 
+	// SubnodePosition returns the position of the subnode within the parent node.
+	SubnodePosition(relpos adSubNodePos) (int, bool)
+
 	// Information returns a message to print adapter/device information.
 	Information() (string, richtext.Text)
 
@@ -65,6 +68,11 @@ func (e *emptyNoder) PopulateActions() {
 // RootID implements [adNoder].
 func (e *emptyNoder) RootID() string {
 	return ""
+}
+
+// SubnodePosition returns the position of the subnode within the parent node.
+func (e *emptyNoder) SubnodePosition(adSubNodePos) (int, bool) {
+	return -1, false
 }
 
 // Information implements [adNoder].

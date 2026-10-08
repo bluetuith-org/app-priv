@@ -27,7 +27,8 @@ type adSubNodePos uint8
 
 // The different types of sub nodes.
 const (
-	relPosActionsListNode adSubNodePos = iota
+	relPosStatusNode adSubNodePos = iota
+	relPosActionsListNode
 	relPosDevicesListNode
 )
 
@@ -47,10 +48,10 @@ type adNode struct {
 	rv ui.RootView
 }
 
-func newAdNode(ntype adTreeNodeType, expanded bool, id nodeID, noder adNoder, rv ui.RootView) *adNode {
+func newAdNode(ntype adTreeNodeType, expanded bool, indent int, id nodeID, noder adNoder, rv ui.RootView) *adNode {
 	data := &adNode{}
 
-	node := ctree.NewNode(data).SetIndent(5).SetExpanded(expanded)
+	node := ctree.NewNode(data).SetIndent(indent).SetExpanded(expanded)
 	data.Node = node
 
 	data.id = id
@@ -96,18 +97,4 @@ func buildLabel(icon, name string, style tcell.Style) richtext.Line {
 		richtext.NewSegment(" ", style),
 		richtext.NewSegment(name, style),
 	)
-}
-
-func pushSeg(line richtext.Line, bgStyle tcell.Style, yield func(richtext.Segment) bool) bool {
-	if !yield(richtext.NewSegment(" ", bgStyle)) {
-		return false
-	}
-
-	for _, seg := range line {
-		if !yield(seg) {
-			return false
-		}
-	}
-
-	return true
 }

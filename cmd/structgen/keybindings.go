@@ -278,8 +278,6 @@ Print:
 		modStr = strings.Join(slices.Collect(maps.Keys(mods)), "|")
 	}
 
-	fmt.Println()
-
 	return fmt.Sprintf(
 			"newTcellKey(tcell.Key(%d), %q, %s)",
 			kb.key, kb.str, modStr,

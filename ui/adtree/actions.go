@@ -120,12 +120,18 @@ func actionKeyIterator(node *ctree.Node) keybindings.IterKeyMatch[actionKeyIterR
 			return
 		}
 
-		ch := node.Children()
-		if len(ch) <= int(relPosActionsListNode) {
+		ndat := n.Data[*adNode]()
+		pos, ok := ndat.noder.SubnodePosition(relPosActionsListNode)
+		if !ok {
 			return
 		}
 
-		actionListNode := ch[relPosActionsListNode]
+		ch := node.Children()
+		if len(ch) == 0 {
+			return
+		}
+
+		actionListNode := ch[pos]
 		actionNodes := actionListNode.Children()
 
 		for _, ac := range actionNodes {
