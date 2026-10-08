@@ -12,6 +12,7 @@ import (
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -278,3 +279,5 @@ func (a *adapterStatus) Content() richtext.Text {
 
 	return builder.Text()
 }
+
+var _ card.ContentProvider = (*adapterStatus)(nil)
