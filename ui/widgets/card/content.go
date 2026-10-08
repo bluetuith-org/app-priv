@@ -5,6 +5,7 @@ import (
 	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/richtext"
 	"github.com/ayn2op/tview/textview"
+	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -13,35 +14,34 @@ import (
 type Content struct {
 	headerRight, headerLeft richtext.Segment
 
-	content richtext.Text
-	message richtext.Text
-
+	content              richtext.Text
+	message              richtext.Text
 	cRendered, mRendered bool
-	cWrapped, mWrapped   richtext.Text
 
-	width int
+	cb ContentBuilder
+
+	width  int
+	inited bool
 }
 
 var _ tview.Widget = (*Content)(nil)
 
-func NewCardContent(content richtext.Text) *Content {
-	c := &Content{content: content}
+func NewCardContent(cb ContentBuilder) *Content {
+	c := &Content{cb: cb}
 
 	return c
 }
 
-func (c *Content) Headers(left, right richtext.Segment) *Content {
-	c.headerLeft = left
-	c.headerRight = right
+// Refresh refreshes the entire content of the card.
+func (c *Content) Refresh() *Content {
+	c.cRendered = false
+	c.mRendered = false
 
 	return c
 }
 
-func (c *Content) Message(marker richtext.Segment, msg richtext.Segment) *Content {
-	spaceBg := msg.Style.GetBackground()
-	spaceSeg := richtext.NewSegment(" ", tcell.Style{}.Background(spaceBg))
-
-	c.message = richtext.Text{richtext.Line{marker, spaceSeg, msg}}
+// RefreshMessage refreshes the message.
+func (c *Content) RefreshMessage() *Content {
 	c.mRendered = false
 
 	return c
@@ -56,10 +56,10 @@ func (c *Content) Draw(screen tview.Screen, area tview.Rectangle) {
 	tview.Print(screen, c.headerRight.Text, x+hd, y, width-hd, tview.AlignmentRight, c.headerRight.Style)
 
 	y += 2
-	c.tv(tview.AlignmentCenter, style, c.cWrapped).Draw(screen, tview.Rectangle{X: x, Y: y, Width: width, Height: len(c.cWrapped) + 1})
+	c.tv(tview.AlignmentCenter, style, c.content).Draw(screen, tview.Rectangle{X: x, Y: y, Width: width, Height: len(c.content) + 1})
 
-	y += len(c.cWrapped) + 1
-	c.tv(tview.AlignmentLeft, style, c.mWrapped).Draw(screen, tview.Rectangle{X: x, Y: y, Width: width, Height: len(c.mWrapped)})
+	y += len(c.content) + 1
+	c.tv(tview.AlignmentLeft, style, c.message).Draw(screen, tview.Rectangle{X: x, Y: y, Width: width, Height: len(c.message)})
 }
 
 // Handle implements [tview.Widget].
@@ -78,6 +78,17 @@ func (c *Content) Size() (width layout.Length, height layout.Length) {
 }
 
 func (c *Content) ensureSize(width int) int {
+	if !c.inited {
+		c.refreshHeaders()
+		c.refreshMessage(width)
+		c.refreshBody(width)
+
+		c.inited = true
+		c.width = width
+
+		return c.height()
+	}
+
 	if c.width == width && c.cRendered && c.mRendered {
 		return c.height()
 	}
@@ -88,21 +99,11 @@ func (c *Content) ensureSize(width int) int {
 	}
 
 	if !c.cRendered {
-		c.cWrapped = nil
-		for _, line := range c.content {
-			c.cWrapped = append(c.cWrapped, richtext.WrapWords(line, width)...)
-		}
-
-		c.cRendered = true
+		c.refreshBody(width)
 	}
 
 	if !c.mRendered {
-		c.mWrapped = nil
-		for _, line := range c.message {
-			c.mWrapped = append(c.mWrapped, richtext.WrapWords(line, width)...)
-		}
-
-		c.mRendered = true
+		c.refreshMessage(width)
 	}
 
 	c.width = width
@@ -110,8 +111,35 @@ func (c *Content) ensureSize(width int) int {
 	return c.height()
 }
 
+func (c *Content) refreshHeaders() *Content {
+	c.headerLeft, c.headerRight = c.cb.Headers()
+
+	return c
+}
+
+func (c *Content) refreshBody(width int) {
+	ui.Log("refresh body", c.cRendered)
+	c.content = nil
+
+	for _, line := range c.cb.Content() {
+		c.content = append(c.content, richtext.WrapWords(line, width)...)
+	}
+
+	c.cRendered = true
+}
+
+func (c *Content) refreshMessage(width int) {
+	ui.Log("refresh message", c.mRendered)
+	msgMarker, msgContent := c.cb.Message()
+	spaceBg := msgContent.Style.GetBackground()
+	spaceSeg := richtext.NewSegment(" ", tcell.Style{}.Background(spaceBg))
+
+	c.message = richtext.WrapWords(richtext.Line{msgMarker, spaceSeg, msgContent}, width)
+	c.mRendered = true
+}
+
 func (c *Content) height() int {
-	return 3 + len(c.cWrapped) + len(c.mWrapped)
+	return 3 + len(c.content) + len(c.message)
 }
 
 func (c *Content) tv(align tview.Alignment, style tcell.Style, content richtext.Text) textview.Widget {

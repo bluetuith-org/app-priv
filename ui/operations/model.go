@@ -148,11 +148,11 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 }
 
 func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error) {
-	if msg.id == "" {
+	if msg.getID() == "" {
 		return nil, nil, fmt.Errorf("%w: msg ID empty on create", errOpInternal)
 	}
 
-	runInfo, ok := m.run[msg.id]
+	runInfo, ok := m.run[msg.getID()]
 	if ok && runInfo.stage == operationInProgress {
 		return nil, nil, errOpAlreadyInProgress
 	}
@@ -160,7 +160,7 @@ func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error)
 	m.count++
 	header := "#" + strconv.Itoa(m.count)
 
-	info := newRunningInfo(m.rv, msg.CreationInfo.updateHeader(header))
+	info := newRunningInfo(m.rv, msg.updateHeader(header))
 	m.run[info.id] = info
 	m.ord = slices.Insert(m.ord, 0, info)
 

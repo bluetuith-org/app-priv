@@ -1,8 +1,6 @@
 package adtree
 
 import (
-	"runtime"
-
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
@@ -152,18 +150,26 @@ func (d *deviceNode) PopulateActions() {
 		return
 	}
 
-	newActionNode(node, ui.Kb().Device.ToggleConnection, boolToActionState(d.device.Connected.Value()), true, d.actionConnect)
-	newActionNode(node, ui.Kb().Device.TogglePairedState, boolToActionState(d.device.Paired.Value()), true, d.actionPair)
+	if v, ok := d.device.Connected.Get(); ok {
+		newActionNode(node, ui.Kb().Device.ToggleConnection, boolToActionState(v), true, d.actionConnect)
+	}
+	if v, ok := d.device.Paired.Get(); ok {
+		newActionNode(node, ui.Kb().Device.TogglePairedState, boolToActionState(v), true, d.actionPair)
+	}
 
 	if d.rv.Features().Has(appfeatures.FeatureSendFile, appfeatures.FeatureReceiveFile) &&
 		d.device.HaveService(bluetooth.ObexObjpushServiceClass) {
 		newActionNode(node, ui.Kb().Device.SendFiles, actionStateNone, false, d.actionSend)
 	}
 
-	if runtime.GOOS == "linux" {
-		newActionNode(node, ui.Kb().Device.Trust, boolToActionState(d.device.Trusted.Value()), true, d.actionTrust)
-		newActionNode(node, ui.Kb().Device.Block, boolToActionState(d.device.Blocked.Value()), true, d.actionBlock)
+	if v, ok := d.device.Trusted.Get(); ok {
+		newActionNode(node, ui.Kb().Device.Trust, boolToActionState(v), true, d.actionTrust)
+	}
+	if v, ok := d.device.Blocked.Get(); ok {
+		newActionNode(node, ui.Kb().Device.Block, boolToActionState(v), true, d.actionBlock)
+	}
 
+	if d.rv.Features().Has(appfeatures.FeatureMediaPlayer) {
 		if d.device.HaveService(bluetooth.AudioSourceServiceClass) ||
 			d.device.HaveService(bluetooth.AudioSinkServiceClass) {
 			newActionNode(node, ui.Kb().Device.AudioProfiles, actionStateNone, false, d.actionAudioProfiles)
@@ -174,13 +180,13 @@ func (d *deviceNode) PopulateActions() {
 			d.device.HaveService(bluetooth.AvRemoteTargetServiceClass) {
 			newActionNode(node, ui.Kb().Player.ToggleDisplay, actionStateDisabled, true, d.actionMediaPlayer)
 		}
+	}
 
-		if d.rv.Features().Has(appfeatures.FeatureNetwork) &&
-			d.device.HaveService(bluetooth.NapServiceClass) &&
-			(d.device.HaveService(bluetooth.PanuServiceClass) ||
-				d.device.HaveService(bluetooth.DialupNetServiceClass)) {
-			newActionNode(node, ui.Kb().Device.NetworkOptions, actionStateNone, false, d.actionNetwork)
-		}
+	if d.rv.Features().Has(appfeatures.FeatureNetwork) &&
+		d.device.HaveService(bluetooth.NapServiceClass) &&
+		(d.device.HaveService(bluetooth.PanuServiceClass) ||
+			d.device.HaveService(bluetooth.DialupNetServiceClass)) {
+		newActionNode(node, ui.Kb().Device.NetworkOptions, actionStateNone, false, d.actionNetwork)
 	}
 
 	for _, actionNode := range actionsListNode.Children() {

@@ -141,10 +141,18 @@ func (a *adapterNode) PopulateActions() {
 		return
 	}
 
-	newActionNode(node, ui.Kb().Adapter.TogglePower, boolToActionState(a.adapter.Powered.Value()), true, a.actionPowered)
-	newActionNode(node, ui.Kb().Adapter.ToggleDiscoverable, boolToActionState(a.adapter.Discovering.Value()), true, a.actionDiscoverable)
-	newActionNode(node, ui.Kb().Adapter.TogglePairable, boolToActionState(a.adapter.Pairable.Value()), true, a.actionPairable)
-	newActionNode(node, ui.Kb().Adapter.ToggleScan, boolToActionState(a.adapter.Discovering.Value()), true, a.actionScan)
+	if v, ok := a.adapter.Powered.Get(); ok {
+		newActionNode(node, ui.Kb().Adapter.TogglePower, boolToActionState(v), true, a.actionPowered)
+	}
+	if v, ok := a.adapter.Discovering.Get(); ok {
+		newActionNode(node, ui.Kb().Adapter.ToggleDiscoverable, boolToActionState(v), true, a.actionDiscoverable)
+	}
+	if v, ok := a.adapter.Pairable.Get(); ok {
+		newActionNode(node, ui.Kb().Adapter.TogglePairable, boolToActionState(v), true, a.actionPairable)
+	}
+	if v, ok := a.adapter.Discovering.Get(); ok {
+		newActionNode(node, ui.Kb().Adapter.ToggleScan, boolToActionState(v), true, a.actionScan)
+	}
 
 	for _, actionNode := range actionsListNode.Children() {
 		a.UpdateActionNode(actionNode.Data[*adNode](), emptyActionUpdateMsg())
@@ -205,7 +213,7 @@ func (a *adapterNode) SetDeviceEventData(bluetooth.DeviceEventData) {
 }
 
 func (a *adapterNode) actionPowered(state *adActionState) (operations.CreationInfo, operations.Invoker) {
-	return operations.NewCreationInfo(a.getDesc("Turning adapter", state)), func(ov *operations.RunningInfo) tview.Msg {
+	return operations.NewCreationInfo(newAdapterStatus(a, "Turning adapter", state)), func(ov *operations.RunningInfo) tview.Msg {
 		ov.Info("Powering on...")
 		time.Sleep(2 * time.Second)
 
@@ -214,7 +222,7 @@ func (a *adapterNode) actionPowered(state *adActionState) (operations.CreationIn
 }
 
 func (a *adapterNode) actionDiscoverable(state *adActionState) (operations.CreationInfo, operations.Invoker) {
-	return operations.NewCreationInfo(a.getDesc("Setting adapter's discoverable", state)), func(ov *operations.RunningInfo) tview.Msg {
+	return operations.NewCreationInfo(newAdapterStatus(a, "Setting adapter's discoverable", state)), func(ov *operations.RunningInfo) tview.Msg {
 		ov.Info("Starting Disc")
 		time.Sleep(2 * time.Second)
 
@@ -230,7 +238,24 @@ func (a *adapterNode) actionScan(state *adActionState) (operations.CreationInfo,
 	return operations.CreationInfo{}, nil
 }
 
-func (a *adapterNode) getDesc(name string, state *adActionState) richtext.Text {
+var _ adNoder = (*adapterNode)(nil)
+
+type adapterStatus struct {
+	name, icon, adapterName string
+	currentState            actionStateSpec
+}
+
+func newAdapterStatus(node *adapterNode, name string, state *adActionState) *adapterStatus {
+	return &adapterStatus{
+		name:        name,
+		adapterName: getAdapterDisplayName(node.adapter),
+		icon:        node.Icon(),
+
+		currentState: state.currentState,
+	}
+}
+
+func (a *adapterStatus) Content() richtext.Text {
 	builder := ui.NewBuilder(
 		theme.Current().Global,
 	)
@@ -240,18 +265,16 @@ func (a *adapterNode) getDesc(name string, state *adActionState) richtext.Text {
 	msgStyle := theme.Current().Operations.Message
 
 	builder.AddKVFunc("Adapter:", style, func(bb *ui.Builder) {
-		bb.Append(a.Icon(), adapterStyle)
+		bb.Append(a.icon, adapterStyle)
 		bb.Space()
-		bb.Append(getAdapterDisplayName(a.adapter), adapterStyle)
+		bb.Append(a.adapterName, adapterStyle)
 	})
 
 	builder.AddKVFunc("Action:", style, func(bb *ui.Builder) {
-		bb.Append(name, msgStyle)
+		bb.Append(a.name, msgStyle)
 		bb.Space()
-		bb.Append(state.currentState.Format("on", "off"), msgStyle)
+		bb.Append(a.currentState.Format("on", "off"), msgStyle)
 	})
 
 	return builder.Text()
 }
-
-var _ adNoder = (*adapterNode)(nil)
