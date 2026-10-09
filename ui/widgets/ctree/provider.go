@@ -1,6 +1,8 @@
 package ctree
 
 import (
+	"iter"
+
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/richtext"
 	"github.com/gdamore/tcell/v3"
@@ -9,7 +11,7 @@ import (
 // Provider describes a formatter to print tree-node contents.
 type Provider interface {
 	// Keybind converts keybindings to actions.
-	Keybind(msg tview.KeyMsg) (Action, bool)
+	Keybind(msg tview.KeyMsg) Action
 
 	// OnChange processes a change in the tree's state and returns a [tview.Msg]
 	OnChange(chg Change) tview.Msg
@@ -21,5 +23,5 @@ type Provider interface {
 	MarkerStyle(node *Node) tcell.Style
 
 	// StyledLabels returns a sequence of text and their associated styles.
-	StyledLabels(node *Node) richtext.Line
+	StyledLabels(node *Node, selected bool) iter.Seq2[richtext.Line, tcell.Style]
 }

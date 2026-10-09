@@ -37,7 +37,6 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 
 	an.adNode = adapterNode
 	an.adapter = adapter
-	an.stn = newStatusNode(adapterNode, true)
 
 	newActionsListNode(an.adNode)
 	newDeviceListNode(adapterNode, devices)
@@ -52,8 +51,7 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 
 // Refresh refreshes the content of the node.
 func (a *adapterNode) Refresh() {
-	a.stn.SetContent(a.StatusIcons())
-
+	a.SetMarkers(a.StatusIcons())
 	a.SetContent(buildLabel(a.Icon(), getAdapterDisplayName(a.adapter), a.NodeStyle()))
 }
 
@@ -80,14 +78,11 @@ func (a *adapterNode) RootID() string {
 // SubnodePosition returns the position of the subnode within the parent node.
 func (a *adapterNode) SubnodePosition(relpos adSubNodePos) (int, bool) {
 	switch relpos {
-	case relPosStatusNode:
+	case relPosActionsListNode:
 		return 0, true
 
-	case relPosActionsListNode:
-		return 1, true
-
 	case relPosDevicesListNode:
-		return 2, true
+		return 1, true
 	}
 
 	return -1, false
@@ -103,9 +98,9 @@ func (a *adapterNode) StatusIcons() richtext.Line {
 	var line richtext.Line
 
 	if powered, ok := a.adapter.Powered.Get(); ok {
-		en, enStyle := " Enabled ", theme.Current().ADTree.Adapter.PoweredOnPill
+		en, enStyle := " On ", theme.Current().ADTree.Adapter.PoweredOnPill
 		if !powered {
-			en, enStyle = " Disabled ", theme.Current().ADTree.Adapter.PoweredOffPill
+			en, enStyle = " Off ", theme.Current().ADTree.Adapter.PoweredOffPill
 		}
 
 		line = append(line, richtext.NewSegment(en, enStyle))
@@ -116,9 +111,9 @@ func (a *adapterNode) StatusIcons() richtext.Line {
 		Opt   optional.Optional[bool]
 		Style tcell.Style
 	}{
-		{" Scanning ", a.adapter.Discovering, theme.Current().ADTree.Adapter.ScanningPill},
-		{" Discoverable ", a.adapter.Discoverable, theme.Current().ADTree.Adapter.DiscoverablePill},
-		{" Pairable ", a.adapter.Pairable, theme.Current().ADTree.Adapter.PairablePill},
+		{" Scn ", a.adapter.Discovering, theme.Current().ADTree.Adapter.ScanningPill},
+		{" Dsc ", a.adapter.Discoverable, theme.Current().ADTree.Adapter.DiscoverablePill},
+		{" Pbl ", a.adapter.Pairable, theme.Current().ADTree.Adapter.PairablePill},
 	} {
 		if v, ok := state.Opt.Get(); !ok || !v {
 			continue

@@ -2,6 +2,9 @@ package ctree
 
 import (
 	"slices"
+
+	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 )
 
 // Node represents one node in a tree view.
@@ -14,6 +17,14 @@ type Node struct {
 
 	// The parent node of this node.
 	parent *Node
+
+	// The item's text.
+	line richtext.Line
+	// lineWidth caches the width of line.
+	lineWidth int
+
+	// The style of selected text.
+	selectedTextStyle tview.Style
 
 	// Whether or not this node can be selected.
 	selectable bool
@@ -29,9 +40,9 @@ type Node struct {
 }
 
 // NewNode returns a new tree node.
-func NewNode(reference any) *Node {
+func NewNode(ref any) *Node {
 	return &Node{
-		reference:  reference,
+		reference:  ref,
 		indent:     2,
 		expanded:   true,
 		selectable: true,
@@ -97,6 +108,30 @@ func (n *Node) AddChild(node *Node) *Node {
 	return n
 }
 
+// Reference returns this node's reference object.
+func (n *Node) Reference() any {
+	return n.reference
+}
+
+// SetReference allows you to store a reference of any type in this node. This will allow you to establish a mapping between the Model hierarchy and your internal tree structure.
+func (n *Node) SetReference(reference any) *Node {
+	n.reference = reference
+
+	return n
+}
+
+// Line returns the node's styled text line.
+func (n *Node) Line() richtext.Line {
+	return n.line
+}
+
+// SetLine sets the node's styled text line.
+func (n *Node) SetLine(line richtext.Line) *Node {
+	n.line, n.lineWidth = line, line.Width()
+
+	return n
+}
+
 // RemoveChild removes a child node from this node. If the child node cannot be found, nothing happens.
 func (n *Node) RemoveChild(node *Node) *Node {
 	if index := slices.Index(n.children, node); index >= 0 {
@@ -147,7 +182,7 @@ func (n *Node) Collapse() *Node {
 
 // ExpandAll expands this node and all descendent nodes.
 func (n *Node) ExpandAll() *Node {
-	n.Walk(func(node, _ *Node) bool {
+	n.Walk(func(node, parent *Node) bool {
 		node.expanded = true
 		return true
 	})
@@ -156,10 +191,21 @@ func (n *Node) ExpandAll() *Node {
 
 // CollapseAll collapses this node and all descendent nodes.
 func (n *Node) CollapseAll() *Node {
-	n.Walk(func(node, _ *Node) bool {
+	n.Walk(func(node, parent *Node) bool {
 		node.expanded = false
 		return true
 	})
+	return n
+}
+
+// SelectedTextStyle returns the text style for this node when it is selected.
+func (n *Node) SelectedTextStyle() tview.Style {
+	return n.selectedTextStyle
+}
+
+// SetSelectedTextStyle sets the text style for this node when it is selected.
+func (n *Node) SetSelectedTextStyle(style tview.Style) *Node {
+	n.selectedTextStyle = style
 	return n
 }
 
@@ -167,4 +213,17 @@ func (n *Node) CollapseAll() *Node {
 func (n *Node) SetIndent(indent int) *Node {
 	n.indent = indent
 	return n
+}
+
+// PathTo returns the nodes from n to node, both included, or nil if node is not under n.
+func (n *Node) PathTo(node *Node) []*Node {
+	if n == node {
+		return []*Node{n}
+	}
+	for _, child := range n.children {
+		if path := child.PathTo(node); path != nil {
+			return append([]*Node{n}, path...)
+		}
+	}
+	return nil
 }

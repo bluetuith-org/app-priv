@@ -1,6 +1,7 @@
 package adtree
 
 import (
+	"iter"
 	"time"
 
 	"github.com/ayn2op/tview"
@@ -84,13 +85,12 @@ func (m Model) View(focused bool) tview.Widget {
 		state.SetCurrentNode(nil)
 	}
 
-	tree := ctree.New(m.root.Node, &m, &state).
+	tree := ctree.New(m.root.Node, &m, state).
 		Focused(focused).
 		Graphics(true).
 		GraphicsSet(m.graphicsSet).
 		GraphicsStyle(theme.Current().Global).
-		Markers(m.markers).
-		SelectedStyle(theme.Current().ADTree.Selection)
+		Markers(m.markers)
 
 	return box.New(tree).
 		Background(theme.Current().Global.GetBackground()).
@@ -98,19 +98,19 @@ func (m Model) View(focused bool) tview.Widget {
 }
 
 // Keybind converts keybindings to actions.
-func (m *Model) Keybind(msg tview.KeyMsg) (ctree.Action, bool) {
+func (m *Model) Keybind(msg tview.KeyMsg) ctree.Action {
 	switch {
 	case ui.Kb().NavigateUp.Matches(msg):
-		return ctree.ActionUp, true
+		return ctree.ActionUp
 
 	case ui.Kb().NavigateDown.Matches(msg):
-		return ctree.ActionDown, true
+		return ctree.ActionDown
 
 	case ui.Kb().ADTree.ExpandOrSelect.Matches(msg):
-		return ctree.ActionSelect, true
+		return ctree.ActionSelect
 	}
 
-	return 0, false
+	return ctree.ActionNone
 }
 
 // OnChange processes a change in the tree's state and returns a [tview.Msg]
@@ -129,8 +129,27 @@ func (m *Model) MarkerStyle(*ctree.Node) tcell.Style {
 }
 
 // StyledLabels returns a sequence of text and their associated styles.
-func (m *Model) StyledLabels(node *ctree.Node) richtext.Line {
-	return node.Data[*adNode]().Content()
+func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[richtext.Line, tcell.Style] {
+	return func(yield func(richtext.Line, tcell.Style) bool) {
+		adn := node.Data[*adNode]()
+
+		if mrk := adn.Markers(); mrk != nil {
+			if !yield(mrk, tcell.Style{}) {
+				return
+			}
+		}
+
+		if ct := adn.Content(); ct != nil {
+			st := tcell.Style{}
+			if selected {
+				st = theme.Current().ADTree.Selection
+			}
+
+			if !yield(ct, st) {
+				return
+			}
+		}
+	}
 }
 
 func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {

@@ -8,9 +8,10 @@ import (
 // Action is what a key makes a tree do. Apps that handle keys themselves send it with Perform.
 type Action int
 
-// The different types of actions.
 const (
-	ActionUp Action = iota
+	ActionNone Action = iota
+
+	ActionUp
 	ActionDown
 	ActionTop
 	ActionBottom
@@ -18,29 +19,21 @@ const (
 	ActionSelect
 )
 
-// DefaultKeybind binds up, down, home, end, K, and enter.
-func DefaultKeybind(key tview.KeyMsg) (Action, bool) {
+// DefaultKeybind is the default keybind.
+func DefaultKeybind(key tview.KeyMsg) Action {
 	switch keybind.String(key) {
 	case "up":
-		return ActionUp, true
+		return ActionUp
 	case "down":
-		return ActionDown, true
+		return ActionDown
 	case "home":
-		return ActionTop, true
+		return ActionTop
 	case "end":
-		return ActionBottom, true
+		return ActionBottom
 	case "K":
-		return ActionMoveToParent, true
+		return ActionMoveToParent
 	case "enter":
-		return ActionSelect, true
+		return ActionSelect
 	}
-	return 0, false
-}
-
-// ActionMsg makes a focused tree perform its action.
-type ActionMsg Action
-
-// Perform is a command that makes a focused tree perform action.
-func Perform(action Action) tview.Cmd {
-	return func() tview.Msg { return ActionMsg(action) }
+	return ActionNone
 }

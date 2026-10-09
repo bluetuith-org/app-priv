@@ -2,6 +2,7 @@ package adtree
 
 import (
 	"github.com/ayn2op/tview/richtext"
+	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
 	"github.com/gdamore/tcell/v3"
@@ -43,6 +44,7 @@ type adNode struct {
 	noder       adNoder
 	actionState *adActionState
 
+	markers richtext.Line
 	content richtext.Line
 
 	rv ui.RootView
@@ -80,6 +82,14 @@ func (a *adNode) Content() richtext.Line {
 // SetContent sets the name for the node.
 func (a *adNode) SetContent(content richtext.Line) {
 	a.content = content
+}
+
+func (a *adNode) Markers() richtext.Line {
+	return a.markers
+}
+
+func (a *adNode) SetMarkers(markers richtext.Line) {
+	a.markers = append(markers, richtext.NewSegment(" ", theme.Current().Global))
 }
 
 func (a *adNode) ParentNode() (*adNode, bool) {

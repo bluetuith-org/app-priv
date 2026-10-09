@@ -13,7 +13,6 @@ import (
 
 // Model represents an information section.
 type Model struct {
-	state       textview.ScrollState
 	text        richtext.Text
 	placeholder richtext.Text
 }
@@ -21,8 +20,7 @@ type Model struct {
 // New returns a new information section.
 func New() Model {
 	return Model{
-		state: textview.ScrollState{},
-		text:  make(richtext.Text, 0),
+		text: make(richtext.Text, 0),
 		placeholder: richtext.New(richtext.Line{
 			richtext.NewSegment(
 				"Settle on an adapter, device or the top of the tree to view information.",
@@ -61,20 +59,14 @@ func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
 // View draws this model onto the screen.
 func (m Model) View(focused bool) tview.Widget {
 	return textview.New(m.text).
-		Focused(focused).
-		ScrollState(&m.state).
 		Style(theme.Current().Global).
 		Wrap(true).
-		WordWrap(true).
-		OnChange(func(c textview.Change) tview.Msg {
-			return scrollMsg(c)
-		})
+		WordWrap(true)
 }
 
 func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case scrollMsg:
-		m.state.Apply(textview.Change(ms))
 
 	case infoMsg:
 		m.text = ms.content
@@ -88,7 +80,7 @@ func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
 	return nil
 }
 
-type scrollMsg textview.Change
+type scrollMsg struct{}
 
 var (
 	_ ui.Model[Model] = Model{}

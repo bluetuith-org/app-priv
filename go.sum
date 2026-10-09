@@ -6,6 +6,8 @@ github.com/ayn2op/tview v0.0.0-20261004194222-a506691173ce h1:QbE9slkt2GwIw9zmE8
 github.com/ayn2op/tview v0.0.0-20261004194222-a506691173ce/go.mod h1:oRPTSZgaEJPhv3dmmNvo6grBq/BemrLG3wFQLMTZJkY=
 github.com/ayn2op/tview v0.0.0-20261007211003-9563fec35eee h1:U0H5wb9+IeOSB4Bsr1dtoQTYfgwCcw0rNFF5mmf//QA=
 github.com/ayn2op/tview v0.0.0-20261007211003-9563fec35eee/go.mod h1:sMf5NqBlGJjsaGCUycTqTyNG5vewJU6jq/3BdJIzbCU=
+github.com/ayn2op/tview v0.0.0-20261008230130-de4c692f9141 h1:c3pb7UfbQqtmBn2HbJ+XRXJTdo/vHgIsK+CKuYoFPYU=
+github.com/ayn2op/tview v0.0.0-20261008230130-de4c692f9141/go.mod h1:sMf5NqBlGJjsaGCUycTqTyNG5vewJU6jq/3BdJIzbCU=
 github.com/bluetuith-org/bluetooth-classic v0.0.8 h1:YC5I/e/V3JNU7FcMBOQHofyAoPqGWna86WChGyz1EqU=
 github.com/bluetuith-org/bluetooth-classic v0.0.8/go.mod h1:aUhYDoh5Pj6vgcxUfaexcuZgJN7drA4FtDTj6sWAqnQ=
 github.com/clipperhouse/displaywidth v0.11.0 h1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=

@@ -35,7 +35,6 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 	dn.device = device
 	dn.adNode = deviceNode
 	dn.parentNoder = parentNode.noder
-	dn.stn = newStatusNode(deviceNode, false)
 
 	newActionsListNode(dn.adNode)
 	parentNode.AddChild(dn.Node)
@@ -57,8 +56,7 @@ func (d *deviceNode) HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool) {
 
 // Refresh refreshes the content of the node.
 func (d *deviceNode) Refresh() {
-	d.stn.SetContent(d.StatusIcons())
-
+	d.SetMarkers(d.StatusIcons())
 	d.SetContent(buildLabel(d.Icon(), getDeviceDisplayName(d.device.DeviceEventData), d.NodeStyle()))
 }
 
@@ -88,11 +86,10 @@ func (d *deviceNode) RootID() string {
 // SubnodePosition returns the position of the subnode within the parent node.
 func (d *deviceNode) SubnodePosition(relpos adSubNodePos) (int, bool) {
 	switch relpos {
-	case relPosStatusNode:
+	case relPosActionsListNode:
 		return 0, true
 
-	case relPosActionsListNode:
-		return 1, true
+	default:
 	}
 
 	return -1, false
@@ -112,11 +109,11 @@ func (d *deviceNode) StatusIcons() richtext.Line {
 		Opt   optional.Optional[bool]
 		Style tcell.Style
 	}{
-		{" New ", d.device.Paired, theme.Current().ADTree.Device.NewDevicePill},
-		{" Connected ", d.device.Connected, theme.Current().ADTree.Device.ConnectedPill},
-		{" Trusted ", d.device.Trusted, theme.Current().ADTree.Device.TrustedPill},
+		{" Nw ", d.device.Paired, theme.Current().ADTree.Device.NewDevicePill},
+		{" Cn ", d.device.Connected, theme.Current().ADTree.Device.ConnectedPill},
+		{" Tr ", d.device.Trusted, theme.Current().ADTree.Device.TrustedPill},
 
-		{" Blocked ", d.device.Blocked, theme.Current().ADTree.Device.BlockedPill},
+		{" Bd ", d.device.Blocked, theme.Current().ADTree.Device.BlockedPill},
 	} {
 		v, ok := state.Opt.Get()
 		if !ok {
@@ -128,7 +125,7 @@ func (d *deviceNode) StatusIcons() richtext.Line {
 			continue
 
 		case i == 0 && v:
-			state.Name = " Paired "
+			state.Name = " Prd "
 			state.Style = theme.Current().ADTree.Device.PairedPill
 		}
 
