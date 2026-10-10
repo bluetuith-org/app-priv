@@ -16,7 +16,7 @@ import (
 	"github.com/gdamore/tcell/v3"
 )
 
-const dbTime = 750 * time.Millisecond
+const dbTime = 500 * time.Millisecond
 
 // Model represents an adapter-device tree.
 type Model struct {
@@ -126,7 +126,7 @@ func (m *Model) Keybind(msg tview.KeyMsg) ctree.Action {
 }
 
 // ScrollKeybinds processes a change in the viewport's state and returns a [viewport.Action].
-func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
+func (m *Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
 	switch {
 	case ui.Kb().NavigateTop.Matches(msg):
 		return viewport.ActionTop
@@ -312,7 +312,8 @@ func (m *Model) dbTimer() tview.Msg {
 
 type (
 	selectionChange ctree.Change
-	scrollMsg       struct {
+
+	scrollMsg struct {
 		change viewport.Change
 		msg    tview.Msg
 	}
