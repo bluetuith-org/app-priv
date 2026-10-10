@@ -6,7 +6,9 @@ import (
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
+	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/viewport"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/info"
@@ -21,6 +23,7 @@ type Model struct {
 	root *rootNode
 
 	selectionState ctree.SelectionState
+	scrollState    viewport.ScrollState
 
 	graphicsSet tview.BorderSet
 	markers     ctree.Markers
@@ -92,7 +95,16 @@ func (m Model) View(focused bool) tview.Widget {
 		GraphicsStyle(theme.Current().Global).
 		Markers(m.markers)
 
-	return box.New(tree).
+	vp := viewport.New(tree, m.scrollState).
+		Target(tree.Target).
+		ContentWidth(tree.RowsWidth).
+		OnChildMsg(func(c viewport.Change, msg tview.Msg) tview.Msg { return scrollMsg{change: c, msg: msg} }).
+		Axes(layout.Axes{Width: true, Height: true}).
+		Keybind(m.ScrollKeybinds).
+		Focused(focused).
+		OnChange(func(c viewport.Change) tview.Msg { return scrollMsg{change: c} })
+
+	return box.New(vp).
 		Background(theme.Current().Global.GetBackground()).
 		Padding(2, 0, 2, 1)
 }
@@ -111,6 +123,19 @@ func (m *Model) Keybind(msg tview.KeyMsg) ctree.Action {
 	}
 
 	return ctree.ActionNone
+}
+
+// ScrollKeybinds processes a change in the viewport's state and returns a [viewport.Action].
+func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
+	switch {
+	case ui.Kb().NavigateTop.Matches(msg):
+		return viewport.ActionTop
+
+	case ui.Kb().NavigateBottom.Matches(msg):
+		return viewport.ActionBottom
+	}
+
+	return viewport.ActionNone
 }
 
 // OnChange processes a change in the tree's state and returns a [tview.Msg]
@@ -157,8 +182,15 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	case dbEvent:
 		return m.dbHandler()
 
+	case scrollMsg:
+		m.scrollState.Apply(ms.change)
+		if ms.msg != nil {
+			return m.updateModel(focused, ms.msg)
+		}
+
 	case selectionChange:
 		m.selectionState.Apply(ctree.Change(ms))
+		m.scrollState.ScrollToTarget()
 		m.resetTimer()
 		return m.resetInformation()
 
@@ -280,7 +312,12 @@ func (m *Model) dbTimer() tview.Msg {
 
 type (
 	selectionChange ctree.Change
-	selectedMsg     struct {
+	scrollMsg       struct {
+		change viewport.Change
+		msg    tview.Msg
+	}
+
+	selectedMsg struct {
 		node *ctree.Node
 	}
 )

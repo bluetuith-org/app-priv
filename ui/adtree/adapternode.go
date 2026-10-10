@@ -20,7 +20,6 @@ import (
 type adapterNode struct {
 	*adNode
 
-	stn     *stNode
 	adapter bluetooth.AdapterData
 }
 
@@ -38,10 +37,10 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	an.adNode = adapterNode
 	an.adapter = adapter
 
-	newActionsListNode(an.adNode)
-	newDeviceListNode(adapterNode, devices)
+	newActionsListNode(an.adNode).SubAdNode().SetVGap(1, 0)
+	newDeviceListNode(adapterNode, devices).SubAdNode().SetVGap(1, 0)
 
-	rootNode.AddChild(adapterNode.Node)
+	rootNode.AddChild(adapterNode.Node.SetVGap(1, 0))
 
 	an.Refresh()
 	an.PopulateActions()

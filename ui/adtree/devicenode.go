@@ -16,7 +16,6 @@ import (
 type deviceNode struct {
 	*adNode
 
-	stn         *stNode
 	parentNoder adNoder
 	device      bluetooth.DeviceData
 }
@@ -37,7 +36,7 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 	dn.parentNoder = parentNode.noder
 
 	newActionsListNode(dn.adNode)
-	parentNode.AddChild(dn.Node)
+	parentNode.AddChild(dn.Node.SetVGap(1, 1))
 
 	dn.Refresh()
 	dn.PopulateActions()

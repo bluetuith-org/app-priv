@@ -37,6 +37,9 @@ type Node struct {
 
 	// The additional horizontal indent of this node's text.
 	indent int
+
+	vGapTop    int
+	vGapBottom int
 }
 
 // NewNode returns a new tree node.
@@ -106,6 +109,23 @@ func (n *Node) AddChild(node *Node) *Node {
 	n.children = append(n.children, node)
 
 	return n
+}
+
+// SetVGap sets the top and bottom vertical spacing (in rows) for the node.
+func (n *Node) SetVGap(top, bottom int) *Node {
+	n.vGapTop = top
+	n.vGapBottom = bottom
+	return n
+}
+
+// VGapTop returns the top vertical gap.
+func (n *Node) VGapTop() int {
+	return n.vGapTop
+}
+
+// VGapBottom returns the bottom vertical gap.
+func (n *Node) VGapBottom() int {
+	return n.vGapBottom
 }
 
 // Reference returns this node's reference object.

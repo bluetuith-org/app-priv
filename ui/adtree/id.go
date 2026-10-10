@@ -12,13 +12,11 @@ type nodeIDNib = string
 
 // The different types of node ID nibs.
 const (
-	nibDevicesList   nodeIDNib = "dl"
-	nibActionsList   nodeIDNib = "al"
-	nibAction        nodeIDNib = "ac"
-	nibAdapter       nodeIDNib = "ad"
-	nibDevice        nodeIDNib = "dv"
-	nibStatus        nodeIDNib = "st"
-	nibStatusContent nodeIDNib = "stc"
+	nibDevicesList nodeIDNib = "dl"
+	nibActionsList nodeIDNib = "al"
+	nibAction      nodeIDNib = "ac"
+	nibAdapter     nodeIDNib = "ad"
+	nibDevice      nodeIDNib = "dv"
 )
 
 const (
@@ -144,32 +142,6 @@ func appendMacAddress(b *strings.Builder, mac bluetooth.MacAddress) {
 			b.WriteByte(nibble + 'A' - 10)
 		}
 	}
-}
-
-// getAdapterDisplayName returns the display name of the adapter.
-func getAdapterDisplayName(adapterData bluetooth.AdapterData) string {
-	if name, ok := adapterData.Name.Get(); ok {
-		return name
-	}
-
-	if adapterData.UniqueName != "" {
-		return adapterData.UniqueName
-	}
-
-	return adapterData.Address.String()
-}
-
-// getDeviceDisplayName returns the display name for the device.
-func getDeviceDisplayName(deviceData bluetooth.DeviceEventData) string {
-	if name, ok := deviceData.Name.Get(); ok {
-		return name
-	}
-
-	if alias, ok := deviceData.Alias.Get(); ok {
-		return alias
-	}
-
-	return deviceData.Address.String()
 }
 
 func useStringBuffer(size int, fn func(b *strings.Builder)) string {

@@ -2,6 +2,7 @@ package adtree
 
 import (
 	"github.com/ayn2op/tview/richtext"
+	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
@@ -19,7 +20,6 @@ const (
 	nodeTypeDevicesList
 	nodeTypeAction
 	nodeTypeActionsList
-	nodeTypeStatus
 )
 
 // adSubNodePos specifies the position of sub-nodes under
@@ -28,8 +28,7 @@ type adSubNodePos uint8
 
 // The different types of sub nodes.
 const (
-	relPosStatusNode adSubNodePos = iota
-	relPosActionsListNode
+	relPosActionsListNode adSubNodePos = iota
 	relPosDevicesListNode
 )
 
@@ -99,6 +98,32 @@ func (a *adNode) ParentNode() (*adNode, bool) {
 	}
 
 	return parent.Data[*adNode](), true
+}
+
+// getAdapterDisplayName returns the display name of the adapter.
+func getAdapterDisplayName(adapterData bluetooth.AdapterData) string {
+	if name, ok := adapterData.Name.Get(); ok {
+		return name
+	}
+
+	if adapterData.UniqueName != "" {
+		return adapterData.UniqueName
+	}
+
+	return adapterData.Address.String()
+}
+
+// getDeviceDisplayName returns the display name for the device.
+func getDeviceDisplayName(deviceData bluetooth.DeviceEventData) string {
+	if name, ok := deviceData.Name.Get(); ok {
+		return name
+	}
+
+	if alias, ok := deviceData.Alias.Get(); ok {
+		return alias
+	}
+
+	return deviceData.Address.String()
 }
 
 func buildLabel(icon, name string, style tcell.Style) richtext.Line {

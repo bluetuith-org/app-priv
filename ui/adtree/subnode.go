@@ -14,12 +14,16 @@ import (
 )
 
 type subNode struct {
-	adn   *adNode
+	sub   *adNode
 	noder adNoder
 }
 
 func newSubNode(adn *adNode, parentNoder adNoder) *subNode {
 	return &subNode{adn, parentNoder}
+}
+
+func (s *subNode) SubAdNode() *adNode {
+	return s.sub
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
@@ -49,8 +53,8 @@ func (s *subNode) PopulateActions() {
 
 // Refresh refreshes the content of the node.
 func (s *subNode) Refresh() {
-	style := s.adn.noder.NodeStyle()
-	c := s.adn.Content()
+	style := s.sub.noder.NodeStyle()
+	c := s.sub.Content()
 
 	for i := range c {
 		c[i].Style = style
@@ -76,7 +80,7 @@ type alNode struct {
 	*subNode
 }
 
-func newActionsListNode(a *adNode) {
+func newActionsListNode(a *adNode) *alNode {
 	al := &alNode{}
 
 	alAdNode := newAdNode(
@@ -87,10 +91,12 @@ func newActionsListNode(a *adNode) {
 	)
 
 	al.subNode = newSubNode(alAdNode, a.noder)
-	al.adn.SetContent(buildLabel(al.Icon(), "Actions", al.NodeStyle()))
+	al.SubAdNode().SetContent(buildLabel(al.Icon(), "Actions", al.NodeStyle()))
 
 	alAdNode.SetChildren(make([]*ctree.Node, 0, 5))
 	a.AddChild(alAdNode.Node)
+
+	return al
 }
 
 // NodeStyle returns the style to be applied for this node's label.
@@ -107,7 +113,7 @@ type dlNode struct {
 	*subNode
 }
 
-func newDeviceListNode(a *adNode, devices []bluetooth.DeviceData) {
+func newDeviceListNode(a *adNode, devices []bluetooth.DeviceData) *dlNode {
 	dl := &dlNode{}
 
 	dlAdNode := newAdNode(
@@ -118,13 +124,15 @@ func newDeviceListNode(a *adNode, devices []bluetooth.DeviceData) {
 	)
 
 	dl.subNode = newSubNode(dlAdNode, a.noder)
-	dl.adn.SetContent(buildLabel(dl.Icon(), "Devices", dl.NodeStyle()))
+	dl.SubAdNode().SetContent(buildLabel(dl.Icon(), "Devices", dl.NodeStyle()))
 
 	for _, device := range devices {
 		newDeviceNode(a.rv, dlAdNode, device)
 	}
 
 	a.AddChild(dlAdNode.Node)
+
+	return dl
 }
 
 // NodeStyle returns the style to be applied for this node's label.
@@ -141,7 +149,7 @@ type acNode struct {
 	*subNode
 }
 
-func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) {
+func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) *acNode {
 	ac := &acNode{}
 
 	actionNode := newAdNode(
@@ -155,6 +163,8 @@ func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec,
 	actionNode.actionState = newAdActionState(key, state, isToggleable, invoker)
 
 	a.AddChild(actionNode.Node)
+
+	return ac
 }
 
 // NodeStyle returns the style to be applied for this node's label.
@@ -165,53 +175,4 @@ func (a *acNode) NodeStyle() tcell.Style {
 // Icon returns the Icon associated with this node.
 func (a *acNode) Icon() string {
 	return theme.Icons().Actions.String()
-}
-
-type stNode struct {
-	*subNode
-	content *adNode
-}
-
-func newStatusNode(a *adNode, expanded bool) *stNode {
-	st := &stNode{}
-
-	statusNode := newAdNode(
-		nodeTypeStatus,
-		expanded, 2,
-		a.id.appendSubNodeNib(nibStatus),
-		st, a.rv,
-	)
-
-	statusContent := newAdNode(
-		nodeTypeStatus,
-		false, 5,
-		statusNode.id.appendSubNodeNib(nibStatusContent),
-		st, a.rv,
-	)
-
-	st.subNode = newSubNode(statusNode, a.noder)
-	st.content = statusContent
-
-	a.AddChild(statusNode.Node)
-	st.adn.AddChild(statusContent.Node)
-
-	st.adn.SetContent(buildLabel(st.Icon(), "Status", st.NodeStyle()))
-	st.content.SetSelectable(false)
-
-	return st
-}
-
-// SetContent sets the content for the status node.
-func (s *stNode) SetContent(content richtext.Line) {
-	s.content.SetContent(content)
-}
-
-// NodeStyle returns the style to be applied for this node's label.
-func (s *stNode) NodeStyle() tcell.Style {
-	return theme.Current().ADTree.Status
-}
-
-// Icon returns the Icon associated with this node.
-func (s *stNode) Icon() string {
-	return theme.Icons().AdStatus.String()
 }
