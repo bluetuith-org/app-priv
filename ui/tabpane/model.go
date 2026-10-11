@@ -2,6 +2,7 @@ package tabpane
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
@@ -37,6 +38,11 @@ func New(rv ui.RootView) Model {
 // ViewID returns the view's ID.
 func (m *Model) ViewID() ui.ViewID {
 	return ui.ViewIDTabs
+}
+
+// Header returns the content to print in the title bar.
+func (m *Model) Header() []richtext.Line {
+	return m.handler.header()
 }
 
 // HandleRouterMsg handles the routed message.

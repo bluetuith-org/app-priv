@@ -7,6 +7,7 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/column"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/ayn2op/tview/row"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
@@ -19,7 +20,7 @@ import (
 type Model struct {
 	ui.AppBinder
 
-	header stext.Widget
+	headerContent string
 
 	adTreeModel adtree.Model
 	tabsModel   tabpane.Model
@@ -33,12 +34,11 @@ type Model struct {
 
 // New returns a new root model.
 func New(binder ui.AppBinder) Model {
-	header := fmt.Sprintf(" bluetuith %s (%s)", binder.Configuration().Version, binder.Configuration().Revision)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	m := Model{
-		AppBinder: binder,
-		header:    stext.New(tview.AlignmentRight).SetContent(header),
+		AppBinder:     binder,
+		headerContent: fmt.Sprintf("bluetuith %s (%s) ", binder.Configuration().Version, binder.Configuration().Revision),
 
 		ctx:     ctx,
 		cancel:  cancel,
@@ -64,14 +64,32 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View() tview.Widget {
+	header := stext.New().
+		Background(theme.Current().App.TitleBar).
+		PushSpace().
+		Push(m.adTreeModel.Header(), tview.AlignmentLeft).
+		PushSpace()
+
+	for _, h := range m.tabsModel.Header() {
+		header = header.Push(h, tview.AlignmentLeft)
+	}
+
+	header = header.
+		Push(richtext.NewLine(
+			richtext.NewSegment(m.headerContent, theme.Current().App.TitleBar)),
+			tview.AlignmentRight,
+		).
+		PushSpace()
+
 	vflex := row.New(
 		m.adTreeModel.View(!m.panelFocused),
 		m.tabsModel.View(m.panelFocused),
 	)
+
 	hflex := column.New(
-		m.header.SetStyle(theme.Current().App.TitleBar),
+		header,
 		vflex,
-		m.header.SetStyle(theme.Current().App.TitleBar),
+		header,
 	)
 
 	return box.New(hflex).Background(theme.Current().Global.GetBackground())

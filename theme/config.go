@@ -52,9 +52,9 @@ type Configuration struct {
 	}
 
 	ADTree struct {
-		Title      string `themedef:"bg:from-theme; fg:from-theme"`
-		Indicators string `themedef:"bg:from-theme; fg:from-theme"`
-		Selection  string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
+		TitleBarIndicator string `themedef:"bg:#5f5ffd; fg:white; attr:bold"`
+		Indicators        string `themedef:"bg:from-theme; fg:from-theme"`
+		Selection         string `themedef:"bg:from-theme; fg:blue; attr:reverse"`
 
 		Adapter struct {
 			Name string `themedef:"bg:from-theme; fg:from-theme"`
@@ -101,8 +101,8 @@ type Configuration struct {
 	}
 
 	Operations struct {
-		Title     string `themedef:"bg:from-theme; fg:from-theme"`
-		Selection string `themedef:"bg:from-theme; fg:blue"`
+		TitleBarIndicator string `themedef:"bg:yellow; fg:black"`
+		Selection         string `themedef:"bg:from-theme; fg:blue"`
 
 		OperationNumber string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,italic,underline"`
 		Time            string `themedef:"bg:from-theme; fg:grey; attr:italic"`

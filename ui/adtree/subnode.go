@@ -154,7 +154,7 @@ func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec,
 
 	actionNode := newAdNode(
 		nodeTypeAction,
-		false, 5,
+		false, 2,
 		a.id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
 		ac, a.rv,
 	)

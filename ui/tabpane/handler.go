@@ -2,6 +2,7 @@ package tabpane
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
@@ -63,6 +64,16 @@ func (h *viewHandler) update(id ui.ViewID, focused bool, msg tview.Msg) tview.Cm
 	}
 
 	return cmd
+}
+
+func (h *viewHandler) header() []richtext.Line {
+	var lines []richtext.Line
+
+	if op := h.operationsModel.Header(); op != nil {
+		lines = append(lines, op)
+	}
+
+	return lines
 }
 
 func (h *viewHandler) setActive(msg tview.KeyMsg) bool {

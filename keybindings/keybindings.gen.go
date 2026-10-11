@@ -287,7 +287,7 @@ func defaultConfig() *Keybindings {
 		"CdBack",
 	)
 	k.Filebrowser.SelectOne = newKeybinding(
-		KeyFilebrowserSelectOne, newTcellKey(tcell.Key(256), " ", tcell.ModNone), " ",
+		KeyFilebrowserSelectOne, newTcellKey(tcell.Key(256), " ", tcell.ModNone), "space",
 		"SelectOne",
 		"SelectOne",
 	)
@@ -392,7 +392,7 @@ func defaultConfig() *Keybindings {
 		"ToggleDisplay",
 	)
 	k.Player.ToggleMediaPlaying = newKeybinding(
-		KeyPlayerToggleMediaPlaying, newTcellKey(tcell.Key(256), " ", tcell.ModNone), " ",
+		KeyPlayerToggleMediaPlaying, newTcellKey(tcell.Key(256), " ", tcell.ModNone), "space",
 		"ToggleMediaPlaying",
 		"ToggleMediaPlaying",
 	)

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
-	"time"
 
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/list"
-	"github.com/bluetuith-org/bluetuith/keybindings"
+	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/scrollbar"
+	"github.com/ayn2op/tview/viewport"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
@@ -19,14 +21,15 @@ import (
 
 // Model represents the operations view.
 type Model struct {
-	state list.SelectionState
+	state       list.SelectionState
+	scrollState viewport.ScrollState
+	scrollBar   scrollbar.Widget
 
 	focused bool
+	count   int
 
 	run map[string]*RunningInfo
 	ord []*RunningInfo
-
-	count int
 
 	rv ui.RootView
 }
@@ -38,15 +41,16 @@ func New(rv ui.RootView) Model {
 	state.SetCursor(0)
 
 	return Model{
-		state: state,
-		run:   make(map[string]*RunningInfo),
-		rv:    rv,
+		state:     state,
+		scrollBar: scrollbar.New(),
+		run:       make(map[string]*RunningInfo),
+		rv:        rv,
 	}
 }
 
 // Title returns the title of the tab section.
 func (m Model) Title() string {
-	return fmt.Sprintf("Operations (%s)", kb().Operations.Show.KeyName)
+	return fmt.Sprintf("Operations (%s)", ui.Kb().Operations.Show.KeyName)
 }
 
 // Icon returns the icon associated with the tab section.
@@ -59,17 +63,45 @@ func (m Model) ViewID() ui.ViewID {
 	return ui.ViewIDOperations
 }
 
-// Keybinds implements [ui.KcVirtualHandler].
+// Header returns the content to print in the title bar.
+func (m *Model) Header() richtext.Line {
+	if len(m.run) == 0 {
+		return nil
+	}
+
+	style := theme.Current().Operations.TitleBarIndicator
+
+	return richtext.NewLine(
+		richtext.NewSegment(" ", style),
+		richtext.NewSegment(strconv.Itoa(len(m.run)), style),
+		richtext.NewSegment(" running ", style),
+	)
+}
+
+// Keybinds implements keybindings for the list.
 func (m Model) Keybinds(msg tview.KeyMsg) list.Action {
 	switch {
-	case kb().NavigateUp.Matches(msg):
+	case ui.Kb().NavigateUp.Matches(msg):
 		return list.ActionSelectUp
 
-	case kb().NavigateDown.Matches(msg):
+	case ui.Kb().NavigateDown.Matches(msg):
 		return list.ActionSelectDown
 	}
 
 	return list.ActionNone
+}
+
+// ScrollKeybinds implements keybindings for the viewport.
+func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
+	switch {
+	case ui.Kb().NavigateTop.Matches(msg):
+		return viewport.ActionTop
+
+	case ui.Kb().NavigateBottom.Matches(msg):
+		return viewport.ActionBottom
+	}
+
+	return viewport.ActionNone
 }
 
 // OnChange implements [ui.KcVirtualHandler].
@@ -110,13 +142,29 @@ func (m Model) View(focused bool) tview.Widget {
 		Keybind(m.Keybinds).
 		SelectedStyle(tcell.StyleDefault)
 
-	return ls
+	vp := viewport.New(ls, m.scrollState).
+		Target(ls.Target).
+		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
+		OnChildMsg(func(c viewport.Change, msg tview.Msg) tview.Msg { return scrollMsg{change: c, msg: msg} }).
+		Axes(layout.Axes{Width: true, Height: true}).
+		Keybind(m.ScrollKeybinds).
+		Focused(focused).
+		OnChange(func(c viewport.Change) tview.Msg { return scrollMsg{change: c} })
+
+	return vp
 }
 
 func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case listChg:
 		m.state.Apply(list.Change(ms))
+		m.scrollState.ScrollToTarget()
+
+	case scrollMsg:
+		m.scrollState.Apply(ms.change)
+		if ms.msg != nil {
+			return m.updateModel(focused, ms.msg)
+		}
 
 	case CreateMsg:
 		info, action, err := m.createNewOperation(ms)
@@ -131,16 +179,19 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	case opUpdateMsg:
 		m.processUpdateMsg(ms)
 
+	case opDeleteMsg:
+		m.deleteOperation(ms.id)
+
 	case tview.KeyMsg:
 		if !focused {
 			return nil
 		}
 
 		switch {
-		case kb().Operations.ClearAll.Matches(ms):
+		case ui.Kb().Operations.ClearAll.Matches(ms):
 			m.clearOperations()
 
-		case kb().Operations.Cancel.Matches(ms):
+		case ui.Kb().Operations.Cancel.Matches(ms):
 		}
 	}
 
@@ -182,6 +233,10 @@ func (m *Model) processUpdateMsg(msg opUpdateMsg) bool {
 	return true
 }
 
+func (m *Model) deleteOperation(id string) {
+	delete(m.run, id)
+}
+
 func (m *Model) clearOperations() {
 	clear(m.run)
 	m.ord = nil
@@ -189,16 +244,18 @@ func (m *Model) clearOperations() {
 
 func (m *Model) deleteOperationCmd(id string) tview.Cmd {
 	return func() tview.Msg {
-		time.Sleep(1 * time.Second)
 		return msgOpDelete(id)
 	}
 }
 
-type listChg list.Change
+type (
+	listChg list.Change
 
-func kb() *keybindings.Keybindings {
-	return keybindings.Current
-}
+	scrollMsg struct {
+		change viewport.Change
+		msg    tview.Msg
+	}
+)
 
 var (
 	_ ui.Model[Model] = Model{}

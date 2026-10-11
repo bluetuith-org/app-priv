@@ -3,46 +3,52 @@ package stext
 import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/layout"
+	"github.com/ayn2op/tview/richtext"
 	"github.com/gdamore/tcell/v3"
-	"github.com/rivo/uniseg"
 )
+
+type alignedSegment struct {
+	richtext.Segment
+	align tview.Alignment
+}
 
 // Widget draws a single line of text.
 type Widget struct {
-	content       string
+	content       []alignedSegment
 	width, height layout.Length
 	align         tview.Alignment
-	style         tcell.Style
+	bgStyle       tcell.Style
 }
 
 var _ tview.Widget = Widget{}
 
 // New draws content in the style of the cells beneath it, so it takes the colors of the element it is drawn in.
-func New(align tview.Alignment) Widget {
+func New() Widget {
 	return Widget{
 		height: layout.Fixed(1),
-		align:  align,
+		width:  layout.Fill,
 	}
 }
 
-// SetStyle sets the style of the widget.
-func (w Widget) SetStyle(style tcell.Style) Widget {
-	w.style = style
-	return w
-}
-
-// SetContent sets the content of the widget.
-func (w Widget) SetContent(content string) Widget {
-	w.content = content
-	w.width = layout.Fixed(uniseg.StringWidth(content))
+// Push pushes a line of content with alignment.
+func (w Widget) Push(line richtext.Line, align tview.Alignment) Widget {
+	for _, seg := range line {
+		w.content = append(w.content, alignedSegment{Segment: seg, align: align})
+	}
 
 	return w
 }
 
-// SetFill sets the width and height to fill.
-func (w Widget) SetFill() Widget {
-	w.width = layout.Fill
-	w.height = layout.Fill
+// PushSpace appends a space between segments.
+func (w Widget) PushSpace() Widget {
+	w.content = append(w.content, alignedSegment{Segment: richtext.NewSegment(" ", w.bgStyle)})
+
+	return w
+}
+
+// Background sets the background style.
+func (w Widget) Background(bgStyle tcell.Style) Widget {
+	w.bgStyle = bgStyle
 
 	return w
 }
@@ -63,11 +69,16 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 		return
 	}
 
-	for x := area.X; x < area.X+area.Width; x++ {
-		screen.Put(x, area.Y, " ", w.style)
-	}
+	screen.FillArea(area.X, area.Y, area.Width, area.Height, ' ', w.bgStyle)
 
-	tview.Print(screen, w.content, area.X, area.Y, area.Width, w.align, w.style)
+	var textWidth int
+	for _, seg := range w.content {
+		if textWidth >= area.Width {
+			return
+		}
+
+		textWidth += tview.Print(screen, seg.Text, area.X+textWidth, area.Y, area.Width-textWidth, seg.align, seg.Style)
+	}
 }
 
 // Handle passes msg through unchanged.

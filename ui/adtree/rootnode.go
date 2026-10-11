@@ -9,7 +9,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
-	"github.com/gdamore/tcell/v3"
 )
 
 // rootNode describes a root tree node.
@@ -17,7 +16,10 @@ type rootNode struct {
 	*adNode
 	emptyNoder
 
+	title richtext.Line
+
 	adapterCount, devicesCount int
+	acPos, dcPos               int
 }
 
 // newRootNode creates a new root node.
@@ -31,22 +33,13 @@ func newRootNode(rv ui.RootView) *rootNode {
 		rn, rv,
 	)
 
+	rootAdNode.SetSelectable(false)
 	rn.adNode = rootAdNode
-	rootAdNode.SetChildren(make([]*ctree.Node, 0, 10))
 
+	rootAdNode.SetChildren(make([]*ctree.Node, 0, 10))
 	rn.Refresh()
 
 	return rn
-}
-
-// NodeStyle returns the style to be applied for this node's label.
-func (r *rootNode) NodeStyle() tcell.Style {
-	return theme.Current().ADTree.Title
-}
-
-// Icon returns the Icon associated with this node.
-func (r *rootNode) Icon() string {
-	return theme.Icons().Adapters.String()
 }
 
 // RootID returns the root ID for the subnodes of an adapter or device node.
@@ -56,29 +49,47 @@ func (r *rootNode) RootID() string {
 
 // Refresh refreshes the content of the node.
 func (r *rootNode) Refresh() {
-	r.SetContent(buildLabel(r.Icon(), "Adapters", r.NodeStyle()))
+	r.renderTitle()
+}
+
+func (r *rootNode) Title() richtext.Line {
+	return r.title
 }
 
 // Information returns a message to print adapter/device information.
-func (r *rootNode) Information() (string, richtext.Text) {
-	builder := ui.NewBuilder(theme.Current().Global)
+func (r *rootNode) renderTitle() {
+	var line richtext.Line
 
-	style := theme.Current().Info.PropertyName
-	vstyle := theme.Current().Info.PropertyValue
-	tstyle := theme.Current().Info.Title
+	tstyle := theme.Current().ADTree.TitleBarIndicator
 
-	builder.Appendln(" Overview ", tstyle)
-	builder.Newline()
+	line = append(line, richtext.NewSegment(" Adapters (", tstyle))
+	line = append(line, richtext.NewSegment(strconv.Itoa(r.adapterCount), tstyle))
+	line = append(line, richtext.NewSegment(") / ", tstyle))
+	line = append(line, richtext.NewSegment("Devices (", tstyle))
+	line = append(line, richtext.NewSegment(strconv.Itoa(r.devicesCount), tstyle))
+	line = append(line, richtext.NewSegment(") ", tstyle))
 
-	builder.AddKV("Adapters:", style, strconv.Itoa(r.adapterCount), vstyle)
-	builder.AddKV("Devices:", style, strconv.Itoa(r.devicesCount), vstyle)
+	r.title = line
+	r.acPos = 1
+	r.dcPos = 4
+}
 
-	return r.id.String(), builder.Text()
+func (r *rootNode) updateStats(fn func(rt *rootNode)) {
+	fn(r)
+
+	if len(r.title) <= r.acPos || len(r.title) <= r.dcPos {
+		return
+	}
+
+	r.title[r.acPos].Text = strconv.Itoa(r.adapterCount)
+	r.title[r.dcPos].Text = strconv.Itoa(r.devicesCount)
 }
 
 func (r *rootNode) addAdapter(adapter bluetooth.AdapterData, devices []bluetooth.DeviceData) {
-	r.adapterCount++
-	r.devicesCount += len(devices)
+	r.updateStats(func(rt *rootNode) {
+		rt.adapterCount++
+		rt.devicesCount += len(devices)
+	})
 
 	newAdapterNode(r.rv, r, adapter, devices)
 }
@@ -91,7 +102,9 @@ func (r *rootNode) addDevice(device bluetooth.DeviceData) {
 		return
 	}
 
-	r.devicesCount++
+	r.updateStats(func(rt *rootNode) {
+		rt.devicesCount++
+	})
 
 	newDeviceNode(r.rv, deviceListNode, device)
 }
@@ -110,8 +123,10 @@ func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove
 			parentNode.SetChildren(slices.Delete(parentNode.Children(), pos, pos+1))
 		}
 
-		r.adapterCount = max(r.adapterCount-1, 0)
-		r.devicesCount = max(r.devicesCount-len(adapterNode.Children()), 0)
+		r.updateStats(func(rt *rootNode) {
+			rt.adapterCount = max(rt.adapterCount-1, 0)
+			rt.devicesCount = max(rt.devicesCount-len(adapterNode.Children()), 0)
+		})
 
 		return
 	}
@@ -133,7 +148,9 @@ func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bo
 			parentNode.SetChildren(slices.Delete(parentNode.Children(), pos, pos+1))
 		}
 
-		r.devicesCount = max(r.devicesCount-1, 0)
+		r.updateStats(func(rt *rootNode) {
+			rt.devicesCount = max(rt.devicesCount-1, 0)
+		})
 
 		return
 	}

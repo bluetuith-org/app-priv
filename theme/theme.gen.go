@@ -24,9 +24,9 @@ type Theme struct {
 	}
 
 	ADTree struct {
-		Title      tcell.Style
-		Indicators tcell.Style
-		Selection  tcell.Style
+		TitleBarIndicator tcell.Style
+		Indicators        tcell.Style
+		Selection         tcell.Style
 
 		Adapter struct {
 			Name tcell.Style
@@ -73,8 +73,8 @@ type Theme struct {
 	}
 
 	Operations struct {
-		Title     tcell.Style
-		Selection tcell.Style
+		TitleBarIndicator tcell.Style
+		Selection         tcell.Style
 
 		OperationNumber tcell.Style
 		Time            tcell.Style
@@ -112,7 +112,7 @@ func defaultConfig() *RootConfiguration {
 	r.App.Border = "bg:from-theme;fg:white"
 	r.App.BorderFocused = "bg:from-theme;fg:green;attr:bold"
 	r.App.PlaceHolder = "bg:from-theme;fg:grey;attr:italic"
-	r.ADTree.Title = "bg:from-theme;fg:from-theme"
+	r.ADTree.TitleBarIndicator = "bg:#5f5ffd;fg:white;attr:bold"
 	r.ADTree.Indicators = "bg:from-theme;fg:from-theme"
 	r.ADTree.Selection = "bg:from-theme;fg:blue;attr:reverse"
 	r.ADTree.Adapter.Name = "bg:from-theme;fg:from-theme"
@@ -139,7 +139,7 @@ func defaultConfig() *RootConfiguration {
 	r.Info.Title = "bg:purple;fg:white"
 	r.Info.PropertyName = "bg:from-theme;fg:brightpurple;attr:bold"
 	r.Info.PropertyValue = "bg:from-theme;fg:white"
-	r.Operations.Title = "bg:from-theme;fg:from-theme"
+	r.Operations.TitleBarIndicator = "bg:yellow;fg:black"
 	r.Operations.Selection = "bg:from-theme;fg:blue"
 	r.Operations.OperationNumber = "bg:from-theme;fg:brightpurple;attr:bold,italic,underline"
 	r.Operations.Time = "bg:from-theme;fg:grey;attr:italic"
@@ -216,9 +216,9 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.App.PlaceHolder
 
 	case 5:
-		p.rootCfg = &cfg.ADTree.Title
-		p.cmpCfg = cmpCfg.ADTree.Title
-		p.style = &t.ADTree.Title
+		p.rootCfg = &cfg.ADTree.TitleBarIndicator
+		p.cmpCfg = cmpCfg.ADTree.TitleBarIndicator
+		p.style = &t.ADTree.TitleBarIndicator
 
 	case 6:
 		p.rootCfg = &cfg.ADTree.Indicators
@@ -351,9 +351,9 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.Info.PropertyValue
 
 	case 32:
-		p.rootCfg = &cfg.Operations.Title
-		p.cmpCfg = cmpCfg.Operations.Title
-		p.style = &t.Operations.Title
+		p.rootCfg = &cfg.Operations.TitleBarIndicator
+		p.cmpCfg = cmpCfg.Operations.TitleBarIndicator
+		p.style = &t.Operations.TitleBarIndicator
 
 	case 33:
 		p.rootCfg = &cfg.Operations.Selection

@@ -29,7 +29,7 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 
 	adapterNode := newAdNode(
 		nodeTypeAdapter,
-		true, 5,
+		true, 2,
 		newAdapterNodeID(adapter.AdapterAddress),
 		an, rv,
 	)

@@ -70,6 +70,11 @@ func (m *Model) ViewID() ui.ViewID {
 	return ui.ViewIDAdTree
 }
 
+// Header returns the content to print in the title bar.
+func (m *Model) Header() richtext.Line {
+	return m.root.Title()
+}
+
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
 	return tview.Batch(m.populate, m.dbTimer)
@@ -89,6 +94,7 @@ func (m Model) View(focused bool) tview.Widget {
 	}
 
 	tree := ctree.New(m.root.Node, &m, state).
+		TopLevel(1).
 		Focused(focused).
 		Graphics(true).
 		GraphicsSet(m.graphicsSet).

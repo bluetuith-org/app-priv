@@ -26,7 +26,7 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 
 	deviceNode := newAdNode(
 		nodeTypeDevice,
-		true, 10,
+		true, 2,
 		newDeviceNodeID(device.DeviceAddress),
 		dn, rv,
 	)
@@ -124,7 +124,7 @@ func (d *deviceNode) StatusIcons() richtext.Line {
 			continue
 
 		case i == 0 && v:
-			state.Name = " Prd "
+			state.Name = " P "
 			state.Style = theme.Current().ADTree.Device.PairedPill
 		}
 
