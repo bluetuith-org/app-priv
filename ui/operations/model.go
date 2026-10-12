@@ -74,7 +74,7 @@ func (m *Model) Header() richtext.Line {
 	return richtext.NewLine(
 		richtext.NewSegment(" ", style),
 		richtext.NewSegment(strconv.Itoa(len(m.run)), style),
-		richtext.NewSegment(" running ", style),
+		richtext.NewSegment(" Running ", style),
 	)
 }
 

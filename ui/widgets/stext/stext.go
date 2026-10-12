@@ -5,16 +5,12 @@ import (
 	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/richtext"
 	"github.com/gdamore/tcell/v3"
+	"github.com/rivo/uniseg"
 )
-
-type alignedSegment struct {
-	richtext.Segment
-	align tview.Alignment
-}
 
 // Widget draws a single line of text.
 type Widget struct {
-	content       []alignedSegment
+	cr, cl        richtext.Line
 	width, height layout.Length
 	align         tview.Alignment
 	bgStyle       tcell.Style
@@ -32,16 +28,26 @@ func New() Widget {
 
 // Push pushes a line of content with alignment.
 func (w Widget) Push(line richtext.Line, align tview.Alignment) Widget {
-	for _, seg := range line {
-		w.content = append(w.content, alignedSegment{Segment: seg, align: align})
+	switch align {
+	case tview.AlignmentLeft:
+		w.cl = append(w.cl, line...)
+
+	case tview.AlignmentRight:
+		w.cr = append(w.cr, line...)
 	}
 
 	return w
 }
 
 // PushSpace appends a space between segments.
-func (w Widget) PushSpace() Widget {
-	w.content = append(w.content, alignedSegment{Segment: richtext.NewSegment(" ", w.bgStyle)})
+func (w Widget) PushSpace(align tview.Alignment) Widget {
+	switch align {
+	case tview.AlignmentLeft:
+		w.cl = append(w.cl, richtext.NewSegment(" ", w.bgStyle))
+
+	case tview.AlignmentRight:
+		w.cr = append(w.cr, richtext.NewSegment(" ", w.bgStyle))
+	}
 
 	return w
 }
@@ -71,14 +77,39 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 
 	screen.FillArea(area.X, area.Y, area.Width, area.Height, ' ', w.bgStyle)
 
-	var textWidth int
-	for _, seg := range w.content {
-		if textWidth >= area.Width {
-			return
-		}
+	textWidth := w.drawLine(screen, w.cl, area.X, area.Y, area)
 
-		textWidth += tview.Print(screen, seg.Text, area.X+textWidth, area.Y, area.Width-textWidth, seg.align, seg.Style)
+	w.drawLine(screen, w.cr, area.X+(area.Width-w.cr.Width()), area.Y, tview.Rectangle{
+		X:      area.X + textWidth,
+		Y:      area.Y,
+		Width:  area.Width - textWidth,
+		Height: area.Height,
+	})
+}
+
+// drawLine draws line starting at x, keeping only the cells within area.
+//
+// Taken from: https://github.com/ayn2op/tview/blob/master/textview/widget.go
+func (w Widget) drawLine(screen tview.Screen, line richtext.Line, x, y int, area tview.Rectangle) int {
+	var textWidth int
+
+	for _, segment := range line {
+		style := segment.Style
+		str, state := segment.Text, -1
+		for len(str) > 0 {
+			var cluster string
+			var width int
+			cluster, str, width, state = uniseg.FirstGraphemeClusterInString(str, state)
+			width = max(width, 1)
+			if x >= area.X && x+width <= area.X+area.Width {
+				screen.Put(x, y, cluster, style)
+			}
+			x += width
+			textWidth += width
+		}
 	}
+
+	return textWidth
 }
 
 // Handle passes msg through unchanged.

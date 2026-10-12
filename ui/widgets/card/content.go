@@ -5,8 +5,8 @@ import (
 	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/richtext"
 	"github.com/ayn2op/tview/textview"
-	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/gdamore/tcell/v3"
+	"github.com/rivo/uniseg"
 )
 
 //revive:disable
@@ -52,8 +52,13 @@ func (c *Content) Draw(screen tview.Screen, area tview.Rectangle) {
 	x, y, width, _ := area.X, area.Y, area.Width, area.Height
 	_, style, _ := screen.Get(x+width/2, y+area.Height/2)
 
-	hd := tview.Print(screen, c.headerLeft.Text, x, y, width, tview.AlignmentLeft, c.headerLeft.Style)
-	tview.Print(screen, c.headerRight.Text, x+hd, y, width-hd, tview.AlignmentRight, c.headerRight.Style)
+	hd := c.drawSegment(screen, c.headerLeft, x, y, area)
+	c.drawSegment(screen, c.headerRight, x+(width-c.headerRight.Width()), y, tview.Rectangle{
+		X:      x + hd,
+		Y:      y,
+		Width:  width - hd,
+		Height: area.Height,
+	})
 
 	y += 2
 	c.tv(tview.AlignmentCenter, style, c.content).Draw(screen, tview.Rectangle{X: x, Y: y, Width: width, Height: len(c.content) + 1})
@@ -75,6 +80,27 @@ func (c *Content) Layout(limits layout.Limits) layout.Size {
 // Size implements [tview.Widget].
 func (c *Content) Size() (width layout.Length, height layout.Length) {
 	return layout.Fill, layout.Shrink
+}
+
+// drawSegment draws a segment starting at x, keeping only the cells within area.
+func (c *Content) drawSegment(screen tview.Screen, segment richtext.Segment, x, y int, area tview.Rectangle) int {
+	var textWidth int
+
+	style := segment.Style
+	str, state := segment.Text, -1
+	for len(str) > 0 {
+		var cluster string
+		var width int
+		cluster, str, width, state = uniseg.FirstGraphemeClusterInString(str, state)
+		width = max(width, 1)
+		if x >= area.X && x+width <= area.X+area.Width {
+			screen.Put(x, y, cluster, style)
+		}
+		x += width
+		textWidth += width
+	}
+
+	return textWidth
 }
 
 func (c *Content) ensureSize(width int) int {
@@ -118,7 +144,6 @@ func (c *Content) refreshHeaders() *Content {
 }
 
 func (c *Content) refreshBody(width int) {
-	ui.Log("refresh body", c.cRendered)
 	c.content = nil
 
 	for _, line := range c.cb.Content() {
@@ -129,7 +154,6 @@ func (c *Content) refreshBody(width int) {
 }
 
 func (c *Content) refreshMessage(width int) {
-	ui.Log("refresh message", c.mRendered)
 	msgMarker, msgContent := c.cb.Message()
 	spaceBg := msgContent.Style.GetBackground()
 	spaceSeg := richtext.NewSegment(" ", tcell.Style{}.Background(spaceBg))

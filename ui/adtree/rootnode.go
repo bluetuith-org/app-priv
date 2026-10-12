@@ -64,20 +64,19 @@ func (r *rootNode) renderTitle() {
 
 	line = append(line, richtext.NewSegment(" Adapters (", tstyle))
 	line = append(line, richtext.NewSegment(strconv.Itoa(r.adapterCount), tstyle))
-	line = append(line, richtext.NewSegment(") / ", tstyle))
-	line = append(line, richtext.NewSegment("Devices (", tstyle))
+	line = append(line, richtext.NewSegment(") / Devices (", tstyle))
 	line = append(line, richtext.NewSegment(strconv.Itoa(r.devicesCount), tstyle))
 	line = append(line, richtext.NewSegment(") ", tstyle))
 
 	r.title = line
-	r.acPos = 1
-	r.dcPos = 4
+	r.acPos, r.dcPos = 1, 3
 }
 
 func (r *rootNode) updateStats(fn func(rt *rootNode)) {
 	fn(r)
 
-	if len(r.title) <= r.acPos || len(r.title) <= r.dcPos {
+	titleLength := len(r.title)
+	if titleLength <= r.acPos || titleLength <= r.dcPos {
 		return
 	}
 
@@ -86,9 +85,10 @@ func (r *rootNode) updateStats(fn func(rt *rootNode)) {
 }
 
 func (r *rootNode) addAdapter(adapter bluetooth.AdapterData, devices []bluetooth.DeviceData) {
+	dvCount := len(devices)
 	r.updateStats(func(rt *rootNode) {
 		rt.adapterCount++
-		rt.devicesCount += len(devices)
+		rt.devicesCount += dvCount
 	})
 
 	newAdapterNode(r.rv, r, adapter, devices)
@@ -123,9 +123,10 @@ func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove
 			parentNode.SetChildren(slices.Delete(parentNode.Children(), pos, pos+1))
 		}
 
+		dvCount := len(adapterNode.Children())
 		r.updateStats(func(rt *rootNode) {
 			rt.adapterCount = max(rt.adapterCount-1, 0)
-			rt.devicesCount = max(rt.devicesCount-len(adapterNode.Children()), 0)
+			rt.devicesCount = max(rt.devicesCount-dvCount, 0)
 		})
 
 		return

@@ -128,30 +128,6 @@ func (n *Node) VGapBottom() int {
 	return n.vGapBottom
 }
 
-// Reference returns this node's reference object.
-func (n *Node) Reference() any {
-	return n.reference
-}
-
-// SetReference allows you to store a reference of any type in this node. This will allow you to establish a mapping between the Model hierarchy and your internal tree structure.
-func (n *Node) SetReference(reference any) *Node {
-	n.reference = reference
-
-	return n
-}
-
-// Line returns the node's styled text line.
-func (n *Node) Line() richtext.Line {
-	return n.line
-}
-
-// SetLine sets the node's styled text line.
-func (n *Node) SetLine(line richtext.Line) *Node {
-	n.line, n.lineWidth = line, line.Width()
-
-	return n
-}
-
 // RemoveChild removes a child node from this node. If the child node cannot be found, nothing happens.
 func (n *Node) RemoveChild(node *Node) *Node {
 	if index := slices.Index(n.children, node); index >= 0 {

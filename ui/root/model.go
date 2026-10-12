@@ -38,7 +38,7 @@ func New(binder ui.AppBinder) Model {
 
 	m := Model{
 		AppBinder:     binder,
-		headerContent: fmt.Sprintf("bluetuith %s (%s) ", binder.Configuration().Version, binder.Configuration().Revision),
+		headerContent: fmt.Sprintf("bluetuith %s (%s)", binder.Configuration().Version, binder.Configuration().Revision),
 
 		ctx:     ctx,
 		cancel:  cancel,
@@ -66,20 +66,21 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 func (m Model) View() tview.Widget {
 	header := stext.New().
 		Background(theme.Current().App.TitleBar).
-		PushSpace().
+		PushSpace(tview.AlignmentLeft).
 		Push(m.adTreeModel.Header(), tview.AlignmentLeft).
-		PushSpace()
+		PushSpace(tview.AlignmentLeft)
 
 	for _, h := range m.tabsModel.Header() {
-		header = header.Push(h, tview.AlignmentLeft)
+		header = header.Push(h, tview.AlignmentLeft).PushSpace(tview.AlignmentLeft)
 	}
 
 	header = header.
 		Push(richtext.NewLine(
-			richtext.NewSegment(m.headerContent, theme.Current().App.TitleBar)),
+			richtext.NewSegment(m.headerContent, theme.Current().App.TitleBar),
+		),
 			tview.AlignmentRight,
 		).
-		PushSpace()
+		PushSpace(tview.AlignmentRight)
 
 	vflex := row.New(
 		m.adTreeModel.View(!m.panelFocused),
