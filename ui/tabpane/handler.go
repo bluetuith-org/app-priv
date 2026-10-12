@@ -10,13 +10,12 @@ import (
 )
 
 type viewHandler struct {
-	*tabs.State
+	tabs.State
+
+	views []ui.ViewID
 
 	infoModel       info.Model
 	operationsModel operations.Model
-
-	indexView map[int]ui.ViewID
-	index     int
 }
 
 type vm interface {
@@ -26,8 +25,7 @@ type vm interface {
 
 func newHandler(rv ui.RootView) *viewHandler {
 	h := &viewHandler{
-		State:     tabs.NewState(),
-		indexView: make(map[int]ui.ViewID),
+		State: tabs.NewState(),
 	}
 
 	h.operationsModel = operations.New(rv)
@@ -41,9 +39,7 @@ func newHandler(rv ui.RootView) *viewHandler {
 
 func (h *viewHandler) addModel[T vm](v T) {
 	h.AddSection(v.Icon(), v.Title())
-
-	h.indexView[h.index] = v.ViewID()
-	h.index++
+	h.views = append(h.views, v.ViewID())
 }
 
 func (h *viewHandler) init() tview.Cmd {
@@ -97,7 +93,7 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
 	}
 
 	idx := -1
-	for i, vid := range h.indexView {
+	for i, vid := range h.views {
 		if vid == id {
 			idx = i
 			break
@@ -108,13 +104,13 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
 		return false
 	}
 
-	h.State.SetActiveIndex(idx)
+	h.SetActiveIndex(idx)
 
 	return true
 }
 
 func (h *viewHandler) activeContent(focused bool) tview.Widget {
-	id := h.indexView[h.ActiveIndex()]
+	id := h.views[h.ActiveIndex()]
 
 	switch id {
 	case ui.ViewIDInfo:
@@ -130,11 +126,11 @@ func (h *viewHandler) activeContent(focused bool) tview.Widget {
 }
 
 func (h *viewHandler) updateActive(focused bool, msg tview.Msg) tview.Cmd {
-	return h.update(h.indexView[h.ActiveIndex()], focused, msg)
+	return h.update(h.views[h.ActiveIndex()], focused, msg)
 }
 
 func (h *viewHandler) updateRouted(id ui.ViewID, focused bool, msg tview.Msg) tview.Cmd {
-	focused = focused && id == h.indexView[h.ActiveIndex()]
+	focused = focused && id == h.views[h.ActiveIndex()]
 
 	return h.update(id, focused, msg)
 }
@@ -144,7 +140,7 @@ func (h *viewHandler) updateAll(focused bool, msg tview.Msg) tview.Cmd {
 
 	activeIdx := h.ActiveIndex()
 
-	for idx, id := range h.indexView {
+	for idx, id := range h.views {
 		cmd := h.update(id, focused && idx == activeIdx, msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)

@@ -2,15 +2,15 @@ package tabs
 
 // State represents the current tab and selection state.
 type State struct {
-	tabs      []*Item
+	tabs      []Item
 	activeTab int
 
 	maxWidth int
 }
 
 // NewState returns a new state.
-func NewState() *State {
-	return &State{}
+func NewState() State {
+	return State{}
 }
 
 // AddSection adds a tab section.

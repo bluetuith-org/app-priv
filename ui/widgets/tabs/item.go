@@ -11,11 +11,11 @@ type Item struct {
 }
 
 // NewItem creates a new tab item.
-func NewItem(icon, title string, prevWidth int) *Item {
+func NewItem(icon, title string, prevWidth int) Item {
 	n := " " + icon + " " + title + " "
 	width := uniseg.StringWidth(n)
 
-	return &Item{
+	return Item{
 		label:     n,
 		width:     width,
 		prevWidth: prevWidth,

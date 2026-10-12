@@ -34,7 +34,7 @@ type Provider interface {
 
 // Widget returns a tab widget.
 type Widget[T Provider] struct {
-	*State
+	State
 
 	provider T
 
@@ -43,7 +43,7 @@ type Widget[T Provider] struct {
 }
 
 // New returns a new tab widget.
-func New[T Provider](provider T, state *State) Widget[T] {
+func New[T Provider](provider T, state State) Widget[T] {
 	return Widget[T]{State: state, provider: provider}
 }
 
