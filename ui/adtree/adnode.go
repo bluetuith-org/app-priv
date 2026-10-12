@@ -127,9 +127,19 @@ func getDeviceDisplayName(deviceData bluetooth.DeviceEventData) string {
 }
 
 func buildLabel(icon, name string, style tcell.Style) richtext.Line {
-	return richtext.NewLine(
-		richtext.NewSegment(icon, style),
-		richtext.NewSegment(" ", style),
-		richtext.NewSegment(name, style),
-	)
+	line := make(richtext.Line, 0, 3)
+
+	if icon != "" {
+		line = append(
+			line,
+			richtext.NewSegment(icon, style),
+			richtext.NewSegment(" ", style),
+		)
+	}
+
+	if name != "" {
+		line = append(line, richtext.NewSegment(name, style))
+	}
+
+	return line
 }

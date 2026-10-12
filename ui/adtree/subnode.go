@@ -162,6 +162,13 @@ func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec,
 	ac.subNode = newSubNode(actionNode, a.noder)
 	actionNode.actionState = newAdActionState(key, state, isToggleable, invoker)
 
+	muted := theme.Current().App.PlaceHolder
+	actionNode.SetMarkers(richtext.NewLine(
+		richtext.NewSegment("(", muted),
+		richtext.NewSegment(key.KeyName, muted),
+		richtext.NewSegment(")", muted),
+	))
+
 	a.AddChild(actionNode.Node)
 
 	return ac
@@ -174,5 +181,5 @@ func (a *acNode) NodeStyle() tcell.Style {
 
 // Icon returns the Icon associated with this node.
 func (a *acNode) Icon() string {
-	return theme.Icons().Actions.String()
+	return ""
 }
