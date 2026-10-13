@@ -25,8 +25,7 @@ type Model struct {
 	scrollState viewport.ScrollState
 	scrollBar   scrollbar.Widget
 
-	focused bool
-	count   int
+	count int
 
 	run map[string]*RunningInfo
 	ord []*RunningInfo
@@ -133,9 +132,10 @@ func (m Model) View(focused bool) tview.Widget {
 		}
 
 		return card.New(info.cc).
-			Background(style.GetBackground()).
+			Borders(tview.BordersAll).
 			BorderStyle(borderStyle).
-			BorderSet(borders)
+			BorderSet(borders).
+			Background(style.GetBackground())
 	}).
 		Focused(focused).
 		OnChange(m.OnChange).

@@ -5,8 +5,6 @@ import (
 	"github.com/gdamore/tcell/v3"
 )
 
-//revive:disable
-
 // Builder holds a new text builder.
 type Builder struct {
 	buf     richtext.Builder

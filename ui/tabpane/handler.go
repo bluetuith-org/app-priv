@@ -5,6 +5,7 @@ import (
 	"github.com/ayn2op/tview/richtext"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/info"
+	"github.com/bluetuith-org/bluetuith/ui/logs"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 )
@@ -16,6 +17,7 @@ type viewHandler struct {
 
 	infoModel       info.Model
 	operationsModel operations.Model
+	logsModel       logs.Model
 }
 
 type vm interface {
@@ -27,6 +29,9 @@ func newHandler(rv ui.RootView) *viewHandler {
 	h := &viewHandler{
 		State: tabs.NewState(),
 	}
+
+	h.logsModel = logs.New()
+	h.addModel(h.logsModel)
 
 	h.operationsModel = operations.New(rv)
 	h.addModel(h.operationsModel)
@@ -43,7 +48,11 @@ func (h *viewHandler) addModel[T vm](v T) {
 }
 
 func (h *viewHandler) init() tview.Cmd {
-	return tview.Batch(h.infoModel.Init(), h.operationsModel.Init())
+	return tview.Batch(
+		h.infoModel.Init(),
+		h.operationsModel.Init(),
+		h.logsModel.Init(),
+	)
 }
 
 func (h *viewHandler) update(id ui.ViewID, focused bool, msg tview.Msg) tview.Cmd {
@@ -55,6 +64,9 @@ func (h *viewHandler) update(id ui.ViewID, focused bool, msg tview.Msg) tview.Cm
 
 	case ui.ViewIDOperations:
 		h.operationsModel, cmd = h.operationsModel.Update(focused, msg)
+
+	case ui.ViewIDLog:
+		h.logsModel, cmd = h.logsModel.Update(focused, msg)
 
 	default:
 	}
@@ -118,6 +130,9 @@ func (h *viewHandler) activeContent(focused bool) tview.Widget {
 
 	case ui.ViewIDOperations:
 		return h.operationsModel.View(focused)
+
+	case ui.ViewIDLog:
+		return h.logsModel.View(focused)
 
 	default:
 	}
