@@ -33,12 +33,11 @@ func New(rv ui.RootView) Model {
 	ui.GetLogger().AddHandler(h)
 
 	return Model{
-		cursor:      -1,
-		target:      -1,
-		h:           h,
-		scrollState: viewport.ScrollState{},
-		scrollBar:   scrollbar.New(),
-		follow:      true,
+		cursor:    -1,
+		target:    -1,
+		h:         h,
+		scrollBar: scrollbar.New(),
+		follow:    true,
 	}
 }
 
@@ -145,7 +144,9 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		m.h.rv.SetFocused(m.ViewID())
 
 	case scrollMsg:
-		m.scrollState = ms.change
+		if !m.follow {
+			m.scrollState = ms.change
+		}
 		if ms.msg != nil {
 			return m.updateModel(ms.msg)
 		}
