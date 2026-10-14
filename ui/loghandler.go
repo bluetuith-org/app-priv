@@ -2,32 +2,28 @@ package ui
 
 import (
 	"log/slog"
-	"slices"
 	"sync"
 )
 
-var log *LogHandler
+var log *logHandler
 
 func init() {
-	log = &LogHandler{}
+	log = &logHandler{}
 	slog.SetDefault(slog.New(slog.DiscardHandler))
 }
 
-// LogHandler describes a logging handler register for slog.
-type LogHandler struct {
+// logHandler describes a logging handler register for slog.
+type logHandler struct {
 	handlers []slog.Handler
 	started  bool
 
 	sync.Mutex
 }
 
-// GetLogger gets the logging handler register.
-func GetLogger() *LogHandler {
-	return log
-}
+// AddLogHandler adds a slog handler.
+func AddLogHandler(handler slog.Handler) {
+	l := log
 
-// AddHandler adds a slog handler.
-func (l *LogHandler) AddHandler(handler slog.Handler) {
 	l.Lock()
 	defer l.Unlock()
 
@@ -38,14 +34,16 @@ func (l *LogHandler) AddHandler(handler slog.Handler) {
 	l.handlers = append(l.handlers, handler)
 }
 
-// Start sets the slog handlers. After Start is called, no
+// StartLogHandler sets the slog handlers. After Start is called, no
 // handlers can be added.
-func (l *LogHandler) Start() {
+func StartLogHandler() {
+	l := log
+
 	l.Lock()
 	defer l.Unlock()
 
 	slog.SetDefault(slog.New(slog.NewMultiHandler(
-		slices.Clone(l.handlers)...,
+		l.handlers...,
 	)))
 
 	l.started = true

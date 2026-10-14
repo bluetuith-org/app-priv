@@ -3,8 +3,6 @@ package root
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"strconv"
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
@@ -56,7 +54,7 @@ func New(binder ui.AppBinder) Model {
 
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
-	ui.GetLogger().Start()
+	ui.StartLogHandler()
 
 	return tview.Batch(m.listenForMsg(), m.adTreeModel.Init(), m.tabsModel.Init())
 }
@@ -89,9 +87,21 @@ func (m Model) View() tview.Widget {
 		).
 		PushSpace(tview.AlignmentRight)
 
+	cvStyle := theme.Current().App.CurrentViewName
+	line := richtext.NewLine(
+		richtext.NewSegment(" ", cvStyle),
+		richtext.NewSegment(
+			m.state.Focused().String(),
+			cvStyle,
+		),
+		richtext.NewSegment(" ", cvStyle),
+	)
+
 	status := stext.New().
 		Background(theme.Current().StatusBar.Style).
-		Push(m.tabsModel.Status(), tview.AlignmentLeft)
+		Push(m.tabsModel.Status(), tview.AlignmentLeft).
+		PushSpace(tview.AlignmentLeft).
+		Push(line, tview.AlignmentRight)
 
 	vflex := row.New(
 		m.adTreeModel.View(!panelFocused),
@@ -137,19 +147,12 @@ func (m *Model) SendRoutedUpdateMsg(msg ui.RouterMsg) tview.Cmd {
 	return cmd
 }
 
-var i = 0
-
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case tview.KeyMsg:
 		switch {
 		case ui.Kb().Quit.Matches(ms):
 			return m.quitCmd()
-
-		case ui.Kb().Filebrowser.ToggleHiddenFiles.Matches(ms):
-			slog.Info("Hello "+strconv.Itoa(i), "message", i)
-			i++
-			return nil
 
 		case ui.Kb().ADTree.TabPane.Matches(ms):
 			m.state.SetFocus(m.tabsModel.GetActiveID())
@@ -172,28 +175,7 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		return m.routeMessageToView(ms)
 	}
 
-	var cmds []tview.Cmd
-	var cmd tview.Cmd
-
-	m.adTreeModel, cmd = m.adTreeModel.Update(msg)
-	if cmd != nil {
-		cmds = append(cmds, cmd)
-	}
-
-	m.tabsModel, cmd = m.tabsModel.Update(msg)
-	if cmd != nil {
-		cmds = append(cmds, cmd)
-	}
-
-	if cmds == nil {
-		return nil
-	}
-
-	if len(cmds) == 1 {
-		return cmds[0]
-	}
-
-	return tview.Batch(cmds...)
+	return nil
 }
 
 func (m *Model) routeMessageToView(routerMsg ui.RouterMsg) tview.Cmd {

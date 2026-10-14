@@ -12,7 +12,8 @@ type Configuration struct {
 		Border        string `themedef:"bg:from-theme; fg:white"`
 		BorderFocused string `themedef:"bg:from-theme; fg:green; attr:bold"`
 
-		PlaceHolder string `themedef:"bg:from-theme; fg:grey; attr:italic"`
+		PlaceHolder     string `themedef:"bg:from-theme; fg:grey; attr:italic"`
+		CurrentViewName string `themedef:"bg:brightblack; fg:from-theme; attr:italic"`
 	}
 
 	ADTree struct {

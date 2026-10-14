@@ -30,11 +30,11 @@ func newHandler(rv ui.RootView) *viewHandler {
 		State: tabs.NewState(),
 	}
 
-	h.logsModel = logs.New(rv)
-	h.addModel(h.logsModel)
-
 	h.operationsModel = operations.New(rv)
 	h.addModel(h.operationsModel)
+
+	h.logsModel = logs.New(rv)
+	h.addModel(h.logsModel)
 
 	h.infoModel = info.New(rv)
 	h.addModel(h.infoModel)

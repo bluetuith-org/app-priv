@@ -35,7 +35,7 @@ func New(rv ui.RootView) Model {
 
 // Title returns the title of the tab section.
 func (m Model) Title() string {
-	return fmt.Sprintf("Info (%s)", ui.Kb().Information.Show.KeyName)
+	return fmt.Sprintf("%s (%s)", m.ViewID().String(), ui.Kb().Information.Show.KeyName)
 }
 
 // Icon returns the icon associated with the tab section.

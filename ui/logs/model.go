@@ -30,7 +30,7 @@ type Model struct {
 // New returns a new log view.
 func New(rv ui.RootView) Model {
 	h := newHandler(rv, 1000)
-	ui.GetLogger().AddHandler(h)
+	ui.AddLogHandler(h)
 
 	return Model{
 		cursor:    -1,
@@ -48,7 +48,7 @@ func (m Model) ViewID() ui.ViewID {
 
 // Title returns the title of the tab section.
 func (m Model) Title() string {
-	return fmt.Sprintf("Logs (%s)", ui.Kb().Log.Show.KeyName)
+	return fmt.Sprintf("%s (%s)", m.ViewID().String(), ui.Kb().Log.Show.KeyName)
 }
 
 // Icon returns the icon associated with the tab section.
@@ -133,9 +133,9 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		m.setFollow()
 
 	case listChg:
+		m.h.rv.SetFocused(m.ViewID())
 		if !m.follow {
 			m.setCursor(int(ms))
-			m.h.rv.SetFocused(m.ViewID())
 		}
 
 	case scrollMsg:

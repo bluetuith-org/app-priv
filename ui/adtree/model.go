@@ -304,7 +304,7 @@ func (m *Model) resetInformation() tview.Cmd {
 
 func (m *Model) dbTimer() tview.Msg {
 	<-m.tm.C
-	return dbEvent{}
+	return m.ViewID().RouterMessage(dbEvent{})
 }
 
 type (

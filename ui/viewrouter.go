@@ -11,7 +11,6 @@ type ViewID int
 const (
 	ViewIDNone ViewID = iota
 	ViewIDAdTree
-	ViewIDStatusBar
 	ViewIDTabs
 	ViewIDInfo
 	ViewIDOperations
@@ -27,6 +26,30 @@ func (v ViewID) IsValid() bool {
 // RouterMessage creates a router message for a [ViewID].
 func (v ViewID) RouterMessage(t tview.Msg) RouterMsg {
 	return NewRouterMsg(v, t)
+}
+
+func (v ViewID) String() string {
+	switch v {
+	case ViewIDAdTree:
+		return "Tree"
+
+	case ViewIDTabs:
+		return "Tabs"
+
+	case ViewIDInfo:
+		return "Info"
+
+	case ViewIDOperations:
+		return "Operations"
+
+	case ViewIDLog:
+		return "Logs"
+
+	case ViewIDTransfers:
+		return "Transfers"
+	}
+
+	return ""
 }
 
 // RouterMsg describes a message to be routed to a [View].

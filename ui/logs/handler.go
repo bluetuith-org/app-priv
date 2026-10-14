@@ -42,7 +42,7 @@ func (h *handler) Handle(_ context.Context, record slog.Record) error {
 	idx := h.rb.Len()
 
 	h.rb.Add(newLogContent(record))
-	h.rv.SendMsg(newLogMsg{idx})
+	h.rv.SendMsg(ui.ViewIDLog.RouterMessage(newLogMsg{idx}))
 
 	return nil
 }
