@@ -45,6 +45,16 @@ func (m *Model) Header() []richtext.Line {
 	return m.handler.header()
 }
 
+// Status returns the content to print in the status bar.
+func (m *Model) Status() richtext.Line {
+	return m.handler.status()
+}
+
+// GetActiveID returns the current active tab view.
+func (m *Model) GetActiveID() ui.ViewID {
+	return m.handler.activeID()
+}
+
 // HandleRouterMsg handles the routed message.
 func (m *Model) HandleRouterMsg(focused bool, routerMsg ui.RouterMsg) tview.Cmd {
 	var cmd tview.Cmd
@@ -114,11 +124,11 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case selectedMsg:
 		m.handler.SetActiveIndex(ms.index)
-		return nil
+		return ui.FocusViewCmd(m.handler.views[ms.index])
 
 	case tview.KeyMsg:
-		if m.handler.setActive(ms) {
-			return ui.FocusViewCmd(ui.ViewIDTabs)
+		if cmd, ok := m.handler.setActive(ms); ok {
+			return cmd
 		}
 
 		if !focused {

@@ -21,11 +21,12 @@ import (
 
 // Model represents the operations view.
 type Model struct {
-	state       list.SelectionState
 	scrollState viewport.ScrollState
 	scrollBar   scrollbar.Widget
 
 	count int
+
+	cursor, target int
 
 	run map[string]*RunningInfo
 	ord []*RunningInfo
@@ -35,12 +36,9 @@ type Model struct {
 
 // New returns a new operations view.
 func New(rv ui.RootView) Model {
-	var state list.SelectionState
-
-	state.SetCursor(0)
-
 	return Model{
-		state:     state,
+		cursor:    -1,
+		target:    -1,
 		scrollBar: scrollbar.New(),
 		run:       make(map[string]*RunningInfo),
 		rv:        rv,
@@ -104,8 +102,8 @@ func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
 }
 
 // OnChange implements [ui.KcVirtualHandler].
-func (m Model) OnChange(change list.Change) tview.Msg {
-	return listChg(change)
+func (m Model) OnChange(cursor int) tview.Msg {
+	return listChg(cursor)
 }
 
 // Init returns a command to run when the model starts, or nil.
@@ -121,13 +119,13 @@ func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View(focused bool) tview.Widget {
-	ls := list.New(m.state, len(m.ord), func(index int) tview.Widget {
+	ls := list.New(m.cursor, len(m.ord), func(index int) tview.Widget {
 		info := m.ord[index]
 		style := theme.Current().Global
 
 		borders := tview.BorderSetRound()
 		borderStyle := style
-		if m.state.Cursor() == index && focused {
+		if m.cursor == index && focused {
 			borderStyle = theme.Current().Operations.Selection
 		}
 
@@ -143,25 +141,33 @@ func (m Model) View(focused bool) tview.Widget {
 		SelectedStyle(tcell.StyleDefault)
 
 	vp := viewport.New(ls, m.scrollState).
-		Target(ls.Target).
+		Target(ls.Target(m.target)).
 		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
-		OnChildMsg(func(c viewport.Change, msg tview.Msg) tview.Msg { return scrollMsg{change: c, msg: msg} }).
+		OnChildMsg(func(c *viewport.ScrollState, msg tview.Msg) tview.Msg { return scrollMsg{change: *c, msg: msg} }).
 		Axes(layout.Axes{Width: true, Height: true}).
 		Keybind(m.ScrollKeybinds).
 		Focused(focused).
-		OnChange(func(c viewport.Change) tview.Msg { return scrollMsg{change: c} })
+		OnChange(func(c *viewport.ScrollState) tview.Msg { return scrollMsg{change: *c} })
 
 	return vp
+}
+
+func (m *Model) setCursor(index int) {
+	if index >= 0 && index != m.cursor {
+		m.scrollState.ScrollToTarget()
+		m.target = index
+	}
+
+	m.cursor = max(index, -1)
 }
 
 func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case listChg:
-		m.state.Apply(list.Change(ms))
-		m.scrollState.ScrollToTarget()
+		m.setCursor(int(ms))
 
 	case scrollMsg:
-		m.scrollState.Apply(ms.change)
+		m.scrollState = viewport.ScrollState(ms.change)
 		if ms.msg != nil {
 			return m.updateModel(focused, ms.msg)
 		}
@@ -249,10 +255,10 @@ func (m *Model) deleteOperationCmd(id string) tview.Cmd {
 }
 
 type (
-	listChg list.Change
+	listChg int
 
 	scrollMsg struct {
-		change viewport.Change
+		change viewport.ScrollState
 		msg    tview.Msg
 	}
 )

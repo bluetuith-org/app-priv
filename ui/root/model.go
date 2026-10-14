@@ -53,6 +53,8 @@ func New(binder ui.AppBinder) Model {
 
 // Init returns a command to run when the model starts, or nil.
 func (m Model) Init() tview.Cmd {
+	ui.GetLogger().Start()
+
 	return tview.Batch(m.listenForMsg(), m.adTreeModel.Init(), m.tabsModel.Init())
 }
 
@@ -82,6 +84,10 @@ func (m Model) View() tview.Widget {
 		).
 		PushSpace(tview.AlignmentRight)
 
+	status := stext.New().
+		Background(theme.Current().StatusBar.Style).
+		Push(m.tabsModel.Status(), tview.AlignmentLeft)
+
 	vflex := row.New(
 		m.adTreeModel.View(!m.panelFocused),
 		m.tabsModel.View(m.panelFocused),
@@ -90,7 +96,7 @@ func (m Model) View() tview.Widget {
 	hflex := column.New(
 		header,
 		vflex,
-		header,
+		status,
 	)
 
 	return box.New(hflex).Background(theme.Current().Global.GetBackground())
@@ -124,18 +130,10 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 			return m.quitCmd()
 
 		case ui.Kb().ADTree.TabPane.Matches(ms):
-			if !m.panelFocused {
-				m.panelFocused = true
-			}
-
-			return nil
+			return ui.FocusViewCmd(m.tabsModel.GetActiveID())
 
 		case ui.Kb().TabPane.ADTree.Matches(ms):
-			if m.panelFocused {
-				m.panelFocused = false
-			}
-
-			return nil
+			return ui.FocusViewCmd(ui.ViewIDAdTree)
 		}
 
 	case ui.FocusMsg:
@@ -145,13 +143,11 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 				m.panelFocused = false
 			}
 
-		case ui.ViewIDTabs:
+		default:
 			if !m.panelFocused {
 				m.panelFocused = true
 			}
 		}
-
-		return nil
 
 	case externalMsg:
 		return tview.Batch(m.updateModel(ms.msg), m.listenForMsg())

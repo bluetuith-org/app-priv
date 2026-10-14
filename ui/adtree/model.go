@@ -104,11 +104,11 @@ func (m Model) View(focused bool) tview.Widget {
 	vp := viewport.New(tree, m.scrollState).
 		Target(tree.Target).
 		ContentWidth(tree.RowsWidth).
-		OnChildMsg(func(c viewport.Change, msg tview.Msg) tview.Msg { return scrollMsg{change: c, msg: msg} }).
+		OnChildMsg(func(c *viewport.ScrollState, msg tview.Msg) tview.Msg { return scrollMsg{change: *c, msg: msg} }).
 		Axes(layout.Axes{Width: true, Height: true}).
 		Keybind(m.ScrollKeybinds).
 		Focused(focused).
-		OnChange(func(c viewport.Change) tview.Msg { return scrollMsg{change: c} })
+		OnChange(func(c *viewport.ScrollState) tview.Msg { return scrollMsg{change: *c} })
 
 	return box.New(vp).
 		Background(theme.Current().Global.GetBackground()).
@@ -189,7 +189,7 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 		return m.dbHandler()
 
 	case scrollMsg:
-		m.scrollState.Apply(ms.change)
+		m.scrollState = viewport.ScrollState(ms.change)
 		if ms.msg != nil {
 			return m.updateModel(focused, ms.msg)
 		}
@@ -320,7 +320,7 @@ type (
 	selectionChange ctree.Change
 
 	scrollMsg struct {
-		change viewport.Change
+		change viewport.ScrollState
 		msg    tview.Msg
 	}
 

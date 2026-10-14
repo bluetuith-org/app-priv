@@ -3,21 +3,22 @@ module github.com/bluetuith-org/bluetuith
 go 1.27.1
 
 require (
-	github.com/ayn2op/tview v0.0.0-20261008230130-de4c692f9141
+	github.com/ayn2op/tview v0.0.0-20261013225942-7c4cbe85112a
 	github.com/bluetuith-org/bluetooth-classic v0.0.8
 	github.com/dave/dst v0.28.0
 	github.com/fatih/color v1.19.0
 	github.com/fatih/structtag v1.2.0
-	github.com/gdamore/tcell/v3 v3.5.0
+	github.com/gdamore/tcell/v3 v3.6.0
 	github.com/knadh/koanf/parsers/hjson v1.1.0
 	github.com/knadh/koanf/providers/cliflagv2 v1.0.2
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.6
 	github.com/lrstanley/bubbletint/v2 v2.0.2
 	github.com/rivo/uniseg v0.4.7
+	github.com/spf13/cast v1.10.0
 	github.com/urfave/cli/v2 v2.27.7
-	golang.org/x/text v0.42.0
-	golang.org/x/tools v0.50.0
+	golang.org/x/text v0.43.0
+	golang.org/x/tools v0.51.0
 )
 
 require (
@@ -47,7 +48,7 @@ require (
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	golang.org/x/mod v0.41.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/term v0.46.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/term v0.47.0 // indirect
 )
