@@ -79,7 +79,8 @@ type Configuration struct {
 	}
 
 	Log struct {
-		Show string `keydef:"L" keyshorthelp:"Transfers" keylonghelp:"Transfers"`
+		Show   string `keydef:"L" keyshorthelp:"Logs" keylonghelp:"Logs"`
+		Follow string `keydef:"f" keyshorthelp:"Follow" keylonghelp:"Follow"`
 	}
 
 	Player struct {

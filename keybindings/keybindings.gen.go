@@ -85,7 +85,8 @@ type Keybindings struct {
 	}
 
 	Log struct {
-		Show Keybinding
+		Show   Keybinding
+		Follow Keybinding
 	}
 
 	Player struct {
@@ -147,6 +148,7 @@ const (
 	KeyTransfersResume
 	KeyTransfersCancel
 	KeyLogShow
+	KeyLogFollow
 	KeyPlayerToggleDisplay
 	KeyPlayerToggleMediaPlaying
 	KeyPlayerNext
@@ -383,8 +385,13 @@ func defaultConfig() *Keybindings {
 	)
 	k.Log.Show = newKeybinding(
 		KeyLogShow, newTcellKey(tcell.Key(256), "L", tcell.ModNone), "L",
-		"Transfers",
-		"Transfers",
+		"Logs",
+		"Logs",
+	)
+	k.Log.Follow = newKeybinding(
+		KeyLogFollow, newTcellKey(tcell.Key(256), "f", tcell.ModNone), "f",
+		"Follow",
+		"Follow",
 	)
 	k.Player.ToggleDisplay = newKeybinding(
 		KeyPlayerToggleDisplay, newTcellKey(tcell.Key(256), "M", tcell.ModNone), "M",
@@ -436,7 +443,7 @@ func iterProperties(kb *Keybindings, cfg *Configuration) iter.Seq[parseKeybindin
 	}
 
 	return func(yield func(parseKeybindingInfo) bool) {
-		for i := range 52 {
+		for i := range 53 {
 			if !yield(getProperty(kb, cfg, i)) {
 				return
 			}
@@ -629,30 +636,34 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.Log.Show
 
 	case 45:
+		p.kb = &kb.Log.Follow
+		p.cmpCfg = cfg.Log.Follow
+
+	case 46:
 		p.kb = &kb.Player.ToggleDisplay
 		p.cmpCfg = cfg.Player.ToggleDisplay
 
-	case 46:
+	case 47:
 		p.kb = &kb.Player.ToggleMediaPlaying
 		p.cmpCfg = cfg.Player.ToggleMediaPlaying
 
-	case 47:
+	case 48:
 		p.kb = &kb.Player.Next
 		p.cmpCfg = cfg.Player.Next
 
-	case 48:
+	case 49:
 		p.kb = &kb.Player.Previous
 		p.cmpCfg = cfg.Player.Previous
 
-	case 49:
+	case 50:
 		p.kb = &kb.Player.SeekForward
 		p.cmpCfg = cfg.Player.SeekForward
 
-	case 50:
+	case 51:
 		p.kb = &kb.Player.SeekBackward
 		p.cmpCfg = cfg.Player.SeekBackward
 
-	case 51:
+	case 52:
 		p.kb = &kb.Player.Stop
 		p.cmpCfg = cfg.Player.Stop
 

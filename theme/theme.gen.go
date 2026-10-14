@@ -86,15 +86,23 @@ type Theme struct {
 	}
 
 	Log struct {
-		Title tcell.Style
-		Time  tcell.Style
-		Info  tcell.Style
-		Debug tcell.Style
-		Error tcell.Style
+		FollowIndicator tcell.Style
+		Selection       tcell.Style
+
+		Time    tcell.Style
+		Info    tcell.Style
+		Debug   tcell.Style
+		Error   tcell.Style
+		Message tcell.Style
+		Attr    tcell.Style
 	}
 
 	StatusBar struct {
 		Style tcell.Style
+
+		Info  tcell.Style
+		Debug tcell.Style
+		Error tcell.Style
 	}
 }
 
@@ -148,12 +156,18 @@ func defaultConfig() *RootConfiguration {
 	r.Operations.Completed = "bg:from-theme;fg:green"
 	r.Operations.InProgress = "bg:from-theme;fg:yellow"
 	r.Operations.Message = "bg:from-theme;fg:white;attr:bold"
-	r.Log.Title = "bg:from-theme;fg:from-theme"
-	r.Log.Time = "bg:from-theme;fg:brightblack(lighten:0.1)"
+	r.Log.FollowIndicator = "bg:from-theme;fg:grey;attr:italic"
+	r.Log.Selection = "bg:from-theme;fg:blue"
+	r.Log.Time = "bg:from-theme;fg:grey"
 	r.Log.Info = "bg:from-theme;fg:blue(lighten:0.2);attr:bold"
-	r.Log.Debug = "bg:from-theme;fg:brightpurple;attr:bold,underline"
+	r.Log.Debug = "bg:from-theme;fg:brightpurple;attr:bold"
 	r.Log.Error = "bg:from-theme;fg:red;attr:bold,underline"
+	r.Log.Message = "bg:from-theme;fg:from-theme"
+	r.Log.Attr = "bg:from-theme;fg:from-theme;attr:bold"
 	r.StatusBar.Style = "bg:purple;fg:white;attr:bold"
+	r.StatusBar.Info = "bg:blue(lighten:0.2);fg:black;attr:bold"
+	r.StatusBar.Debug = "bg:brightpurple;fg:black;attr:bold"
+	r.StatusBar.Error = "bg:red;fg:white;attr:bold"
 
 	return r
 }
@@ -177,7 +191,7 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 	}
 
 	return func(yield func(parseThemeInfo) bool) {
-		for i := range 47 {
+		for i := range 53 {
 			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
@@ -396,34 +410,64 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.Operations.Message
 
 	case 41:
-		p.rootCfg = &cfg.Log.Title
-		p.cmpCfg = cmpCfg.Log.Title
-		p.style = &t.Log.Title
+		p.rootCfg = &cfg.Log.FollowIndicator
+		p.cmpCfg = cmpCfg.Log.FollowIndicator
+		p.style = &t.Log.FollowIndicator
 
 	case 42:
+		p.rootCfg = &cfg.Log.Selection
+		p.cmpCfg = cmpCfg.Log.Selection
+		p.style = &t.Log.Selection
+
+	case 43:
 		p.rootCfg = &cfg.Log.Time
 		p.cmpCfg = cmpCfg.Log.Time
 		p.style = &t.Log.Time
 
-	case 43:
+	case 44:
 		p.rootCfg = &cfg.Log.Info
 		p.cmpCfg = cmpCfg.Log.Info
 		p.style = &t.Log.Info
 
-	case 44:
+	case 45:
 		p.rootCfg = &cfg.Log.Debug
 		p.cmpCfg = cmpCfg.Log.Debug
 		p.style = &t.Log.Debug
 
-	case 45:
+	case 46:
 		p.rootCfg = &cfg.Log.Error
 		p.cmpCfg = cmpCfg.Log.Error
 		p.style = &t.Log.Error
 
-	case 46:
+	case 47:
+		p.rootCfg = &cfg.Log.Message
+		p.cmpCfg = cmpCfg.Log.Message
+		p.style = &t.Log.Message
+
+	case 48:
+		p.rootCfg = &cfg.Log.Attr
+		p.cmpCfg = cmpCfg.Log.Attr
+		p.style = &t.Log.Attr
+
+	case 49:
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style
+
+	case 50:
+		p.rootCfg = &cfg.StatusBar.Info
+		p.cmpCfg = cmpCfg.StatusBar.Info
+		p.style = &t.StatusBar.Info
+
+	case 51:
+		p.rootCfg = &cfg.StatusBar.Debug
+		p.cmpCfg = cmpCfg.StatusBar.Debug
+		p.style = &t.StatusBar.Debug
+
+	case 52:
+		p.rootCfg = &cfg.StatusBar.Error
+		p.cmpCfg = cmpCfg.StatusBar.Error
+		p.style = &t.StatusBar.Error
 
 	}
 

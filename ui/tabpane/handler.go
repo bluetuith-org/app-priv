@@ -30,7 +30,7 @@ func newHandler(rv ui.RootView) *viewHandler {
 		State: tabs.NewState(),
 	}
 
-	h.logsModel = logs.New()
+	h.logsModel = logs.New(rv)
 	h.addModel(h.logsModel)
 
 	h.operationsModel = operations.New(rv)
@@ -84,7 +84,15 @@ func (h *viewHandler) header() []richtext.Line {
 	return lines
 }
 
-func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
+func (h *viewHandler) status() richtext.Line {
+	return h.logsModel.StatusBar()
+}
+
+func (h *viewHandler) activeID() ui.ViewID {
+	return h.views[h.ActiveIndex()]
+}
+
+func (h *viewHandler) setActive(msg tview.KeyMsg) (tview.Cmd, bool) {
 	var id ui.ViewID
 
 	switch {
@@ -101,7 +109,7 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
 		id = ui.ViewIDLog
 
 	default:
-		return false
+		return nil, false
 	}
 
 	idx := -1
@@ -113,12 +121,12 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
 	}
 
 	if idx < 0 {
-		return false
+		return nil, false
 	}
 
 	h.SetActiveIndex(idx)
 
-	return true
+	return ui.FocusViewCmd(id), true
 }
 
 func (h *viewHandler) activeContent(focused bool) tview.Widget {

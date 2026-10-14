@@ -114,15 +114,23 @@ type Configuration struct {
 	}
 
 	Log struct {
-		Title string `themedef:"bg:from-theme; fg:from-theme"`
-		Time  string `themedef:"bg:from-theme; fg:brightblack(lighten:0.1)"`
-		Info  string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
-		Debug string `themedef:"bg:from-theme; fg:brightpurple; attr:bold,underline"`
-		Error string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
+		FollowIndicator string `themedef:"bg:from-theme; fg:grey; attr:italic"`
+		Selection       string `themedef:"bg:from-theme; fg:blue"`
+
+		Time    string `themedef:"bg:from-theme; fg:grey"`
+		Info    string `themedef:"bg:from-theme; fg:blue(lighten:0.2); attr:bold"`
+		Debug   string `themedef:"bg:from-theme; fg:brightpurple; attr:bold"`
+		Error   string `themedef:"bg:from-theme; fg:red; attr:bold,underline"`
+		Message string `themedef:"bg:from-theme; fg:from-theme"`
+		Attr    string `themedef:"bg:from-theme; fg:from-theme; attr:bold"`
 	}
 
 	StatusBar struct {
 		Style string `themedef:"bg:purple; fg:white; attr:bold"`
+
+		Info  string `themedef:"bg:blue(lighten:0.2); fg:black; attr:bold"`
+		Debug string `themedef:"bg:brightpurple; fg:black; attr:bold"`
+		Error string `themedef:"bg:red; fg:white; attr:bold"`
 	}
 }
 
