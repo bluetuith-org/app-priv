@@ -3,6 +3,8 @@ package root
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"strconv"
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
@@ -29,7 +31,7 @@ type Model struct {
 	cancel  context.CancelFunc
 	msgChan chan tview.Msg
 
-	panelFocused bool
+	state *focusState
 }
 
 // New returns a new root model.
@@ -47,6 +49,7 @@ func New(binder ui.AppBinder) Model {
 
 	m.adTreeModel = adtree.New(&m)
 	m.tabsModel = tabpane.New(&m)
+	m.state = newFocusState(ui.ViewIDAdTree)
 
 	return m
 }
@@ -66,6 +69,8 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View() tview.Widget {
+	panelFocused := m.state.Focused() != ui.ViewIDAdTree
+
 	header := stext.New().
 		Background(theme.Current().App.TitleBar).
 		PushSpace(tview.AlignmentLeft).
@@ -89,8 +94,8 @@ func (m Model) View() tview.Widget {
 		Push(m.tabsModel.Status(), tview.AlignmentLeft)
 
 	vflex := row.New(
-		m.adTreeModel.View(!m.panelFocused),
-		m.tabsModel.View(m.panelFocused),
+		m.adTreeModel.View(!panelFocused),
+		m.tabsModel.View(panelFocused),
 	)
 
 	hflex := column.New(
@@ -100,6 +105,16 @@ func (m Model) View() tview.Widget {
 	)
 
 	return box.New(hflex).Background(theme.Current().Global.GetBackground())
+}
+
+// Focused returns the currently focused view.
+func (m *Model) Focused() ui.ViewID {
+	return m.state.Focused()
+}
+
+// SetFocused stores the currently focused view.
+func (m *Model) SetFocused(id ui.ViewID) {
+	m.state.SetFocus(id)
 }
 
 // SendMsg sends a message to the program.
@@ -122,6 +137,8 @@ func (m *Model) SendRoutedUpdateMsg(msg ui.RouterMsg) tview.Cmd {
 	return cmd
 }
 
+var i = 0
+
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case tview.KeyMsg:
@@ -129,24 +146,16 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		case ui.Kb().Quit.Matches(ms):
 			return m.quitCmd()
 
+		case ui.Kb().Filebrowser.ToggleHiddenFiles.Matches(ms):
+			slog.Info("Hello "+strconv.Itoa(i), "message", i)
+			i++
+			return nil
+
 		case ui.Kb().ADTree.TabPane.Matches(ms):
-			return ui.FocusViewCmd(m.tabsModel.GetActiveID())
+			m.state.SetFocus(m.tabsModel.GetActiveID())
 
 		case ui.Kb().TabPane.ADTree.Matches(ms):
-			return ui.FocusViewCmd(ui.ViewIDAdTree)
-		}
-
-	case ui.FocusMsg:
-		switch ms.ID {
-		case ui.ViewIDAdTree:
-			if m.panelFocused {
-				m.panelFocused = false
-			}
-
-		default:
-			if !m.panelFocused {
-				m.panelFocused = true
-			}
+			m.state.SetFocus(ui.ViewIDAdTree)
 		}
 
 	case externalMsg:
@@ -163,12 +172,12 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	var cmds []tview.Cmd
 	var cmd tview.Cmd
 
-	m.adTreeModel, cmd = m.adTreeModel.Update(!m.panelFocused, msg)
+	m.adTreeModel, cmd = m.adTreeModel.Update(msg)
 	if cmd != nil {
 		cmds = append(cmds, cmd)
 	}
 
-	m.tabsModel, cmd = m.tabsModel.Update(m.panelFocused, msg)
+	m.tabsModel, cmd = m.tabsModel.Update(msg)
 	if cmd != nil {
 		cmds = append(cmds, cmd)
 	}
@@ -187,15 +196,12 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 func (m *Model) routeMessageToView(routerMsg ui.RouterMsg) tview.Cmd {
 	var cmd tview.Cmd
 
-	switch routerMsg.ID {
-	case ui.ViewIDAdTree:
-		m.adTreeModel, cmd = m.adTreeModel.Update(!m.panelFocused, routerMsg.Msg)
+	if routerMsg.ID == ui.ViewIDAdTree {
+		m.adTreeModel, cmd = m.adTreeModel.Update(routerMsg.Msg)
 		return cmd
-
-	default:
 	}
 
-	return m.tabsModel.HandleRouterMsg(m.panelFocused, routerMsg)
+	return m.tabsModel.HandleRouterMsg(routerMsg)
 }
 
 type externalMsg struct {

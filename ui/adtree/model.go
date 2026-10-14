@@ -81,8 +81,8 @@ func (m Model) Init() tview.Cmd {
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(focused, msg)
+func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(msg)
 	return m, cmd
 }
 
@@ -183,7 +183,7 @@ func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[richtext
 	}
 }
 
-func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case dbEvent:
 		return m.dbHandler()
@@ -191,7 +191,7 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	case scrollMsg:
 		m.scrollState = viewport.ScrollState(ms.change)
 		if ms.msg != nil {
-			return m.updateModel(focused, ms.msg)
+			return m.updateModel(ms.msg)
 		}
 
 	case selectionChange:
@@ -207,18 +207,17 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 		return m.resetInformation()
 
 	case selectedMsg:
+		m.rv.SetFocused(m.ViewID())
+
 		data := ms.node.Data[*adNode]()
 		if data.nodeType != nodeTypeAction {
 			ms.node.SetExpanded(!ms.node.Expanded())
 			m.selectionState.SetCurrentNode(ms.node)
-			return m.sendFocusMsg(focused)
+			return nil
 		}
 
 		m.selectionState.SetCurrentNode(ms.node)
-		return tview.Batch(
-			m.sendFocusMsg(focused),
-			acStateToOpMsg(data.ID(), data.actionState).SendRoutedMsg(m.rv),
-		)
+		return acStateToOpMsg(data.ID(), data.actionState).SendRoutedMsg(m.rv)
 
 	case tview.KeyMsg:
 		data := m.selectionState.CurrentNode().Data[*adNode]()
@@ -232,14 +231,6 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 	}
 
 	return nil
-}
-
-func (m *Model) sendFocusMsg(focused bool) tview.Cmd {
-	if focused {
-		return nil
-	}
-
-	return ui.FocusViewCmd(ui.ViewIDAdTree)
 }
 
 func (m *Model) populate() tview.Msg {

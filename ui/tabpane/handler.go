@@ -36,7 +36,7 @@ func newHandler(rv ui.RootView) *viewHandler {
 	h.operationsModel = operations.New(rv)
 	h.addModel(h.operationsModel)
 
-	h.infoModel = info.New()
+	h.infoModel = info.New(rv)
 	h.addModel(h.infoModel)
 
 	return h
@@ -55,18 +55,18 @@ func (h *viewHandler) init() tview.Cmd {
 	)
 }
 
-func (h *viewHandler) update(id ui.ViewID, focused bool, msg tview.Msg) tview.Cmd {
+func (h *viewHandler) update(id ui.ViewID, msg tview.Msg) tview.Cmd {
 	var cmd tview.Cmd
 
 	switch id {
 	case ui.ViewIDInfo:
-		h.infoModel, cmd = h.infoModel.Update(focused, msg)
+		h.infoModel, cmd = h.infoModel.Update(msg)
 
 	case ui.ViewIDOperations:
-		h.operationsModel, cmd = h.operationsModel.Update(focused, msg)
+		h.operationsModel, cmd = h.operationsModel.Update(msg)
 
 	case ui.ViewIDLog:
-		h.logsModel, cmd = h.logsModel.Update(focused, msg)
+		h.logsModel, cmd = h.logsModel.Update(msg)
 
 	default:
 	}
@@ -126,7 +126,7 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) (tview.Cmd, bool) {
 
 	h.SetActiveIndex(idx)
 
-	return ui.FocusViewCmd(id), true
+	return nil, true
 }
 
 func (h *viewHandler) activeContent(focused bool) tview.Widget {
@@ -148,23 +148,19 @@ func (h *viewHandler) activeContent(focused bool) tview.Widget {
 	return nil
 }
 
-func (h *viewHandler) updateActive(focused bool, msg tview.Msg) tview.Cmd {
-	return h.update(h.views[h.ActiveIndex()], focused, msg)
+func (h *viewHandler) updateActive(msg tview.Msg) tview.Cmd {
+	return h.update(h.views[h.ActiveIndex()], msg)
 }
 
-func (h *viewHandler) updateRouted(id ui.ViewID, focused bool, msg tview.Msg) tview.Cmd {
-	focused = focused && id == h.views[h.ActiveIndex()]
-
-	return h.update(id, focused, msg)
+func (h *viewHandler) updateRouted(id ui.ViewID, msg tview.Msg) tview.Cmd {
+	return h.update(id, msg)
 }
 
-func (h *viewHandler) updateAll(focused bool, msg tview.Msg) tview.Cmd {
+func (h *viewHandler) updateAll(msg tview.Msg) tview.Cmd {
 	var cmds []tview.Cmd
 
-	activeIdx := h.ActiveIndex()
-
-	for idx, id := range h.views {
-		cmd := h.update(id, focused && idx == activeIdx, msg)
+	for _, id := range h.views {
+		cmd := h.update(id, msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}

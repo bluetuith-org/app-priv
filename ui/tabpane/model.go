@@ -56,18 +56,18 @@ func (m *Model) GetActiveID() ui.ViewID {
 }
 
 // HandleRouterMsg handles the routed message.
-func (m *Model) HandleRouterMsg(focused bool, routerMsg ui.RouterMsg) tview.Cmd {
+func (m *Model) HandleRouterMsg(routerMsg ui.RouterMsg) tview.Cmd {
 	var cmd tview.Cmd
 
 	switch routerMsg.ID {
 	case ui.ViewIDTabs:
-		*m, cmd = m.Update(focused, routerMsg.Msg)
+		*m, cmd = m.Update(routerMsg.Msg)
 		return cmd
 
 	default:
 	}
 
-	return m.handler.updateRouted(routerMsg.ID, focused, routerMsg.Msg)
+	return m.handler.updateRouted(routerMsg.ID, routerMsg.Msg)
 }
 
 // LabelStyle provides the styles for the inactive and active labels.
@@ -108,8 +108,8 @@ func (m Model) Init() tview.Cmd {
 }
 
 // Update returns the model changed in response to a message and a command to run, or nil.
-func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(focused, msg)
+func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(msg)
 	return m, cmd
 }
 
@@ -120,25 +120,21 @@ func (m Model) View(focused bool) tview.Widget {
 		Content(m.handler.activeContent(focused))
 }
 
-func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case selectedMsg:
 		m.handler.SetActiveIndex(ms.index)
-		return ui.FocusViewCmd(m.handler.views[ms.index])
+		m.rv.SetFocused(m.handler.activeID())
 
 	case tview.KeyMsg:
 		if cmd, ok := m.handler.setActive(ms); ok {
 			return cmd
 		}
 
-		if !focused {
-			return nil
-		}
-
-		return m.handler.updateActive(focused, msg)
+		return m.handler.updateActive(msg)
 	}
 
-	return m.handler.updateAll(focused, msg)
+	return m.handler.updateAll(msg)
 }
 
 type selectedMsg struct {

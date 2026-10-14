@@ -112,8 +112,8 @@ func (m Model) Init() tview.Cmd {
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(focused, msg)
+func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(msg)
 	return m, cmd
 }
 
@@ -161,15 +161,16 @@ func (m *Model) setCursor(index int) {
 	m.cursor = max(index, -1)
 }
 
-func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case listChg:
 		m.setCursor(int(ms))
+		m.rv.SetFocused(m.ViewID())
 
 	case scrollMsg:
 		m.scrollState = viewport.ScrollState(ms.change)
 		if ms.msg != nil {
-			return m.updateModel(focused, ms.msg)
+			return m.updateModel(ms.msg)
 		}
 
 	case CreateMsg:
@@ -189,9 +190,6 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 		m.deleteOperation(ms.id)
 
 	case tview.KeyMsg:
-		if !focused {
-			return nil
-		}
 
 		switch {
 		case ui.Kb().Operations.ClearAll.Matches(ms):

@@ -81,8 +81,8 @@ func (m Model) Init() tview.Cmd {
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(focused, msg)
+func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(msg)
 	return m, cmd
 }
 
@@ -127,7 +127,12 @@ func (m *Model) setFollow() {
 	}
 }
 
-func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+	focused := m.h.rv.Focused() == m.ViewID()
+	if !focused {
+		m.setFollow()
+	}
+
 	switch ms := msg.(type) {
 	case newLogMsg:
 		m.lastIndex = ms.index
@@ -135,28 +140,19 @@ func (m *Model) updateModel(focused bool, msg tview.Msg) tview.Cmd {
 			m.setFollow()
 		}
 
-		return nil
-
 	case listChg:
 		m.setCursor(int(ms))
-		return nil
+		m.h.rv.SetFocused(m.ViewID())
 
 	case scrollMsg:
 		m.scrollState = ms.change
 		if ms.msg != nil {
-			return m.updateModel(focused, ms.msg)
+			return m.updateModel(ms.msg)
 		}
-
-		return nil
 
 	case tview.KeyMsg:
 		if ui.Kb().Log.Follow.Matches(ms) {
 			m.follow = !m.follow
-			m.setFollow()
-		}
-
-	case ui.FocusMsg:
-		if ms.ID != m.ViewID() {
 			m.setFollow()
 		}
 	}

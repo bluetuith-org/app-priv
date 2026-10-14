@@ -32,7 +32,7 @@ type Model[T any] interface {
 	Init() tview.Cmd
 
 	// Update receives messages when this model has focus.
-	Update(focused bool, msg tview.Msg) (T, tview.Cmd)
+	Update(msg tview.Msg) (T, tview.Cmd)
 
 	// View draws this model onto the screen.
 	View(focused bool) tview.Widget
@@ -42,6 +42,12 @@ type Model[T any] interface {
 // to call app-related functions and route messages to components.
 type RootView interface {
 	AppBinder
+
+	// Focused returns the currently focused view.
+	Focused() ViewID
+
+	// SetFocused stores the currently focused view.
+	SetFocused(id ViewID)
 
 	// SendMsg sends a message to the program.
 	SendMsg(msg tview.Msg)

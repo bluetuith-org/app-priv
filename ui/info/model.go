@@ -15,11 +15,14 @@ import (
 type Model struct {
 	text        richtext.Text
 	placeholder richtext.Text
+
+	rv ui.RootView
 }
 
 // New returns a new information section.
-func New() Model {
+func New(rv ui.RootView) Model {
 	return Model{
+		rv:   rv,
 		text: make(richtext.Text, 0),
 		placeholder: richtext.New(richtext.Line{
 			richtext.NewSegment(
@@ -51,20 +54,20 @@ func (m Model) Init() tview.Cmd {
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(focused bool, msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(focused, msg)
+func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(msg)
 	return m, cmd
 }
 
 // View draws this model onto the screen.
-func (m Model) View(focused bool) tview.Widget {
+func (m Model) View(_ bool) tview.Widget {
 	return textview.New(m.text).
 		Style(theme.Current().Global).
 		Wrap(true).
 		WordWrap(true)
 }
 
-func (m *Model) updateModel(_ bool, msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case scrollMsg:
 
