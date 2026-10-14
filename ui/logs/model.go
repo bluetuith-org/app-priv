@@ -14,8 +14,7 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 )
 
-//revive:disable
-
+// Model represents a log view.
 type Model struct {
 	h *handler
 
@@ -28,6 +27,7 @@ type Model struct {
 	follow bool
 }
 
+// New returns a new log view.
 func New(rv ui.RootView) Model {
 	h := newHandler(rv, 1000)
 	ui.GetLogger().AddHandler(h)
@@ -48,7 +48,7 @@ func (m Model) ViewID() ui.ViewID {
 
 // Title returns the title of the tab section.
 func (m Model) Title() string {
-	return fmt.Sprintf("Log (%s)", ui.Kb().Log.Show.KeyName)
+	return fmt.Sprintf("Logs (%s)", ui.Kb().Log.Show.KeyName)
 }
 
 // Icon returns the icon associated with the tab section.
@@ -111,37 +111,32 @@ func (m Model) View(focused bool) tview.Widget {
 }
 
 func (m *Model) setCursor(index int) {
-	if index >= 0 && index != m.cursor {
-		m.scrollState.ScrollToTarget()
-		m.target = index
+	if index < 0 {
+		return
 	}
 
+	m.scrollState.ScrollToTarget()
+	m.target = index
 	m.cursor = max(index, -1)
 }
 
 func (m *Model) setFollow() {
 	if m.follow {
 		m.setCursor(m.lastIndex)
-		m.scrollState.ScrollToEnd()
 	}
 }
 
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
-	focused := m.h.rv.Focused() == m.ViewID()
-	if !focused {
-		m.setFollow()
-	}
-
 	switch ms := msg.(type) {
 	case newLogMsg:
 		m.lastIndex = ms.index
-		if !focused {
-			m.setFollow()
-		}
+		m.setFollow()
 
 	case listChg:
-		m.setCursor(int(ms))
-		m.h.rv.SetFocused(m.ViewID())
+		if !m.follow {
+			m.setCursor(int(ms))
+			m.h.rv.SetFocused(m.ViewID())
+		}
 
 	case scrollMsg:
 		if !m.follow {
@@ -167,6 +162,10 @@ type (
 	scrollMsg struct {
 		change viewport.ScrollState
 		msg    tview.Msg
+	}
+
+	newLogMsg struct {
+		index int
 	}
 )
 

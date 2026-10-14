@@ -105,8 +105,4 @@ func (h *handler) getLatest() richtext.Line {
 	return h.lcontent
 }
 
-type newLogMsg struct {
-	index int
-}
-
 var _ slog.Handler = (*handler)(nil)

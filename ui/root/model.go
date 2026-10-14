@@ -156,6 +156,9 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 
 		case ui.Kb().TabPane.ADTree.Matches(ms):
 			m.state.SetFocus(ui.ViewIDAdTree)
+
+		default:
+			return m.updateModel(m.Focused().RouterMessage(ms))
 		}
 
 	case externalMsg:
