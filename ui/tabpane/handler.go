@@ -18,6 +18,8 @@ type viewHandler struct {
 	infoModel       info.Model
 	operationsModel operations.Model
 	logsModel       logs.Model
+
+	rv ui.RootView
 }
 
 type vm interface {
@@ -28,6 +30,7 @@ type vm interface {
 func newHandler(rv ui.RootView) *viewHandler {
 	h := &viewHandler{
 		State: tabs.NewState(),
+		rv:    rv,
 	}
 
 	h.operationsModel = operations.New(rv)
@@ -125,6 +128,7 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) (tview.Cmd, bool) {
 	}
 
 	h.SetActiveIndex(idx)
+	h.rv.SetFocused(id)
 
 	return nil, true
 }
@@ -146,10 +150,6 @@ func (h *viewHandler) activeContent(focused bool) tview.Widget {
 	}
 
 	return nil
-}
-
-func (h *viewHandler) updateActive(msg tview.Msg) tview.Cmd {
-	return h.update(h.views[h.ActiveIndex()], msg)
 }
 
 func (h *viewHandler) updateRouted(id ui.ViewID, msg tview.Msg) tview.Cmd {

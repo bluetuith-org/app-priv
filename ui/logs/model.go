@@ -33,8 +33,8 @@ func New(rv ui.RootView) Model {
 	ui.AddLogHandler(h)
 
 	return Model{
-		cursor:    -1,
-		target:    -1,
+		cursor:    0,
+		target:    0,
 		h:         h,
 		scrollBar: scrollbar.New(),
 		follow:    true,
@@ -61,8 +61,8 @@ func (m *Model) StatusBar() richtext.Line {
 	return m.h.getLatest()
 }
 
-// ScrollKeybinds implements keybindings for the viewport.
-func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
+// ViewportKeybinds implements keybindings for the viewport.
+func (m Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 	switch {
 	case ui.Kb().NavigateTop.Matches(msg):
 		return viewport.ActionTop
@@ -72,6 +72,21 @@ func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
 	}
 
 	return viewport.ActionNone
+}
+
+// OnListChange processes a change in the list and returns a message.
+func (m Model) OnListChange(cursor int) tview.Msg {
+	return m.ViewID().RouterMessage(listChg(cursor))
+}
+
+// OnViewportChange processes a change in the viewport and returns a message.
+func (m Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c})
+}
+
+// OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
+func (m Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
 }
 
 // Init returns a command to run when the model starts, or nil.
@@ -92,11 +107,11 @@ func (m Model) View(focused bool) tview.Widget {
 	vp := viewport.New(ls, m.scrollState).
 		Target(ls.Target(m.target)).
 		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
-		OnChildMsg(func(c *viewport.ScrollState, msg tview.Msg) tview.Msg { return scrollMsg{change: *c, msg: msg} }).
 		Axes(layout.Axes{Width: true, Height: true}).
-		Keybind(m.ScrollKeybinds).
 		Focused(focused).
-		OnChange(func(c *viewport.ScrollState) tview.Msg { return scrollMsg{change: *c} })
+		Keybind(m.ViewportKeybinds).
+		OnChange(m.OnViewportChange).
+		OnChildMsg(m.OnViewportChildMsg)
 
 	bx := box.New(vp).
 		TitleStyle(theme.Current().Log.FollowIndicator).

@@ -120,18 +120,20 @@ func (m Model) View(focused bool) tview.Widget {
 		Content(m.handler.activeContent(focused))
 }
 
+// SetViewKeybind focuses the view if the keybind matches.
+func (m *Model) SetViewKeybind(msg tview.KeyMsg) bool {
+	_, ok := m.handler.setActive(msg)
+
+	return ok
+}
+
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case selectedMsg:
 		m.handler.SetActiveIndex(ms.index)
 		m.rv.SetFocused(m.handler.activeID())
 
-	case tview.KeyMsg:
-		if cmd, ok := m.handler.setActive(ms); ok {
-			return cmd
-		}
-
-		return m.handler.updateActive(msg)
+	default:
 	}
 
 	return m.handler.updateAll(msg)

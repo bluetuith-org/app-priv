@@ -150,15 +150,23 @@ func (m *Model) SendRoutedUpdateMsg(msg ui.RouterMsg) tview.Cmd {
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
 	case tview.KeyMsg:
+		if m.tabsModel.SetViewKeybind(ms) {
+			return nil
+		}
+
 		switch {
 		case ui.Kb().Quit.Matches(ms):
 			return m.quitCmd()
 
 		case ui.Kb().ADTree.TabPane.Matches(ms):
-			m.state.SetFocus(m.tabsModel.GetActiveID())
+			if m.Focused() == ui.ViewIDAdTree {
+				m.state.SetFocus(m.tabsModel.GetActiveID())
+			}
 
 		case ui.Kb().TabPane.ADTree.Matches(ms):
-			m.state.SetFocus(ui.ViewIDAdTree)
+			if m.Focused() != ui.ViewIDAdTree {
+				m.state.SetFocus(ui.ViewIDAdTree)
+			}
 
 		default:
 			return m.updateModel(m.Focused().RouterMessage(ms))
@@ -173,9 +181,29 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		}
 
 		return m.routeMessageToView(ms)
+
+	default:
+		return nil
 	}
 
-	return nil
+	return m.updateAllViews(msg)
+}
+
+func (m *Model) updateAllViews(msg tview.Msg) tview.Cmd {
+	cmds := make([]tview.Cmd, 0, 2)
+	var cmd tview.Cmd
+
+	m.adTreeModel, cmd = m.adTreeModel.Update(msg)
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	m.tabsModel, cmd = m.tabsModel.Update(msg)
+	if cmd != nil {
+		cmds = append(cmds, cmd)
+	}
+
+	return tview.Batch(cmds...)
 }
 
 func (m *Model) routeMessageToView(routerMsg ui.RouterMsg) tview.Cmd {

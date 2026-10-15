@@ -37,8 +37,8 @@ type Model struct {
 // New returns a new operations view.
 func New(rv ui.RootView) Model {
 	return Model{
-		cursor:    -1,
-		target:    -1,
+		cursor:    0,
+		target:    0,
 		scrollBar: scrollbar.New(),
 		run:       make(map[string]*RunningInfo),
 		rv:        rv,
@@ -75,8 +75,8 @@ func (m *Model) Header() richtext.Line {
 	)
 }
 
-// Keybinds implements keybindings for the list.
-func (m Model) Keybinds(msg tview.KeyMsg) list.Action {
+// ListKeybinds implements keybindings for the list.
+func (m Model) ListKeybinds(msg tview.KeyMsg) list.Action {
 	switch {
 	case ui.Kb().NavigateUp.Matches(msg):
 		return list.ActionSelectUp
@@ -88,8 +88,8 @@ func (m Model) Keybinds(msg tview.KeyMsg) list.Action {
 	return list.ActionNone
 }
 
-// ScrollKeybinds implements keybindings for the viewport.
-func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
+// ViewportKeybinds implements keybindings for the viewport.
+func (m Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 	switch {
 	case ui.Kb().NavigateTop.Matches(msg):
 		return viewport.ActionTop
@@ -101,9 +101,19 @@ func (m Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
 	return viewport.ActionNone
 }
 
-// OnChange implements [ui.KcVirtualHandler].
-func (m Model) OnChange(cursor int) tview.Msg {
-	return listChg(cursor)
+// OnListChange processes a change in the list and returns a message.
+func (m Model) OnListChange(cursor int) tview.Msg {
+	return m.ViewID().RouterMessage(listChg(cursor))
+}
+
+// OnViewportChange processes a change in the viewport and returns a message.
+func (m Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c})
+}
+
+// OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
+func (m Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
 }
 
 // Init returns a command to run when the model starts, or nil.
@@ -136,24 +146,24 @@ func (m Model) View(focused bool) tview.Widget {
 			Background(style.GetBackground())
 	}).
 		Focused(focused).
-		OnChange(m.OnChange).
-		Keybind(m.Keybinds).
-		SelectedStyle(tcell.StyleDefault)
+		SelectedStyle(tcell.StyleDefault).
+		OnChange(m.OnListChange).
+		Keybind(m.ListKeybinds)
 
 	vp := viewport.New(ls, m.scrollState).
 		Target(ls.Target(m.target)).
 		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
-		OnChildMsg(func(c *viewport.ScrollState, msg tview.Msg) tview.Msg { return scrollMsg{change: *c, msg: msg} }).
 		Axes(layout.Axes{Width: true, Height: true}).
-		Keybind(m.ScrollKeybinds).
 		Focused(focused).
-		OnChange(func(c *viewport.ScrollState) tview.Msg { return scrollMsg{change: *c} })
+		Keybind(m.ViewportKeybinds).
+		OnChange(m.OnViewportChange).
+		OnChildMsg(m.OnViewportChildMsg)
 
 	return vp
 }
 
 func (m *Model) setCursor(index int) {
-	if index >= 0 && index != m.cursor {
+	if index >= 0 {
 		m.scrollState.ScrollToTarget()
 		m.target = index
 	}
@@ -190,7 +200,6 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		m.deleteOperation(ms.id)
 
 	case tview.KeyMsg:
-
 		switch {
 		case ui.Kb().Operations.ClearAll.Matches(ms):
 			m.clearOperations()

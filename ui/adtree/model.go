@@ -75,46 +75,6 @@ func (m *Model) Header() richtext.Line {
 	return m.root.Title()
 }
 
-// Init returns a command to run when the model starts, or nil.
-func (m Model) Init() tview.Cmd {
-	return tview.Batch(m.populate, m.dbTimer)
-}
-
-// Update receives messages when this model has focus.
-func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(msg)
-	return m, cmd
-}
-
-// View draws this model onto the screen.
-func (m Model) View(focused bool) tview.Widget {
-	state := m.selectionState
-	if !focused {
-		state.SetCurrentNode(nil)
-	}
-
-	tree := ctree.New(m.root.Node, &m, state).
-		TopLevel(1).
-		Focused(focused).
-		Graphics(true).
-		GraphicsSet(m.graphicsSet).
-		GraphicsStyle(theme.Current().Global).
-		Markers(m.markers)
-
-	vp := viewport.New(tree, m.scrollState).
-		Target(tree.Target).
-		ContentWidth(tree.RowsWidth).
-		OnChildMsg(func(c *viewport.ScrollState, msg tview.Msg) tview.Msg { return scrollMsg{change: *c, msg: msg} }).
-		Axes(layout.Axes{Width: true, Height: true}).
-		Keybind(m.ScrollKeybinds).
-		Focused(focused).
-		OnChange(func(c *viewport.ScrollState) tview.Msg { return scrollMsg{change: *c} })
-
-	return box.New(vp).
-		Background(theme.Current().Global.GetBackground()).
-		Padding(2, 0, 2, 1)
-}
-
 // Keybind converts keybindings to actions.
 func (m *Model) Keybind(msg tview.KeyMsg) ctree.Action {
 	switch {
@@ -152,6 +112,69 @@ func (m *Model) OnChange(chg ctree.Change) tview.Msg {
 // OnSelect returns a message after processing the selected node.
 func (m *Model) OnSelect(node *ctree.Node) tview.Msg {
 	return ui.ViewIDAdTree.RouterMessage(selectedMsg{node})
+}
+
+// ViewportKeybinds implements keybindings for the viewport.
+func (m Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
+	switch {
+	case ui.Kb().NavigateTop.Matches(msg):
+		return viewport.ActionTop
+
+	case ui.Kb().NavigateBottom.Matches(msg):
+		return viewport.ActionBottom
+	}
+
+	return viewport.ActionNone
+}
+
+// OnViewportChange processes a change in the viewport and returns a message.
+func (m Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c})
+}
+
+// OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
+func (m Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
+}
+
+// Init returns a command to run when the model starts, or nil.
+func (m Model) Init() tview.Cmd {
+	return tview.Batch(m.populate, m.dbTimer)
+}
+
+// Update receives messages when this model has focus.
+func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
+	cmd := m.updateModel(msg)
+	return m, cmd
+}
+
+// View draws this model onto the screen.
+func (m Model) View(focused bool) tview.Widget {
+	state := m.selectionState
+	if !focused {
+		state.SetCurrentNode(nil)
+	}
+
+	tree := ctree.New(m.root.Node, &m, state).
+		TopLevel(1).
+		Focused(focused).
+		Graphics(true).
+		GraphicsSet(m.graphicsSet).
+		GraphicsStyle(theme.Current().Global).
+		Markers(m.markers)
+
+	vp := viewport.New(tree, m.scrollState).
+		Target(tree.Target).
+		ContentWidth(tree.RowsWidth).
+		Axes(layout.Axes{Width: true, Height: true}).
+		Focused(focused).
+		Keybind(m.ScrollKeybinds).
+		OnChange(m.OnViewportChange).
+		OnChildMsg(m.OnViewportChildMsg)
+
+	return box.New(vp).
+		Background(theme.Current().Global.GetBackground()).
+		Padding(2, 0, 2, 1)
 }
 
 // MarkerStyle returns the styles for the markers.

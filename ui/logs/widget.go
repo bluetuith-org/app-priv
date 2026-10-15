@@ -34,10 +34,10 @@ func newWidget(h *handler, cursor int, selectItem bool) widget {
 		return bx
 	}).
 		Gap(0).
+		SelectedStyle(tcell.StyleDefault).
 		Focused(w.focused).
 		OnChange(w.OnChange).
-		Keybind(w.Keybinds).
-		SelectedStyle(tcell.StyleDefault)
+		Keybind(w.ListKeybinds)
 
 	return w
 }
@@ -50,8 +50,8 @@ func (w widget) Draw(screen tview.Screen, area tview.Rectangle) {
 	w.Widget.Draw(screen, area)
 }
 
-// Keybinds implements keybindings for the list.
-func (w widget) Keybinds(msg tview.KeyMsg) list.Action {
+// ListKeybinds implements keybindings for the list.
+func (w widget) ListKeybinds(msg tview.KeyMsg) list.Action {
 	switch {
 	case ui.Kb().NavigateUp.Matches(msg):
 		return list.ActionSelectUp
@@ -65,5 +65,5 @@ func (w widget) Keybinds(msg tview.KeyMsg) list.Action {
 
 // OnChange implements a handler that returns a message when the list's state is changed.
 func (w widget) OnChange(index int) tview.Msg {
-	return listChg(index)
+	return ui.ViewIDLog.RouterMessage(listChg(index))
 }
