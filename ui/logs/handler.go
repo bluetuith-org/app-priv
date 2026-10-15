@@ -36,12 +36,17 @@ func (h *handler) Enabled(context.Context, slog.Level) bool {
 
 // Handle implements [slog.Handler].
 func (h *handler) Handle(_ context.Context, record slog.Record) error {
-	h.Lock()
-	defer h.Unlock()
+	var idx int
 
-	idx := h.rb.Len()
+	{
+		h.Lock()
 
-	h.rb.Add(newLogContent(record))
+		idx = h.rb.Len()
+		h.rb.Add(newLogContent(record))
+
+		h.Unlock()
+	}
+
 	h.rv.SendMsg(ui.ViewIDLog.RouterMessage(newLogMsg{idx}))
 
 	return nil
