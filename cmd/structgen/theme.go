@@ -129,7 +129,9 @@ func (t *ThemeGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error)
 		tagValue = ""
 	}
 
-	fmt.Fprintf(&t.defSb, "r.%s = %q\n", s, tagValue)
+	if tagValue != "" {
+		fmt.Fprintf(&t.defSb, "r.%s = %q\n", s, tagValue)
+	}
 
 	if isRoot && tagKey == tagKeys[0] {
 		return newGenTemplRet("", false, true), nil

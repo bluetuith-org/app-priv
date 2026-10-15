@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"unicode"
 
+	"github.com/ayn2op/tview"
 	"github.com/gdamore/tcell/v3"
 	tc "github.com/gdamore/tcell/v3/color"
 	tint "github.com/lrstanley/bubbletint/v2"
@@ -50,57 +50,78 @@ func (r *RootConfiguration) Merge(cfg *Configuration) (*Theme, error) {
 	tint.SetTint(tintSpec)
 
 	r.Tint = tintName
-	th := &Theme{}
+	theme := &Theme{}
 
-	for parseInfo := range iterProperties(r, cfg, th) {
-		rootCfg := *parseInfo.rootCfg
-
-		cmpParseInfo, parseErr := r.checkItem(parseInfo.cmpCfg)
-		if parseErr != nil {
-			return nil, parseErr
+	for parseInfo := range iterProperties(r, cfg, theme) {
+		cmpStyle, err := r.applyTheme(parseInfo.cmpCfg)
+		if err != nil {
+			return nil, err
 		}
 
-		rootParseInfo, parseErr := r.checkItem(rootCfg)
-		if parseErr != nil {
-			return nil, parseErr
+		rootStyle, err := r.applyTheme(*parseInfo.rootCfg)
+		if err != nil {
+			return nil, err
 		}
 
-		*parseInfo.rootCfg = rootParseInfo.merge(cmpParseInfo)
-		r.applyTheme(parseInfo)
+		style := rootStyle
+		if cmpStyle != (tcell.Style{}) {
+			style = tview.MergeStyle(rootStyle, cmpStyle)
+		}
+
+		*parseInfo.style = style
 	}
 
-	return th, nil
+	return theme, nil
 }
 
 // convertToTheme converts the configuration to a [Theme].
 func (r *RootConfiguration) convertToTheme() (*Theme, error) {
-	th := &Theme{}
+	theme := &Theme{}
 
 	tintSpec := tint.DefaultTintsByID(r.Tint)
 	if tintSpec == nil {
-		return th, fmt.Errorf("theme not found: '%s'", r.Tint)
+		return nil, fmt.Errorf("the specified theme was not found: %s", r.Tint)
 	}
 
 	tint.Register(tintSpec)
 	tint.SetTint(tintSpec)
 
-	for parseInfo := range iterProperties(r, nil, th) {
-		r.applyTheme(parseInfo)
+	for parseInfo := range iterProperties(r, nil, theme) {
+		style, err := r.applyTheme(*parseInfo.rootCfg)
+		if err != nil {
+			return nil, err
+		}
+
+		*parseInfo.style = style
 	}
 
-	return th, nil
+	return theme, nil
 }
 
-func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
+func (r *RootConfiguration) applyTheme(cfgItem string) (tcell.Style, error) {
 	style := tcell.Style{}
 	fgSet, bgSet := false, false
 
-	for seg := range strings.SplitSeq(*p.rootCfg, propSegmentSep) {
-		prop, val, _ := strings.Cut(seg, propValSep)
+	if cfgItem == "" {
+		goto SetStyle
+	}
+
+	for seg := range strings.SplitSeq(removeSpaces(cfgItem), propSegmentSep) {
+		prop, val, ok := strings.Cut(seg, propValSep)
+		if !ok {
+			return style, fmt.Errorf("invalid property sequence: '%s' -> '%s' ('%s')", prop, val, cfgItem)
+		}
+
+		if val == "" {
+			return style, fmt.Errorf("no value was specified for property '%s' ('%s')", prop, cfgItem)
+		}
 
 		switch prop {
 		case fgKeyword:
-			c, _ := r.parseColorSpec(val)
+			c, err := r.parseColorSpec(val)
+			if err != nil {
+				return style, fmt.Errorf("%w: Invalid format '%s' ('%s')", err, prop, cfgItem)
+			}
 			if c == _noColor {
 				c = tc.FromImageColor(tint.Current().Fg)
 			}
@@ -109,7 +130,11 @@ func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 			fgSet = true
 
 		case bgKeyword:
-			c, _ := r.parseColorSpec(val)
+			c, err := r.parseColorSpec(val)
+			if err != nil {
+				return style, fmt.Errorf("%w: Invalid format '%s' ('%s')", err, prop, cfgItem)
+			}
+
 			if c == _noColor {
 				c = tc.FromImageColor(tint.Current().Bg)
 			}
@@ -118,7 +143,17 @@ func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 			bgSet = true
 
 		case attrKeyword:
+			const (
+				totalAttrs = 6
+			)
+
+			var attrCount int
+
 			for attr := range strings.SplitSeq(val, multiValSep) {
+				if attr == "" {
+					continue
+				}
+
 				switch attr {
 				case "bold":
 					style = style.Bold(true)
@@ -134,11 +169,23 @@ func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 
 				case "reverse":
 					style = style.Reverse(true)
+
+				case "dim":
+					style = style.Dim(true)
+
+				default:
+					return style, fmt.Errorf("invalid attribute '%s' specified for property '%s' ('%s')", attr, prop, cfgItem)
+				}
+
+				attrCount++
+				if attrCount > totalAttrs {
+					return style, fmt.Errorf("invalid property length of '%s' in '%s' ('%s')", val, prop, cfgItem)
 				}
 			}
 		}
 	}
 
+SetStyle:
 	if !fgSet {
 		style = style.Foreground(tc.FromImageColor(tint.Current().Fg))
 	}
@@ -147,7 +194,7 @@ func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 		style = style.Background(tc.FromImageColor(tint.Current().Bg))
 	}
 
-	*p.style = style
+	return style, nil
 }
 
 func (r *RootConfiguration) parseColorSpec(colorSpec string) (tc.Color, error) {
@@ -226,137 +273,7 @@ MatchColor:
 	return tc.FromImageColor(c), nil
 }
 
-func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigInfo, err error) {
-	if cfgItem == "" {
-		return cfgParseInfo, nil
-	}
-
-	for seg := range strings.SplitSeq(removeSpaces(cfgItem), propSegmentSep) {
-		prop, val, ok := strings.Cut(seg, propValSep)
-		if !ok {
-			return cfgParseInfo, fmt.Errorf("invalid property sequence: '%s' -> '%s' ('%s')", prop, val, cfgItem)
-		}
-
-		if val == "" {
-			return cfgParseInfo, fmt.Errorf("no value was specified for property '%s' ('%s')", prop, cfgItem)
-		}
-
-		switch prop {
-		case fgKeyword, bgKeyword:
-			if _, err := r.parseColorSpec(val); err != nil {
-				return cfgParseInfo, fmt.Errorf("%w: Invalid format '%s' ('%s')", err, prop, cfgItem)
-			}
-
-			if prop == fgKeyword {
-				cfgParseInfo.fg = val
-				continue
-			}
-
-			cfgParseInfo.bg = val
-
-		case attrKeyword:
-			const (
-				totalAttrs = 5
-			)
-
-			var attrCount int
-
-			for attr := range strings.SplitSeq(val, multiValSep) {
-				if attr == "" {
-					continue
-				}
-
-				switch attr {
-				case "bold", "italic", "underline", "blink", "reverse":
-					attrCount++
-					if attrCount > totalAttrs {
-						return cfgParseInfo, fmt.Errorf("invalid property length of '%s' in '%s' ('%s')", val, prop, cfgItem)
-					}
-
-					continue
-
-				default:
-					return cfgParseInfo, fmt.Errorf("invalid attribute '%s' specified for property '%s' ('%s')", attr, prop, cfgItem)
-				}
-			}
-
-			cfgParseInfo.attrs = val
-
-		default:
-			return cfgParseInfo, fmt.Errorf("property is not supported: '%s' ('%s')", prop, cfgItem)
-		}
-	}
-
-	return cfgParseInfo, nil
-}
-
-type parseConfigInfo struct {
-	fg, bg string
-	attrs  string
-}
-
-func (p *parseConfigInfo) merge(cmpCfg parseConfigInfo) string {
-	const (
-		numSemicolons = 2
-	)
-
-	if cmpCfg.fg != "" {
-		p.fg = cmpCfg.fg
-	}
-
-	if cmpCfg.bg != "" {
-		p.bg = cmpCfg.bg
-	}
-
-	if cmpCfg.attrs != "" {
-		p.attrs = cmpCfg.attrs
-	}
-
-	fgPrefixLen, bgPrefixLen, attrPrefixLen := len(fgKeyword), len(bgKeyword), len(attrKeyword)
-
-	var sb strings.Builder
-
-	sb.Grow(
-		(min(len(p.fg), 10) + fgPrefixLen) +
-			(min(len(p.bg), 10) + bgPrefixLen) +
-			(min(len(p.attrs), 30) + attrPrefixLen) +
-			numSemicolons,
-	)
-
-	if p.fg != "" {
-		sb.WriteString(fgKeyword)
-		sb.WriteString(propValSep)
-		sb.WriteString(p.fg)
-	}
-
-	if sb.Len() > 0 && p.bg != "" {
-		sb.WriteString(propSegmentSep)
-	}
-
-	if p.bg != "" {
-		sb.WriteString(bgKeyword)
-		sb.WriteString(propValSep)
-		sb.WriteString(p.bg)
-	}
-
-	if sb.Len() > 0 && p.attrs != "" {
-		sb.WriteString(propSegmentSep)
-	}
-
-	if p.attrs != "" {
-		sb.WriteString(attrKeyword)
-		sb.WriteString(propValSep)
-		sb.WriteString(p.attrs)
-	}
-
-	return sb.String()
-}
-
 func removeSpaces(s string) string {
-	if !strings.ContainsFunc(s, unicode.IsSpace) {
-		return s
-	}
-
 	var sb strings.Builder
 
 	sb.Grow(max(minBufferLen, min(len(s), maxBuffenLen)))
