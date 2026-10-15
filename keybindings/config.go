@@ -4,93 +4,93 @@ package keybindings
 
 // Configuration holds the configuration for the keybindings of the application.
 type Configuration struct {
-	SelectItem  string `keydef:"enter" keyshorthelp:"SelectItem" keylonghelp:"SelectItem"`
-	CloseItem   string `keydef:"esc" keyshorthelp:"CloseItem" keylonghelp:"CloseItem"`
-	FilterItems string `keydef:"/" keyshorthelp:"FilterItems" keylonghelp:"FilterItems"`
+	SelectItem  string `keydef:"enter"`
+	CloseItem   string `keydef:"esc"`
+	FilterItems string `keydef:"/"`
 
-	Help    string `keydef:"?" keyshorthelp:"Help" keylonghelp:"Help"`
-	Suspend string `keydef:"ctrl+z" keyshorthelp:"Suspend" keylonghelp:"Suspend"`
-	Quit    string `keydef:"q" keyshorthelp:"Quit" keylonghelp:"Quit"`
+	Help    string `keydef:"?"`
+	Suspend string `keydef:"ctrl+z"`
+	Quit    string `keydef:"q"`
 
-	NavigateUp     string `keydef:"up" keyshorthelp:"NavigateUp" keylonghelp:"NavigateUp"`
-	NavigateDown   string `keydef:"down" keyshorthelp:"NavigateDown" keylonghelp:"NavigateDown"`
-	NavigateLeft   string `keydef:"left" keyshorthelp:"NavigateLeft" keylonghelp:"NavigateLeft"`
-	NavigateRight  string `keydef:"right" keyshorthelp:"NavigateRight" keylonghelp:"NavigateRight"`
-	NavigateTop    string `keydef:"pgup" keyshorthelp:"NavigateTop" keylonghelp:"NavigateTop"`
-	NavigateBottom string `keydef:"pgdn" keyshorthelp:"NavigateBottom" keylonghelp:"NavigateBottom"`
+	NavigateUp     string `keydef:"up"`
+	NavigateDown   string `keydef:"down"`
+	NavigateLeft   string `keydef:"left"`
+	NavigateRight  string `keydef:"right"`
+	NavigateTop    string `keydef:"pgup"`
+	NavigateBottom string `keydef:"pgdn"`
 
 	Adapter struct {
-		TogglePower        string `keydef:"o" keyshorthelp:"TogglePower" keylonghelp:"TogglePower"`
-		ToggleDiscoverable string `keydef:"S" keyshorthelp:"ToggleDiscoverable" keylonghelp:"ToggleDiscoverable"`
-		TogglePairable     string `keydef:"P" keyshorthelp:"TogglePairable" keylonghelp:"TogglePairable"`
-		ToggleScan         string `keydef:"s" keyshorthelp:"ToggleScan" keylonghelp:"ToggleScan"`
+		TogglePower        string `keydef:"o"`
+		ToggleDiscoverable string `keydef:"S"`
+		TogglePairable     string `keydef:"P"`
+		ToggleScan         string `keydef:"s"`
 	}
 
 	Device struct {
-		ToggleConnection  string `keydef:"c" keyshorthelp:"ToggleConnection" keylonghelp:"ToggleConnection"`
-		TogglePairedState string `keydef:"p" keyshorthelp:"TogglePairedState" keylonghelp:"TogglePairedState"`
-		Trust             string `keydef:"t" keyshorthelp:"Trust" keylonghelp:"Trust"`
+		ToggleConnection  string `keydef:"c"`
+		TogglePairedState string `keydef:"p"`
+		Trust             string `keydef:"t"`
 
-		SendFiles      string `keydef:"f" keyshorthelp:"SendFiles" keylonghelp:"SendFiles"`
-		NetworkOptions string `keydef:"n" keyshorthelp:"NetworkOptions" keylonghelp:"NetworkOptions"`
-		AudioProfiles  string `keydef:"A" keyshorthelp:"AudioProfiles" keylonghelp:"AudioProfiles"`
-		Block          string `keydef:"b" keyshorthelp:"Block" keylonghelp:"Block"`
+		SendFiles      string `keydef:"f"`
+		NetworkOptions string `keydef:"n"`
+		AudioProfiles  string `keydef:"A"`
+		Block          string `keydef:"b"`
 	}
 
 	Filebrowser struct {
-		CdForward string `keydef:"right" keyshorthelp:"CdForward" keylonghelp:"CdForward"`
-		CdBack    string `keydef:"left" keyshorthelp:"CdBack" keylonghelp:"CdBack"`
+		CdForward string `keydef:"right"`
+		CdBack    string `keydef:"left"`
 
-		SelectOne        string `keydef:"space" keyshorthelp:"SelectOne" keylonghelp:"SelectOne"`
-		SelectAll        string `keydef:"A" keyshorthelp:"SelectAll" keylonghelp:"SelectAll"`
-		InvertSelection  string `keydef:"a" keyshorthelp:"InvertSelection" keylonghelp:"InvertSelection"`
-		ConfirmSelection string `keydef:"ctrl+s" keyshorthelp:"ConfirmSelection" keylonghelp:"ConfirmSelection"`
+		SelectOne        string `keydef:"space"`
+		SelectAll        string `keydef:"A"`
+		InvertSelection  string `keydef:"a"`
+		ConfirmSelection string `keydef:"ctrl+s"`
 
-		Refresh           string `keydef:"ctrl+r" keyshorthelp:"Refresh" keylonghelp:"Refresh"`
-		ToggleHiddenFiles string `keydef:"." keyshorthelp:"ToggleHiddenFiles" keylonghelp:"ToggleHiddenFiles"`
+		Refresh           string `keydef:"ctrl+r"`
+		ToggleHiddenFiles string `keydef:"."`
 	}
 
 	ADTree struct {
-		ExpandOrSelect string `keydef:"right" keyshorthelp:"ExpandOrSelect" keylonghelp:"ExpandOrSelect"`
-		TabPane        string `keydef:"tab" keyshorthelp:"SwitchPanes" keylonghelp:"SwitchPanes"`
+		ExpandOrSelect string `keydef:"right"`
+		TabPane        string `keydef:"tab"`
 	}
 
 	TabPane struct {
-		Next     string `keydef:"tab" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
-		Previous string `keydef:"shift+tab" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
-		ADTree   string `keydef:"esc" keyshorthelp:"SwitchSections" keylonghelp:"SwitchSections"`
+		Next     string `keydef:"tab"`
+		Previous string `keydef:"shift+tab"`
+		ADTree   string `keydef:"esc"`
 	}
 
 	Information struct {
-		Show string `keydef:"I" keyshorthelp:"Information" keylonghelp:"Information"`
+		Show string `keydef:"I"`
 	}
 
 	Operations struct {
-		Show     string `keydef:"O" keyshorthelp:"Operations" keylonghelp:"Operations"`
-		Cancel   string `keydef:"x" keyshorthelp:"Cancel" keylonghelp:"Cancel"`
-		ClearAll string `keydef:"C" keyshorthelp:"ClearAll" keylonghelp:"ClearAll"`
+		Show     string `keydef:"O"`
+		Cancel   string `keydef:"x"`
+		ClearAll string `keydef:"C"`
 	}
 
 	Transfers struct {
-		Show    string `keydef:"T" keyshorthelp:"Transfers" keylonghelp:"Transfers"`
-		Suspend string `keydef:"s" keyshorthelp:"Suspend" keylonghelp:"Suspend"`
-		Resume  string `keydef:"r" keyshorthelp:"Resume" keylonghelp:"Resume"`
-		Cancel  string `keydef:"x" keyshorthelp:"Cancel" keylonghelp:"Cancel"`
+		Show    string `keydef:"T"`
+		Suspend string `keydef:"s"`
+		Resume  string `keydef:"r"`
+		Cancel  string `keydef:"x"`
 	}
 
 	Log struct {
-		Show   string `keydef:"L" keyshorthelp:"Logs" keylonghelp:"Logs"`
-		Follow string `keydef:"f" keyshorthelp:"Follow" keylonghelp:"Follow"`
+		Show   string `keydef:"L"`
+		Follow string `keydef:"f"`
 	}
 
 	Player struct {
-		ToggleDisplay      string `keydef:"M" keyshorthelp:"ToggleDisplay" keylonghelp:"ToggleDisplay"`
-		ToggleMediaPlaying string `keydef:"space" keyshorthelp:"ToggleMediaPlaying" keylonghelp:"ToggleMediaPlaying"`
+		ToggleDisplay      string `keydef:"M"`
+		ToggleMediaPlaying string `keydef:"space"`
 
-		Next         string `keydef:">" keyshorthelp:"Next" keylonghelp:"Next"`
-		Previous     string `keydef:"<" keyshorthelp:"Previous" keylonghelp:"Previous"`
-		SeekForward  string `keydef:"right" keyshorthelp:"SeekForward" keylonghelp:"SeekForward"`
-		SeekBackward string `keydef:"left" keyshorthelp:"SeekBackward" keylonghelp:"SeekBackward"`
-		Stop         string `keydef:"]" keyshorthelp:"Stop" keylonghelp:"Stop"`
+		Next         string `keydef:">"`
+		Previous     string `keydef:"<"`
+		SeekForward  string `keydef:"right"`
+		SeekBackward string `keydef:"left"`
+		Stop         string `keydef:"]"`
 	}
 }

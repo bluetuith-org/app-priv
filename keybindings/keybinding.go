@@ -14,22 +14,20 @@ type KeyID int
 
 // Keybinding represents a single Keybinding.
 type Keybinding struct {
-	tcellKey
+	TcellKey
 
-	ID                  KeyID
-	ShortHelp, LongHelp string
-
+	ID      KeyID
 	KeyName string
 }
 
 // newKeybinding returns a new keybinding.
-func newKeybinding(id KeyID, keyCombo tcellKey, keyName, shorthelp, longhelp string) Keybinding {
-	return Keybinding{tcellKey: keyCombo, ID: id, KeyName: keyName, ShortHelp: shorthelp, LongHelp: longhelp}
+func newKeybinding(id KeyID, keyCombo TcellKey, keyName string) Keybinding {
+	return Keybinding{TcellKey: keyCombo, ID: id, KeyName: keyName}
 }
 
 // Matches returns if the keybinding matches the [tea.KeyPressMsg].
 func (k *Keybinding) Matches(p tview.KeyMsg) bool {
-	return p.Key() == k.key && p.Str() == k.str && p.Modifiers() == k.mod
+	return p.Key() == k.Key && p.Str() == k.Str && p.Modifiers() == k.Mod
 }
 
 // IterKeyMatch describes an iterator that iterates over a keybinding-T pair.
@@ -48,12 +46,13 @@ func IterMatch[T any](p tview.KeyMsg, iterator IterKeyMatch[T]) (Keybinding, T, 
 	return _emptyKeybinding, defVal, false
 }
 
-type tcellKey struct {
-	key tcell.Key
-	str string
-	mod tcell.ModMask
+// TcellKey represents a [tcell.EventKey].
+type TcellKey struct {
+	Key tcell.Key
+	Str string
+	Mod tcell.ModMask
 }
 
-func newTcellKey(key tcell.Key, str string, mod tcell.ModMask) tcellKey {
-	return tcellKey{key, str, mod}
+func newTcellKey(key tcell.Key, str string, mod tcell.ModMask) TcellKey {
+	return TcellKey{key, str, mod}
 }

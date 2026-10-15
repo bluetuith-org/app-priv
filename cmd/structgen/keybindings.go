@@ -72,7 +72,7 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 }
 `
 
-var tagKeysKb = [3]string{"keydef", "keyshorthelp", "keylonghelp"}
+var tagKeysKb = [1]string{"keydef"}
 
 type KbGenImpl struct {
 	sb, constSb, defSb strings.Builder
@@ -111,11 +111,9 @@ func (k *KbGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error) {
 		&k.defSb,
 		`k.%s = newKeybinding(
 		%s, %s, %q,
-		%q,
-		%q,
 		)
 		`,
-		s, id, kb, keyStr, vals[1], vals[2],
+		s, id, kb, keyStr,
 	)
 
 	fmt.Fprintf(&k.sb, `
