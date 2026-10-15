@@ -70,6 +70,8 @@ func defaultConfig() *RootConfiguration {
 
 var tagKeys = [2]string{"themetype", "themedef"}
 
+const tintPropName = "Tint"
+
 type ThemeGenImpl struct {
 	sb, defSb strings.Builder
 	count     int
@@ -115,8 +117,19 @@ func (t *ThemeGenImpl) AppendAccessor(s string, tag string) (genTemplRet, error)
 			s, tag,
 		)
 	}
+	if tagKey == tagKeys[0] && s != tintPropName {
+		return emptyGenTemplRet(), fmt.Errorf(
+			"Property '%s' must only be specified for the '%s' configuration item (accessor %s)",
+			tagKeys[0], tintPropName, s,
+		)
+	}
 
-	fmt.Fprintf(&t.defSb, "r.%s = %q\n", s, strings.ReplaceAll(tagValue, " ", ""))
+	tagValue = strings.ReplaceAll(tagValue, " ", "")
+	if tagValue == "-" {
+		tagValue = ""
+	}
+
+	fmt.Fprintf(&t.defSb, "r.%s = %q\n", s, tagValue)
 
 	if isRoot && tagKey == tagKeys[0] {
 		return newGenTemplRet("", false, true), nil

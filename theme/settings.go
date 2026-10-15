@@ -1,6 +1,8 @@
 package theme
 
 import (
+	"sync/atomic"
+
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -15,25 +17,33 @@ func init() {
 
 // Settings represents the current settings for themes and other elements.
 type Settings struct {
-	*Theme
+	theme atomic.Pointer[Theme]
 
 	rootCfg *RootConfiguration
 	iconSet *IconSet
 }
 
 // ParseTheme parses and applies the theme configuration.
-// TODO: Parse config.
-func (s *Settings) ParseTheme() error {
-	cmpCfg := (*Configuration)(s.rootCfg)
+func (s *Settings) ParseTheme(asciiIcons bool, config *Configuration) error {
+	s.rootCfg = defaultConfig()
+	s.iconSet = NewIconSet(asciiIcons)
 
-	if err := s.rootCfg.Merge(cmpCfg); err != nil {
+	if config != nil {
+		th, err := s.rootCfg.Merge(config)
+		if err != nil {
+			return err
+		}
+
+		s.theme.Store(th)
+		return nil
+	}
+
+	th, err := s.rootCfg.convertToTheme()
+	if err != nil {
 		return err
 	}
 
-	th := s.rootCfg.convertToTheme()
-	s.Theme = &th
-
-	s.iconSet = NewIconSet(false)
+	s.theme.Store(th)
 
 	return nil
 }
@@ -45,7 +55,7 @@ func CurrentSettings() *Settings {
 
 // Current returns the current theme.
 func Current() *Theme {
-	return _current.Theme
+	return _current.theme.Load()
 }
 
 // Icons returns the preconfigured icons.
@@ -54,7 +64,4 @@ func Icons() *IconSet {
 }
 
 // _current returns the current theme settings.
-var _current = &Settings{
-	rootCfg: defaultConfig(),
-	Theme:   &Theme{},
-}
+var _current = &Settings{}

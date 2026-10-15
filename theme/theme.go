@@ -2,7 +2,6 @@ package theme
 
 import (
 	"fmt"
-	"image/color"
 	"strconv"
 	"strings"
 	"unicode"
@@ -15,10 +14,9 @@ import (
 //go:generate go run ../cmd/structgen theme
 
 const (
-	fgKeyword        = "fg"
-	bgKeyword        = "bg"
-	attrKeyword      = "attr"
-	fromThemeKeyword = "from-theme"
+	fgKeyword   = "fg"
+	bgKeyword   = "bg"
+	attrKeyword = "attr"
 
 	propSegmentSep = ";"
 	propValSep     = ":"
@@ -40,71 +38,84 @@ const (
 type RootConfiguration Configuration
 
 // Merge merges the provided configuration with the root configuration.
-func (r *RootConfiguration) Merge(cfg *Configuration) error {
+func (r *RootConfiguration) Merge(cfg *Configuration) (*Theme, error) {
 	tintName := cfg.Tint
 
-	if t := tint.DefaultTintsByID(tintName); t == nil {
-		return fmt.Errorf("the specified theme was not found: %s", tintName)
+	tintSpec := tint.DefaultTintsByID(tintName)
+	if tintSpec == nil {
+		return nil, fmt.Errorf("the specified theme was not found: %s", tintName)
 	}
 
-	r.Tint = tintName
+	tint.Register(tintSpec)
+	tint.SetTint(tintSpec)
 
-	for parseInfo := range iterProperties(r, cfg, nil) {
+	r.Tint = tintName
+	th := &Theme{}
+
+	for parseInfo := range iterProperties(r, cfg, th) {
 		rootCfg := *parseInfo.rootCfg
 
 		cmpParseInfo, parseErr := r.checkItem(parseInfo.cmpCfg)
 		if parseErr != nil {
-			return parseErr
+			return nil, parseErr
 		}
 
 		rootParseInfo, parseErr := r.checkItem(rootCfg)
 		if parseErr != nil {
-			return parseErr
+			return nil, parseErr
 		}
 
 		*parseInfo.rootCfg = rootParseInfo.merge(cmpParseInfo)
-	}
-
-	return nil
-}
-
-// convertToTheme converts the configuration to a [Theme].
-func (r *RootConfiguration) convertToTheme() Theme {
-	tintSpec := tint.DefaultTintsByID(r.Tint)
-	tint.Register(tintSpec)
-	tint.SetTint(tintSpec)
-
-	th := Theme{}
-
-	for parseInfo := range iterProperties(r, nil, &th) {
 		r.applyTheme(parseInfo)
 	}
 
-	return th
+	return th, nil
+}
+
+// convertToTheme converts the configuration to a [Theme].
+func (r *RootConfiguration) convertToTheme() (*Theme, error) {
+	th := &Theme{}
+
+	tintSpec := tint.DefaultTintsByID(r.Tint)
+	if tintSpec == nil {
+		return th, fmt.Errorf("theme not found: '%s'", r.Tint)
+	}
+
+	tint.Register(tintSpec)
+	tint.SetTint(tintSpec)
+
+	for parseInfo := range iterProperties(r, nil, th) {
+		r.applyTheme(parseInfo)
+	}
+
+	return th, nil
 }
 
 func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 	style := tcell.Style{}
+	fgSet, bgSet := false, false
 
 	for seg := range strings.SplitSeq(*p.rootCfg, propSegmentSep) {
 		prop, val, _ := strings.Cut(seg, propValSep)
 
 		switch prop {
 		case fgKeyword:
-			c, _ := r.parseColorSpec(prop, val)
+			c, _ := r.parseColorSpec(val)
 			if c == _noColor {
 				c = tc.FromImageColor(tint.Current().Fg)
 			}
 
 			style = style.Foreground(c)
+			fgSet = true
 
 		case bgKeyword:
-			c, _ := r.parseColorSpec(prop, val)
+			c, _ := r.parseColorSpec(val)
 			if c == _noColor {
 				c = tc.FromImageColor(tint.Current().Bg)
 			}
 
 			style = style.Background(c)
+			bgSet = true
 
 		case attrKeyword:
 			for attr := range strings.SplitSeq(val, multiValSep) {
@@ -128,10 +139,18 @@ func (r *RootConfiguration) applyTheme(p parseThemeInfo) {
 		}
 	}
 
+	if !fgSet {
+		style = style.Foreground(tc.FromImageColor(tint.Current().Fg))
+	}
+
+	if !bgSet {
+		style = style.Background(tc.FromImageColor(tint.Current().Bg))
+	}
+
 	*p.style = style
 }
 
-func (r *RootConfiguration) parseColorSpec(keyWord, colorSpec string) (tc.Color, error) {
+func (r *RootConfiguration) parseColorSpec(colorSpec string) (tc.Color, error) {
 	if colorSpec == "" {
 		return _noColor, fmt.Errorf("no format specified, color specification is empty")
 	}
@@ -191,25 +210,9 @@ func (r *RootConfiguration) parseColorSpec(keyWord, colorSpec string) (tc.Color,
 	}
 
 MatchColor:
-	var c color.Color
-
-	switch colorName {
-	case fromThemeKeyword:
-		switch keyWord {
-		case fgKeyword:
-			c = tint.Current().Fg
-
-		case bgKeyword:
-			c = tint.Current().Bg
-		}
-
-	default:
-		clr, ok := parseColor(colorName)
-		if !ok {
-			return _noColor, fmt.Errorf("invalid color specifier '%s'", colorName)
-		}
-
-		c = clr
+	c, ok := parseColor(colorName)
+	if !ok {
+		return _noColor, fmt.Errorf("invalid color specifier '%s'", colorName)
 	}
 
 	if darken != 0 {
@@ -240,7 +243,7 @@ func (r *RootConfiguration) checkItem(cfgItem string) (cfgParseInfo parseConfigI
 
 		switch prop {
 		case fgKeyword, bgKeyword:
-			if _, err := r.parseColorSpec(prop, val); err != nil {
+			if _, err := r.parseColorSpec(val); err != nil {
 				return cfgParseInfo, fmt.Errorf("%w: Invalid format '%s' ('%s')", err, prop, cfgItem)
 			}
 
@@ -326,7 +329,7 @@ func (p *parseConfigInfo) merge(cmpCfg parseConfigInfo) string {
 		sb.WriteString(p.fg)
 	}
 
-	if sb.Len() > 0 {
+	if sb.Len() > 0 && p.bg != "" {
 		sb.WriteString(propSegmentSep)
 	}
 
@@ -336,7 +339,7 @@ func (p *parseConfigInfo) merge(cmpCfg parseConfigInfo) string {
 		sb.WriteString(p.bg)
 	}
 
-	if sb.Len() > 0 {
+	if sb.Len() > 0 && p.attrs != "" {
 		sb.WriteString(propSegmentSep)
 	}
 

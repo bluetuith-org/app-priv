@@ -84,6 +84,7 @@ func (i *IconSet) populateIcons(isASCII bool) *IconSet {
 		Operations: IconVariant{
 			Unicode: "⚙️",
 			ASCII:   "[O]",
+			IsASCII: isASCII,
 		},
 		Log: IconVariant{
 			Unicode: "\U0001F50D",

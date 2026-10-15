@@ -137,6 +137,7 @@ func (m Model) View(focused bool) tview.Widget {
 		borderStyle := style
 		if m.cursor == index && focused {
 			borderStyle = theme.Current().Operations.Selection
+			borders = tview.BorderSetThick()
 		}
 
 		return card.New(info.cc).

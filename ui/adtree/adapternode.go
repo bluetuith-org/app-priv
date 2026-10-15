@@ -121,7 +121,7 @@ func (a *adapterNode) StatusIcons() richtext.Line {
 		line = append(line, richtext.NewSegment(state.Name, state.Style))
 	}
 
-	return ui.RenderMergedPill(line)
+	return ui.RenderMergedPill(line, theme.Current().Global.GetBackground())
 }
 
 // PopulateActions populates all actions within a node of type [nodeTypeAction].

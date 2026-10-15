@@ -21,6 +21,7 @@ type Values struct {
 	NoWarning     bool              `koanf:"no-warning"`
 	NoHelpDisplay bool              `koanf:"no-help-display"`
 	ConfirmOnQuit bool              `koanf:"confirm-on-quit"`
+	AsciiIcons    bool              `koanf:"ui-ascii-icons"` //revive:disable
 	Keybindings   map[string]string `koanf:"keybindings"`
 
 	AdapterStatesMap      map[string]string
@@ -256,5 +257,5 @@ func (v *Values) validateGsm() error {
 // validateTheme validates the theme configuration.
 // TODO: Theme
 func (v *Values) validateTheme() error {
-	return theme.CurrentSettings().ParseTheme()
+	return theme.CurrentSettings().ParseTheme(v.AsciiIcons, nil)
 }
