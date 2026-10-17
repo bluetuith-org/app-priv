@@ -28,7 +28,7 @@ func (s *subNode) SubAdNode() *adNode {
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
-func (s *subNode) HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool) {
+func (s *subNode) HandleKeys(p tview.KeyMsg) (ui.Router, bool) {
 	return s.noder.HandleKeys(p)
 }
 

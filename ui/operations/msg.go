@@ -12,7 +12,7 @@ type CreateMsg struct {
 }
 
 // MsgCreate creates a message to be sent to the operations manager, to create an operation.
-func MsgCreate(creationInfo CreationInfo, action Invoker) ui.RouterMsg {
+func MsgCreate(creationInfo CreationInfo, action Invoker) ui.Router {
 	return ui.ViewIDOperations.RouterMessage(CreateMsg{CreationInfo: creationInfo, opAction: action})
 }
 
@@ -22,11 +22,11 @@ type opUpdateMsg struct {
 	stage       operationStage
 }
 
-func msgOpUpdate(id, msg string, stage operationStage) ui.RouterMsg {
+func msgOpUpdate(id, msg string, stage operationStage) ui.Router {
 	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg, nil, stage})
 }
 
-func msgOpUpdateErr(id, msg string, err error) ui.RouterMsg {
+func msgOpUpdateErr(id, msg string, err error) ui.Router {
 	return ui.ViewIDOperations.RouterMessage(opUpdateMsg{id, msg, err, operationError})
 }
 
@@ -34,6 +34,6 @@ type opDeleteMsg struct {
 	id string
 }
 
-func msgOpDelete(id string) ui.RouterMsg {
+func msgOpDelete(id string) ui.Router {
 	return ui.ViewIDOperations.RouterMessage(opDeleteMsg{id})
 }

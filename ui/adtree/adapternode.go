@@ -56,7 +56,7 @@ func (a *adapterNode) Refresh() {
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
-func (a *adapterNode) HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool) {
+func (a *adapterNode) HandleKeys(p tview.KeyMsg) (ui.Router, bool) {
 	return actionHandleKeyMsg(p, a.Node)
 }
 

@@ -11,7 +11,7 @@ import (
 // adNoder describes an interface to get information from nodes and update node states.
 type adNoder interface {
 	// HandleKeys handles a [tview.KeyMsg] and returns a message.
-	HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool)
+	HandleKeys(p tview.KeyMsg) (ui.Router, bool)
 
 	// NodeStyle returns the style to be applied for this node's label.
 	NodeStyle() tcell.Style
@@ -47,7 +47,7 @@ type adNoder interface {
 type emptyNoder struct{}
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
-func (e *emptyNoder) HandleKeys(tview.KeyMsg) (ui.RouterMsg, bool) {
+func (e *emptyNoder) HandleKeys(tview.KeyMsg) (ui.Router, bool) {
 	return ui.EmptyRouterMsg(), false
 }
 

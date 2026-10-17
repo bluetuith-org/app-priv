@@ -86,7 +86,7 @@ func newAdActionState(key keybindings.Keybinding, state actionStateSpec, isToggl
 }
 
 // actionHandleKeyMsg maps a keybinding to an action.
-func actionHandleKeyMsg(p tview.KeyMsg, node *ctree.Node) (ui.RouterMsg, bool) {
+func actionHandleKeyMsg(p tview.KeyMsg, node *ctree.Node) (ui.Router, bool) {
 	_, result, ok := keybindings.IterMatch(p, actionKeyIterator(node))
 	if !ok {
 		return ui.EmptyRouterMsg(), false
@@ -95,7 +95,7 @@ func actionHandleKeyMsg(p tview.KeyMsg, node *ctree.Node) (ui.RouterMsg, bool) {
 	return acStateToOpMsg(result.id, result.state), true
 }
 
-func acStateToOpMsg(id string, state *adActionState) ui.RouterMsg {
+func acStateToOpMsg(id string, state *adActionState) ui.Router {
 	if state == nil || id == "" {
 		return ui.EmptyRouterMsg()
 	}

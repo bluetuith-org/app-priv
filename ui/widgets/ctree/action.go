@@ -8,6 +8,7 @@ import (
 // Action is what a key makes a tree do. Apps that handle keys themselves send it with Perform.
 type Action int
 
+// The different types of actions.
 const (
 	ActionNone Action = iota
 

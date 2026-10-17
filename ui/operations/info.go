@@ -82,11 +82,11 @@ func (o *RunningInfo) Info(msg string) {
 }
 
 // Ok sets the information for the completed operation.
-func (o *RunningInfo) Ok(msg string) ui.RouterMsg {
+func (o *RunningInfo) Ok(msg string) ui.Router {
 	return msgOpUpdate(o.id, msg, operationCompleted)
 }
 
 // Error sends an error to the operations manager.
-func (o *RunningInfo) Error(msg string, err error) ui.RouterMsg {
+func (o *RunningInfo) Error(msg string, err error) ui.Router {
 	return msgOpUpdateErr(o.id, msg, err)
 }

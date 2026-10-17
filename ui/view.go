@@ -49,10 +49,23 @@ type RootView interface {
 	// SetFocused stores the currently focused view.
 	SetFocused(id ViewID)
 
+	// PanelFocused returns whether the panel is focused.
+	PanelFocused() bool
+
 	// SendMsg sends a message to the program.
 	SendMsg(msg tview.Msg)
 
 	// SendRoutedUpdateMsg routes the message to the specified view.
 	// Should only be called from the model's [Model.Update] function.
-	SendRoutedUpdateMsg(msg RouterMsg) tview.Cmd
+	SendRoutedUpdateMsg(msg Router) tview.Cmd
+}
+
+// TabSection defines a section of the tabs widget where
+// the selected view is shown.
+type TabSection interface {
+	// Title returns the title of the tab section.
+	Title() string
+
+	// Icon returns the icon associated with the tab section.
+	Icon() string
 }

@@ -222,38 +222,38 @@ func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[text.Spa
 
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
-	case dbEvent:
+	case ui.R[dbEvent]:
 		return m.dbHandler()
 
-	case scrollMsg:
-		m.scrollState = viewport.ScrollState(ms.change)
-		if ms.msg != nil {
-			return m.updateModel(ms.msg)
+	case ui.R[scrollMsg]:
+		m.scrollState = viewport.ScrollState(ms.Value.change)
+		if ms.Value.msg != nil {
+			return m.updateModel(ms.Value.msg)
 		}
 
-	case selectionChange:
-		m.currentNode = ms
+	case ui.R[selectionChange]:
+		m.currentNode = ms.Value
 		m.scrollState.ScrollToTarget()
 		m.resetTimer()
 		return m.resetInformation()
 
-	case rootNodeMsg:
-		m.root = ms.node
+	case ui.R[rootNodeMsg]:
+		m.root = ms.Value.node
 		m.setCurrentNode(m.root.Node)
 		m.resetTimer()
 		return m.resetInformation()
 
-	case selectedMsg:
+	case ui.R[selectedMsg]:
 		m.rv.SetFocused(m.ViewID())
 
-		data := ms.node.Data[*adNode]()
+		data := ms.Value.node.Data[*adNode]()
 		if data.nodeType != nodeTypeAction {
-			ms.node.SetExpanded(!ms.node.Expanded())
-			m.setCurrentNode(ms.node)
+			ms.Value.node.SetExpanded(!ms.Value.node.Expanded())
+			m.setCurrentNode(ms.Value.node)
 			return nil
 		}
 
-		m.setCurrentNode(ms.node)
+		m.setCurrentNode(ms.Value.node)
 		return acStateToOpMsg(data.ID(), data.actionState).SendRoutedMsg(m.rv)
 
 	case tview.KeyMsg:

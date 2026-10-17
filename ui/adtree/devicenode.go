@@ -46,7 +46,7 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
-func (d *deviceNode) HandleKeys(p tview.KeyMsg) (ui.RouterMsg, bool) {
+func (d *deviceNode) HandleKeys(p tview.KeyMsg) (ui.Router, bool) {
 	if msg, ok := actionHandleKeyMsg(p, d.Node); ok {
 		return msg, ok
 	}

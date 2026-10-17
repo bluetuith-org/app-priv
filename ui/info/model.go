@@ -8,7 +8,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 )
 
 // Model represents an information section.
@@ -67,12 +66,12 @@ func (m Model) View(_ bool) tview.Widget {
 
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
-	case scrollMsg:
+	case ui.R[scrollMsg]:
 
-	case infoMsg:
-		m.text = ms.content
+	case ui.R[infoMsg]:
+		m.text = ms.Value.content
 
-	case resetMsg:
+	case ui.R[resetMsg]:
 		m.text = m.placeholder
 
 	default:
@@ -85,6 +84,6 @@ type scrollMsg struct{}
 
 var (
 	_ ui.Model[Model] = Model{}
-	_ tabs.TabSection = Model{}
+	_ ui.TabSection   = Model{}
 	_ ui.View         = (*Model)(nil)
 )

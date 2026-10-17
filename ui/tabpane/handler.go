@@ -7,13 +7,13 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/logs"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 )
 
 type viewHandler struct {
-	tabs.State
+	activeIndex int
 
-	views []ui.ViewID
+	views  []ui.ViewID
+	labels []string
 
 	infoModel       info.Model
 	operationsModel operations.Model
@@ -24,13 +24,12 @@ type viewHandler struct {
 
 type vm interface {
 	ui.View
-	tabs.TabSection
+	ui.TabSection
 }
 
 func newHandler(rv ui.RootView) *viewHandler {
 	h := &viewHandler{
-		State: tabs.NewState(),
-		rv:    rv,
+		rv: rv,
 	}
 
 	h.operationsModel = operations.New(rv)
@@ -46,8 +45,10 @@ func newHandler(rv ui.RootView) *viewHandler {
 }
 
 func (h *viewHandler) addModel[T vm](v T) {
-	h.AddSection(v.Icon(), v.Title())
 	h.views = append(h.views, v.ViewID())
+
+	icon, title := v.Icon(), v.Title()
+	h.labels = append(h.labels, icon+" "+title)
 }
 
 func (h *viewHandler) init() tview.Cmd {
@@ -92,7 +93,11 @@ func (h *viewHandler) status() []text.Span {
 }
 
 func (h *viewHandler) activeID() ui.ViewID {
-	return h.views[h.ActiveIndex()]
+	return h.views[h.activeIndex]
+}
+
+func (h *viewHandler) setActiveIndex(idx int) {
+	h.activeIndex = idx
 }
 
 func (h *viewHandler) setActive(msg tview.KeyMsg) (tview.Cmd, bool) {
@@ -127,14 +132,14 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) (tview.Cmd, bool) {
 		return nil, false
 	}
 
-	h.SetActiveIndex(idx)
+	h.activeIndex = idx
 	h.rv.SetFocused(id)
 
 	return nil, true
 }
 
 func (h *viewHandler) activeContent(focused bool) tview.Widget {
-	id := h.views[h.ActiveIndex()]
+	id := h.views[h.activeIndex]
 
 	switch id {
 	case ui.ViewIDInfo:

@@ -16,7 +16,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -175,18 +174,18 @@ func (m *Model) setCursor(index int) {
 
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
-	case listChg:
-		m.setCursor(int(ms))
+	case ui.R[listChg]:
+		m.setCursor(int(ms.Value))
 		m.rv.SetFocused(m.ViewID())
 
-	case scrollMsg:
-		m.scrollState = viewport.ScrollState(ms.change)
-		if ms.msg != nil {
-			return m.updateModel(ms.msg)
+	case ui.R[scrollMsg]:
+		m.scrollState = viewport.ScrollState(ms.Value.change)
+		if ms.Value.msg != nil {
+			return m.updateModel(ms.Value.msg)
 		}
 
-	case CreateMsg:
-		info, action, err := m.createNewOperation(ms)
+	case ui.R[CreateMsg]:
+		info, action, err := m.createNewOperation(ms.Value)
 		if err != nil {
 			return nil
 		}
@@ -195,11 +194,11 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 			return action(info)
 		}, m.deleteOperationCmd(info.id))
 
-	case opUpdateMsg:
-		m.processUpdateMsg(ms)
+	case ui.R[opUpdateMsg]:
+		m.processUpdateMsg(ms.Value)
 
-	case opDeleteMsg:
-		m.deleteOperation(ms.id)
+	case ui.R[opDeleteMsg]:
+		m.deleteOperation(ms.Value.id)
 
 	case tview.KeyMsg:
 		switch {
@@ -274,7 +273,7 @@ type (
 
 var (
 	_ ui.Model[Model] = Model{}
-	_ tabs.TabSection = Model{}
+	_ ui.TabSection   = Model{}
 )
 
 var (

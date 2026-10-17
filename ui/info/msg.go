@@ -13,11 +13,11 @@ type infoMsg struct {
 type resetMsg struct{}
 
 // Msg returns a message to print information.
-func Msg(id string, content []text.Span) ui.RouterMsg {
+func Msg(id string, content []text.Span) ui.Router {
 	return ui.ViewIDInfo.RouterMessage(infoMsg{id, content})
 }
 
 // ResetMsg sends a message to reset the information view.
-func ResetMsg() ui.RouterMsg {
+func ResetMsg() ui.Router {
 	return ui.ViewIDInfo.RouterMessage(resetMsg{})
 }

@@ -126,6 +126,11 @@ func (m *Model) SetFocused(id ui.ViewID) {
 	m.state.SetFocus(id)
 }
 
+// PanelFocused returns whether the panel is focused.
+func (m *Model) PanelFocused() bool {
+	return m.Focused() != ui.ViewIDAdTree
+}
+
 // SendMsg sends a message to the program.
 func (m *Model) SendMsg(msg tview.Msg) {
 	select {
@@ -136,14 +141,12 @@ func (m *Model) SendMsg(msg tview.Msg) {
 
 // SendRoutedUpdateMsg routes the message to the specified view.
 // Should only be called from the view's [Update] function.
-func (m *Model) SendRoutedUpdateMsg(msg ui.RouterMsg) tview.Cmd {
-	if !msg.IsValid() {
+func (m *Model) SendRoutedUpdateMsg(msg ui.Router) tview.Cmd {
+	if msg == nil || !msg.IsValid() {
 		return nil
 	}
 
-	_, cmd := m.Update(msg)
-
-	return cmd
+	return m.updateModel(msg)
 }
 
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
@@ -166,23 +169,19 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 			if m.Focused() != ui.ViewIDAdTree {
 				m.state.SetFocus(ui.ViewIDAdTree)
 			}
-
-		default:
-			return m.updateModel(m.Focused().RouterMessage(ms))
 		}
+
+		return m.routeMessageToView(m.Focused(), ms)
 
 	case externalMsg:
 		return tview.Batch(m.updateModel(ms.msg), m.listenForMsg())
 
-	case ui.RouterMsg:
-		if !ms.IsValid() {
+	case ui.Router:
+		if ms == nil || !ms.IsValid() {
 			return nil
 		}
 
-		return m.routeMessageToView(ms)
-
-	default:
-		return nil
+		return m.routeMessageToView(ms.ViewID(), ms)
 	}
 
 	return m.updateAllViews(msg)
@@ -205,15 +204,15 @@ func (m *Model) updateAllViews(msg tview.Msg) tview.Cmd {
 	return tview.Batch(cmds...)
 }
 
-func (m *Model) routeMessageToView(routerMsg ui.RouterMsg) tview.Cmd {
+func (m *Model) routeMessageToView(id ui.ViewID, routedMsg tview.Msg) tview.Cmd {
 	var cmd tview.Cmd
 
-	if routerMsg.ID == ui.ViewIDAdTree {
-		m.adTreeModel, cmd = m.adTreeModel.Update(routerMsg.Msg)
+	if id == ui.ViewIDAdTree {
+		m.adTreeModel, cmd = m.adTreeModel.Update(routedMsg)
 		return cmd
 	}
 
-	return m.tabsModel.HandleRouterMsg(routerMsg)
+	return m.tabsModel.HandleRouterMsg(id, routedMsg)
 }
 
 type externalMsg struct {

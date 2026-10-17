@@ -2,36 +2,26 @@ package tabpane
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/box"
+	"github.com/ayn2op/tview/column"
+	"github.com/ayn2op/tview/tabs"
 	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
-	"github.com/gdamore/tcell/v3"
-	"github.com/rockorager/go-uucode"
 )
 
 // Model holds a tabbed pane.
 type Model struct {
 	handler *viewHandler
 
-	arrowLeft, arrowRight string
-	arrowWidth            int
-
 	rv ui.RootView
 }
 
 // New returns a new tabbed pane.
 func New(rv ui.RootView) Model {
-	leftArrow := theme.Icons().ArrowLeft.String() + " "
-	rightArrow := " " + theme.Icons().ArrowRight.String()
-
 	return Model{
-		rv: rv,
-
-		handler:    newHandler(rv),
-		arrowLeft:  leftArrow,
-		arrowRight: rightArrow,
-		arrowWidth: uucode.StringWidth(leftArrow),
+		rv:      rv,
+		handler: newHandler(rv),
 	}
 }
 
@@ -56,36 +46,20 @@ func (m *Model) GetActiveID() ui.ViewID {
 }
 
 // HandleRouterMsg handles the routed message.
-func (m *Model) HandleRouterMsg(routerMsg ui.RouterMsg) tview.Cmd {
-	var cmd tview.Cmd
-
-	switch routerMsg.ID {
-	case ui.ViewIDTabs:
-		*m, cmd = m.Update(routerMsg.Msg)
-		return cmd
-
-	default:
+func (m *Model) HandleRouterMsg(id ui.ViewID, routedMsg tview.Msg) tview.Cmd {
+	if id == ui.ViewIDTabs {
+		return m.updateModel(routedMsg)
 	}
 
-	return m.handler.updateRouted(routerMsg.ID, routerMsg.Msg)
-}
-
-// LabelStyle provides the styles for the inactive and active labels.
-func (m *Model) LabelStyle(active bool) tcell.Style {
-	if active {
-		return theme.Current().TabsPane.FocusedTab
-	}
-
-	return theme.Current().TabsPane.Tab
-}
-
-// ArrowConfig provides the left/right arrow icons and the style to be applied.
-func (m *Model) ArrowConfig() (arrowLeft string, arrowRight string, arrowStyle tcell.Style, arrowWidth int) {
-	return m.arrowLeft, m.arrowRight, theme.Current().TabsPane.ArrowStyle, m.arrowWidth
+	return m.handler.updateRouted(id, routedMsg)
 }
 
 // Keybind converts a [tview.KeyMsg] to an [Action].
 func (m *Model) Keybind(msg tview.KeyMsg) tabs.Action {
+	if !m.rv.PanelFocused() {
+		return tabs.ActionNone
+	}
+
 	switch {
 	case ui.Kb().TabPane.Next.Matches(msg):
 		return tabs.ActionNext
@@ -98,7 +72,7 @@ func (m *Model) Keybind(msg tview.KeyMsg) tabs.Action {
 }
 
 // OnSelect is called when a new tab item is selected.
-func (m *Model) OnSelect(index int) tview.Msg {
+func (m Model) OnSelect(index int) tview.Msg {
 	return ui.ViewIDTabs.RouterMessage(selectedMsg{index})
 }
 
@@ -115,9 +89,29 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 
 // View returns the element that draws the model.
 func (m Model) View(focused bool) tview.Widget {
-	return tabs.New(&m, m.handler.State).
-		Focused(focused).
-		Content(m.handler.activeContent(focused))
+	bgStyle := theme.Current().Global
+
+	t := tabs.New(m.handler.labels...).
+		Active(m.handler.activeIndex).
+		Style(theme.Current().TabsPane.Tab).
+		ActiveStyle(theme.Current().TabsPane.FocusedTab).
+		Alignment(tview.AlignmentCenter).
+		Separator(" ").
+		Padding(" ", " ").
+		Arrows(theme.Icons().ArrowLeft.String(), theme.Icons().ArrowRight.String()).
+		ArrowStyle(theme.Current().TabsPane.ArrowStyle).
+		ClickableArrows(true).
+		Wrap(true).
+		Keybind(m.Keybind).
+		OnSelect(m.OnSelect)
+
+	content := box.New(m.handler.activeContent(focused)).
+		Background(bgStyle.GetBackground()).
+		Padding(1, 0, 0, 0)
+
+	return box.New(column.New(t, content)).
+		Background(bgStyle.GetBackground()).
+		Padding(1, 0, 0, 0)
 }
 
 // SetViewKeybind focuses the view if the keybind matches.
@@ -129,8 +123,8 @@ func (m *Model) SetViewKeybind(msg tview.KeyMsg) bool {
 
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 	switch ms := msg.(type) {
-	case selectedMsg:
-		m.handler.SetActiveIndex(ms.index)
+	case ui.R[selectedMsg]:
+		m.handler.setActiveIndex(ms.Value.index)
 		m.rv.SetFocused(m.handler.activeID())
 
 	default:

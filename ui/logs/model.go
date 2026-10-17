@@ -6,12 +6,11 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/layout"
-	"github.com/ayn2op/tview/text"
 	"github.com/ayn2op/tview/scrollbar"
+	"github.com/ayn2op/tview/text"
 	"github.com/ayn2op/tview/viewport"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 )
 
 // Model represents a log view.
@@ -125,6 +124,36 @@ func (m Model) View(focused bool) tview.Widget {
 	return bx
 }
 
+func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+	switch ms := msg.(type) {
+	case ui.R[newLogMsg]:
+		m.lastIndex = ms.Value.index
+		m.setFollow()
+
+	case ui.R[listChg]:
+		m.h.rv.SetFocused(m.ViewID())
+		if !m.follow {
+			m.setCursor(int(ms.Value))
+		}
+
+	case ui.R[scrollMsg]:
+		if !m.follow {
+			m.scrollState = ms.Value.change
+		}
+		if ms.Value.msg != nil {
+			return m.updateModel(ms.Value.msg)
+		}
+
+	case tview.KeyMsg:
+		if ui.Kb().Log.Follow.Matches(ms) {
+			m.follow = !m.follow
+			m.setFollow()
+		}
+	}
+
+	return nil
+}
+
 func (m *Model) setCursor(index int) {
 	if index < 0 {
 		return
@@ -139,36 +168,6 @@ func (m *Model) setFollow() {
 	if m.follow {
 		m.setCursor(m.lastIndex)
 	}
-}
-
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
-	switch ms := msg.(type) {
-	case newLogMsg:
-		m.lastIndex = ms.index
-		m.setFollow()
-
-	case listChg:
-		m.h.rv.SetFocused(m.ViewID())
-		if !m.follow {
-			m.setCursor(int(ms))
-		}
-
-	case scrollMsg:
-		if !m.follow {
-			m.scrollState = ms.change
-		}
-		if ms.msg != nil {
-			return m.updateModel(ms.msg)
-		}
-
-	case tview.KeyMsg:
-		if ui.Kb().Log.Follow.Matches(ms) {
-			m.follow = !m.follow
-			m.setFollow()
-		}
-	}
-
-	return nil
 }
 
 type (
@@ -186,6 +185,6 @@ type (
 
 var (
 	_ ui.Model[Model] = Model{}
-	_ tabs.TabSection = Model{}
+	_ ui.TabSection   = Model{}
 	_ ui.View         = (*Model)(nil)
 )
