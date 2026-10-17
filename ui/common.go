@@ -3,9 +3,10 @@ package ui
 import (
 	"slices"
 
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 	"github.com/gdamore/tcell/v3/color"
 )
@@ -16,9 +17,9 @@ func Kb() *keybindings.Keybindings {
 }
 
 // RenderMergedPill renders a merged pill with multiple segments.
-func RenderMergedPill(line richtext.Line, bgColor color.Color) richtext.Line {
+func RenderMergedPill(line []text.Span, bgColor color.Color) []text.Span {
 	if len(line) == 0 {
-		return richtext.Line{}
+		return []text.Span{}
 	}
 
 	firstSeg, lastSeg := line[0], line[len(line)-1]
@@ -31,10 +32,10 @@ func RenderMergedPill(line richtext.Line, bgColor color.Color) richtext.Line {
 
 	line = slices.Insert(
 		line, 0,
-		richtext.NewSegment(theme.Icons().PillLeft.String(), firstStyle),
+		stext.NewSpan(theme.Icons().PillLeft.String(), firstStyle),
 	)
 
-	line = append(line, richtext.NewSegment(theme.Icons().PillRight.String(), lastStyle))
+	line = append(line, stext.NewSpan(theme.Icons().PillRight.String(), lastStyle))
 
 	return line
 }

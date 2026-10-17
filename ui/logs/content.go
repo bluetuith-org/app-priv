@@ -6,16 +6,15 @@ import (
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/layout"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
-	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
-	"github.com/rivo/uniseg"
 	"github.com/spf13/cast"
 )
 
 type logContent struct {
-	cached richtext.Text
+	cached [][]text.Span
 	record slog.Record
 
 	width    int
@@ -36,7 +35,7 @@ func (c *logContent) Draw(screen tview.Screen, area tview.Rectangle) {
 	area.Height = c.height()
 
 	for _, line := range c.cached {
-		c.drawLine(screen, line, area.X, area.Y, area)
+		stext.DrawLine(screen, line, area.X, area.Y, area)
 		area.Y++
 	}
 }
@@ -106,7 +105,7 @@ func (c *logContent) render(width int) {
 		levelStyle = theme.Current().Log.Error
 	}
 
-	builder := ui.NewBuilder(bgStyle)
+	builder := stext.NewBuilder(bgStyle)
 
 	builder.Append(c.record.Time.Format(timeFmt), timeStyle)
 	builder.Space()
@@ -132,9 +131,7 @@ func (c *logContent) render(width int) {
 		return true
 	})
 
-	for _, line := range builder.Text() {
-		c.cached = append(c.cached, richtext.Wrap(line, width)...)
-	}
+	c.cached = text.Lines(builder.Text(), width, text.WrappingGlyph)
 }
 
 func (c *logContent) getKV(a slog.Attr) (key string, value string) {
@@ -169,25 +166,4 @@ func (c *logContent) getKV(a slog.Attr) (key string, value string) {
 	}
 
 	return a.Key, val
-}
-
-// drawLine draws line starting at x, keeping only the cells within area.
-func (c *logContent) drawLine(screen tview.Screen, line richtext.Line, x, y int, area tview.Rectangle) {
-	for _, segment := range line {
-		style := segment.Style
-		str, state := segment.Text, -1
-		for len(str) > 0 {
-			var cluster string
-			var width int
-			cluster, str, width, state = uniseg.FirstGraphemeClusterInString(str, state)
-			if cluster == "\t" {
-				cluster = " "
-			}
-			width = max(width, 1)
-			if x >= area.X && x+width <= area.X+area.Width {
-				screen.Put(x, y, cluster, style)
-			}
-			x += width
-		}
-	}
 }

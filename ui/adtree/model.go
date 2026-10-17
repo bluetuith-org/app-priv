@@ -7,7 +7,7 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/layout"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/ayn2op/tview/viewport"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
@@ -20,10 +20,10 @@ const dbTime = 500 * time.Millisecond
 
 // Model represents an adapter-device tree.
 type Model struct {
-	root *rootNode
+	root        *rootNode
+	currentNode *ctree.Node
 
-	selectionState ctree.SelectionState
-	scrollState    viewport.ScrollState
+	scrollState viewport.ScrollState
 
 	graphicsSet tview.BorderSet
 	markers     ctree.Markers
@@ -39,8 +39,6 @@ type Model struct {
 func New(rv ui.RootView) Model {
 	root := newRootNode(rv)
 
-	state := ctree.SelectionState{}
-
 	graphicsSet := tview.BorderSetRound()
 	markers := ctree.Markers{
 		Expanded:  theme.Icons().TriangleDown.String() + " ",
@@ -52,9 +50,8 @@ func New(rv ui.RootView) Model {
 	tm.Reset(dbTime)
 
 	return Model{
-		root: root,
-
-		selectionState: state,
+		root:        root,
+		currentNode: root.Node,
 
 		graphicsSet: graphicsSet,
 		markers:     markers,
@@ -71,7 +68,7 @@ func (m *Model) ViewID() ui.ViewID {
 }
 
 // Header returns the content to print in the title bar.
-func (m *Model) Header() richtext.Line {
+func (m *Model) Header() []text.Span {
 	return m.root.Title()
 }
 
@@ -105,13 +102,13 @@ func (m *Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
 }
 
 // OnChange processes a change in the tree's state and returns a [tview.Msg]
-func (m *Model) OnChange(chg ctree.Change) tview.Msg {
-	return ui.ViewIDAdTree.RouterMessage(selectionChange(chg))
+func (m *Model) OnChange(chg *ctree.Node) tview.Msg {
+	return m.ViewID().RouterMessage(selectionChange(chg))
 }
 
 // OnSelect returns a message after processing the selected node.
 func (m *Model) OnSelect(node *ctree.Node) tview.Msg {
-	return ui.ViewIDAdTree.RouterMessage(selectedMsg{node})
+	return m.ViewID().RouterMessage(selectedMsg{node})
 }
 
 // ViewportKeybinds implements keybindings for the viewport.
@@ -150,12 +147,12 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View(focused bool) tview.Widget {
-	state := m.selectionState
+	state := m.currentNode
 	if !focused {
-		state.SetCurrentNode(nil)
+		state = nil
 	}
 
-	tree := ctree.New(m.root.Node, &m, state).
+	tree := ctree.New(&m, m.root.Node, state).
 		TopLevel(1).
 		Focused(focused).
 		Graphics(true).
@@ -182,24 +179,41 @@ func (m *Model) MarkerStyle(*ctree.Node) tcell.Style {
 	return theme.Current().Global
 }
 
+// LabelWidth implements [ctree.Provider].
+func (m *Model) LabelWidth(node *ctree.Node) int {
+	adn := node.Data[*adNode]()
+
+	return adn.labelWidth()
+}
+
+// Spacing implements [ctree.Provider].
+func (m *Model) Spacing(node *ctree.Node) int {
+	adn := node.Data[*adNode]()
+	if adn.nodeType == nodeTypeAction {
+		return 0
+	}
+
+	return 1
+}
+
 // StyledLabels returns a sequence of text and their associated styles.
-func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[richtext.Line, tcell.Style] {
-	return func(yield func(richtext.Line, tcell.Style) bool) {
+func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[text.Span, tcell.Style] {
+	return func(yield func(text.Span, tcell.Style) bool) {
 		adn := node.Data[*adNode]()
 
-		if mrk := adn.Markers(); mrk != nil {
-			if !yield(mrk, tcell.Style{}) {
+		for _, span := range adn.Markers() {
+			if !yield(span, tcell.Style{}) {
 				return
 			}
 		}
 
-		if ct := adn.Content(); ct != nil {
+		for _, span := range adn.Content() {
 			st := tcell.Style{}
 			if selected {
 				st = theme.Current().ADTree.Selection
 			}
 
-			if !yield(ct, st) {
+			if !yield(span, st) {
 				return
 			}
 		}
@@ -218,14 +232,14 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		}
 
 	case selectionChange:
-		m.selectionState.Apply(ctree.Change(ms))
+		m.currentNode = ms
 		m.scrollState.ScrollToTarget()
 		m.resetTimer()
 		return m.resetInformation()
 
 	case rootNodeMsg:
 		m.root = ms.node
-		m.selectionState.SetCurrentNode(m.root.Node)
+		m.setCurrentNode(m.root.Node)
 		m.resetTimer()
 		return m.resetInformation()
 
@@ -235,15 +249,15 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		data := ms.node.Data[*adNode]()
 		if data.nodeType != nodeTypeAction {
 			ms.node.SetExpanded(!ms.node.Expanded())
-			m.selectionState.SetCurrentNode(ms.node)
+			m.setCurrentNode(ms.node)
 			return nil
 		}
 
-		m.selectionState.SetCurrentNode(ms.node)
+		m.setCurrentNode(ms.node)
 		return acStateToOpMsg(data.ID(), data.actionState).SendRoutedMsg(m.rv)
 
 	case tview.KeyMsg:
-		data := m.selectionState.CurrentNode().Data[*adNode]()
+		data := m.currentNode.Data[*adNode]()
 		if rmsg, ok := data.Noder().HandleKeys(ms); ok {
 			return func() tview.Msg {
 				return rmsg
@@ -278,7 +292,7 @@ func (m *Model) populate() tview.Msg {
 }
 
 func (m *Model) dbHandler() tview.Cmd {
-	currNode := m.selectionState.CurrentNode()
+	currNode := m.currentNode
 	if currNode == nil {
 		return m.dbTimer
 	}
@@ -308,7 +322,7 @@ func (m *Model) resetInformation() tview.Cmd {
 		return nil
 	}
 
-	currNode := m.selectionState.CurrentNode()
+	currNode := m.currentNode
 	if currNode == nil {
 		return nil
 	}
@@ -325,13 +339,17 @@ func (m *Model) resetInformation() tview.Cmd {
 	}
 }
 
+func (m *Model) setCurrentNode(n *ctree.Node) {
+	m.currentNode = n
+}
+
 func (m *Model) dbTimer() tview.Msg {
 	<-m.tm.C
 	return m.ViewID().RouterMessage(dbEvent{})
 }
 
 type (
-	selectionChange ctree.Change
+	selectionChange *ctree.Node
 
 	scrollMsg struct {
 		change viewport.ScrollState
@@ -353,5 +371,6 @@ type (
 
 var (
 	_ ui.Model[Model] = Model{}
+	_ ctree.Provider  = (*Model)(nil)
 	_ ui.View         = (*Model)(nil)
 )

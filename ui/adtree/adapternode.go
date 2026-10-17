@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetooth-classic/api/optional"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -37,10 +38,10 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	an.adNode = adapterNode
 	an.adapter = adapter
 
-	newActionsListNode(an.adNode).SubAdNode().SetVGap(1, 0)
-	newDeviceListNode(adapterNode, devices).SubAdNode().SetVGap(1, 0)
+	newActionsListNode(an.adNode).SubAdNode()
+	newDeviceListNode(adapterNode, devices).SubAdNode()
 
-	rootNode.AddChild(adapterNode.Node.SetVGap(1, 0))
+	rootNode.AddChild(adapterNode.Node)
 
 	an.Refresh()
 	an.PopulateActions()
@@ -88,13 +89,13 @@ func (a *adapterNode) SubnodePosition(relpos adSubNodePos) (int, bool) {
 }
 
 // Information returns a message to print adapter/device information.
-func (a *adapterNode) Information() (string, richtext.Text) {
+func (a *adapterNode) Information() (string, []text.Span) {
 	return a.id.String(), nil
 }
 
 // StatusIcons returns the status icon pills for this node.
-func (a *adapterNode) StatusIcons() richtext.Line {
-	var line richtext.Line
+func (a *adapterNode) StatusIcons() []text.Span {
+	var line []text.Span
 
 	if powered, ok := a.adapter.Powered.Get(); ok {
 		en, enStyle := " On ", theme.Current().ADTree.Adapter.PoweredOnPill
@@ -102,7 +103,7 @@ func (a *adapterNode) StatusIcons() richtext.Line {
 			en, enStyle = " Off ", theme.Current().ADTree.Adapter.PoweredOffPill
 		}
 
-		line = append(line, richtext.NewSegment(en, enStyle))
+		line = append(line, stext.NewSpan(en, enStyle))
 	}
 
 	for _, state := range [3]struct {
@@ -118,7 +119,7 @@ func (a *adapterNode) StatusIcons() richtext.Line {
 			continue
 		}
 
-		line = append(line, richtext.NewSegment(state.Name, state.Style))
+		line = append(line, stext.NewSpan(state.Name, state.Style))
 	}
 
 	return ui.RenderMergedPill(line, theme.Current().Global.GetBackground())
@@ -250,8 +251,8 @@ func newAdapterStatus(node *adapterNode, name string, state *adActionState) *ada
 	}
 }
 
-func (a *adapterStatus) Content() richtext.Text {
-	builder := ui.NewBuilder(
+func (a *adapterStatus) Content() []text.Span {
+	builder := stext.NewBuilder(
 		theme.Current().Global,
 	)
 
@@ -259,13 +260,13 @@ func (a *adapterStatus) Content() richtext.Text {
 	adapterStyle := theme.Current().ADTree.Adapter.Name
 	msgStyle := theme.Current().Operations.Message
 
-	builder.AddKVFunc("Adapter:", style, func(bb *ui.Builder) {
+	builder.AddKVFunc("Adapter:", style, func(bb *stext.Builder) {
 		bb.Append(a.icon, adapterStyle)
 		bb.Space()
 		bb.Append(a.adapterName, adapterStyle)
 	})
 
-	builder.AddKVFunc("Action:", style, func(bb *ui.Builder) {
+	builder.AddKVFunc("Action:", style, func(bb *stext.Builder) {
 		bb.Append(a.name, msgStyle)
 		bb.Space()
 		bb.Append(a.currentState.Format("on", "off"), msgStyle)

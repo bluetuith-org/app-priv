@@ -4,7 +4,7 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/layout"
 	"github.com/gdamore/tcell/v3"
-	"github.com/rivo/uniseg"
+	"github.com/rockorager/go-uucode"
 )
 
 // TabSection defines a section of the tabs widget where
@@ -242,46 +242,38 @@ func (t Widget[T]) setContent(screen tcell.Screen, area tview.Rectangle) {
 
 func (t Widget[T]) drawTruncatedRight(s tcell.Screen, x, y, maxWidth int, style tcell.Style, str string) {
 	parsedWidth := 0
-	state := -1
 
-	for len(str) > 0 {
+	clusters := uucode.NewGraphemeWidthIterator(str)
+	for c, ok := clusters.Next(); ok; c, ok = clusters.Next() {
 		if parsedWidth > maxWidth {
 			return
 		}
 
-		cl, rest, boundaries, next := uniseg.StepString(str, state)
-		str = rest
-		state = next
+		cluster, width := str[c.Start:c.End], max(c.Width, 1)
 
-		s.PutStrStyled(x+parsedWidth, y, cl, style)
-
-		bw := boundaries >> uniseg.ShiftWidth
-		parsedWidth += bw
+		s.PutStrStyled(x+parsedWidth, y, cluster, style)
+		parsedWidth += width
 	}
 }
 
 func (t Widget[T]) drawTruncatedLeft(s tcell.Screen, x, y, maxWidth, stringWidth int, style tcell.Style, str string) {
 	parsedWidth := 0
-	state := -1
 	skipWidth := maxWidth - stringWidth
 
 	if skipWidth < 0 {
 		skipWidth = -skipWidth
 	}
 
-	for len(str) > 0 {
-		cl, rest, boundaries, next := uniseg.StepString(str, state)
-		str = rest
-		state = next
-
-		bw := boundaries >> uniseg.ShiftWidth
+	clusters := uucode.NewGraphemeWidthIterator(str)
+	for c, ok := clusters.Next(); ok; c, ok = clusters.Next() {
+		cluster, width := str[c.Start:c.End], max(c.Width, 1)
 		if skipWidth > 0 {
-			skipWidth -= bw
+			skipWidth -= width
 			continue
 		}
 
-		s.PutStrStyled(x+parsedWidth, y, cl, style)
-		parsedWidth += bw
+		s.PutStrStyled(x+parsedWidth, y, cluster, style)
+		parsedWidth += width
 	}
 }
 

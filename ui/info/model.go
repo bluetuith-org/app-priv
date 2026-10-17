@@ -4,17 +4,17 @@ import (
 	"fmt"
 
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
-	"github.com/ayn2op/tview/textview"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 )
 
 // Model represents an information section.
 type Model struct {
-	text        richtext.Text
-	placeholder richtext.Text
+	text        []text.Span
+	placeholder []text.Span
 
 	rv ui.RootView
 }
@@ -23,13 +23,13 @@ type Model struct {
 func New(rv ui.RootView) Model {
 	return Model{
 		rv:   rv,
-		text: make(richtext.Text, 0),
-		placeholder: richtext.New(richtext.Line{
-			richtext.NewSegment(
+		text: make([]text.Span, 0),
+		placeholder: []text.Span{
+			stext.NewSpan(
 				"Settle on an adapter, device or the top of the tree to view information.",
 				theme.Current().App.PlaceHolder,
 			),
-		}),
+		},
 	}
 }
 
@@ -61,10 +61,8 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View(_ bool) tview.Widget {
-	return textview.New(m.text).
-		Style(theme.Current().Global).
-		Wrap(true).
-		WordWrap(true)
+	return text.Rich(m.text...).
+		Style(theme.Current().Global)
 }
 
 func (m *Model) updateModel(msg tview.Msg) tview.Cmd {

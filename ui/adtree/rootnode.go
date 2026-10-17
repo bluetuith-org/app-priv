@@ -4,11 +4,12 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 )
 
 // rootNode describes a root tree node.
@@ -16,7 +17,7 @@ type rootNode struct {
 	*adNode
 	emptyNoder
 
-	title richtext.Line
+	title []text.Span
 
 	adapterCount, devicesCount int
 	acPos, dcPos               int
@@ -52,21 +53,20 @@ func (r *rootNode) Refresh() {
 	r.renderTitle()
 }
 
-func (r *rootNode) Title() richtext.Line {
+func (r *rootNode) Title() []text.Span {
 	return r.title
 }
 
-// Information returns a message to print adapter/device information.
 func (r *rootNode) renderTitle() {
-	var line richtext.Line
+	var line []text.Span
 
 	tstyle := theme.Current().ADTree.TitleBarIndicator
 
-	line = append(line, richtext.NewSegment(" Adapters (", tstyle))
-	line = append(line, richtext.NewSegment(strconv.Itoa(r.adapterCount), tstyle))
-	line = append(line, richtext.NewSegment(") / Devices (", tstyle))
-	line = append(line, richtext.NewSegment(strconv.Itoa(r.devicesCount), tstyle))
-	line = append(line, richtext.NewSegment(") ", tstyle))
+	line = append(line, stext.NewSpan(" Adapters (", tstyle))
+	line = append(line, stext.NewSpan(strconv.Itoa(r.adapterCount), tstyle))
+	line = append(line, stext.NewSpan(") / Devices (", tstyle))
+	line = append(line, stext.NewSpan(strconv.Itoa(r.devicesCount), tstyle))
+	line = append(line, stext.NewSpan(") ", tstyle))
 
 	r.title = line
 	r.acPos, r.dcPos = 1, 3

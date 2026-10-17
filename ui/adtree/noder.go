@@ -2,7 +2,7 @@ package adtree
 
 import (
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/gdamore/tcell/v3"
@@ -26,7 +26,7 @@ type adNoder interface {
 	SubnodePosition(relpos adSubNodePos) (int, bool)
 
 	// Information returns a message to print adapter/device information.
-	Information() (string, richtext.Text)
+	Information() (string, []text.Span)
 
 	// PopulateActions populates all actions within a node of type [nodeTypeAction].
 	PopulateActions()
@@ -76,7 +76,7 @@ func (e *emptyNoder) SubnodePosition(adSubNodePos) (int, bool) {
 }
 
 // Information implements [adNoder].
-func (e *emptyNoder) Information() (string, richtext.Text) {
+func (e *emptyNoder) Information() (string, []text.Span) {
 	return "", nil
 }
 

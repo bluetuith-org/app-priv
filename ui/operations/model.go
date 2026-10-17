@@ -9,12 +9,13 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/list"
-	"github.com/ayn2op/tview/richtext"
 	"github.com/ayn2op/tview/scrollbar"
+	"github.com/ayn2op/tview/text"
 	"github.com/ayn2op/tview/viewport"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 	"github.com/gdamore/tcell/v3"
 )
@@ -61,17 +62,17 @@ func (m Model) ViewID() ui.ViewID {
 }
 
 // Header returns the content to print in the title bar.
-func (m *Model) Header() richtext.Line {
+func (m *Model) Header() []text.Span {
 	if len(m.run) == 0 {
 		return nil
 	}
 
 	style := theme.Current().Operations.TitleBarIndicator
 
-	return richtext.NewLine(
-		richtext.NewSegment(" ", style),
-		richtext.NewSegment(strconv.Itoa(len(m.run)), style),
-		richtext.NewSegment(" Running ", style),
+	return stext.NewLine(
+		stext.NewSpan(" ", style),
+		stext.NewSpan(strconv.Itoa(len(m.run)), style),
+		stext.NewSpan(" Running ", style),
 	)
 }
 

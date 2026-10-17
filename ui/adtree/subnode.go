@@ -4,12 +4,13 @@ import (
 	"strconv"
 
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -42,7 +43,7 @@ func (s *subNode) SubnodePosition(adSubNodePos) (int, bool) {
 }
 
 // Information returns a message to print adapter/device information.
-func (s *subNode) Information() (string, richtext.Text) {
+func (s *subNode) Information() (string, []text.Span) {
 	return s.noder.Information()
 }
 
@@ -163,10 +164,10 @@ func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec,
 	actionNode.actionState = newAdActionState(key, state, isToggleable, invoker)
 
 	muted := theme.Current().App.PlaceHolder
-	actionNode.SetMarkers(richtext.NewLine(
-		richtext.NewSegment("(", muted),
-		richtext.NewSegment(key.KeyName, muted),
-		richtext.NewSegment(")", muted),
+	actionNode.SetMarkers(stext.NewLine(
+		stext.NewSpan("(", muted),
+		stext.NewSpan(key.KeyName, muted),
+		stext.NewSpan(")", muted),
 	))
 
 	a.AddChild(actionNode.Node)

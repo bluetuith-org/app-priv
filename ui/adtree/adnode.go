@@ -1,11 +1,12 @@
 package adtree
 
 import (
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -43,8 +44,11 @@ type adNode struct {
 	noder       adNoder
 	actionState *adActionState
 
-	markers richtext.Line
-	content richtext.Line
+	markers []text.Span
+	mwidth  int
+
+	content []text.Span
+	cwidth  int
 
 	rv ui.RootView
 }
@@ -74,21 +78,27 @@ func (a *adNode) Noder() adNoder {
 }
 
 // Content returns the name of the node.
-func (a *adNode) Content() richtext.Line {
+func (a *adNode) Content() []text.Span {
 	return a.content
 }
 
 // SetContent sets the name for the node.
-func (a *adNode) SetContent(content richtext.Line) {
+func (a *adNode) SetContent(content []text.Span) {
 	a.content = content
+	a.cwidth = stext.LineWidth(a.content)
 }
 
-func (a *adNode) Markers() richtext.Line {
+func (a *adNode) labelWidth() int {
+	return a.mwidth + a.cwidth
+}
+
+func (a *adNode) Markers() []text.Span {
 	return a.markers
 }
 
-func (a *adNode) SetMarkers(markers richtext.Line) {
-	a.markers = append(markers, richtext.NewSegment(" ", theme.Current().Global))
+func (a *adNode) SetMarkers(markers []text.Span) {
+	a.markers = append(markers, stext.NewSpan(" ", theme.Current().Global))
+	a.mwidth = stext.LineWidth(a.markers)
 }
 
 func (a *adNode) ParentNode() (*adNode, bool) {
@@ -126,19 +136,19 @@ func getDeviceDisplayName(deviceData bluetooth.DeviceEventData) string {
 	return deviceData.Address.String()
 }
 
-func buildLabel(icon, name string, style tcell.Style) richtext.Line {
-	line := make(richtext.Line, 0, 3)
+func buildLabel(icon, name string, style tcell.Style) []text.Span {
+	line := make([]text.Span, 0, 3)
 
 	if icon != "" {
 		line = append(
 			line,
-			richtext.NewSegment(icon, style),
-			richtext.NewSegment(" ", style),
+			stext.NewSpan(icon, style),
+			stext.NewSpan(" ", style),
 		)
 	}
 
 	if name != "" {
-		line = append(line, richtext.NewSegment(name, style))
+		line = append(line, stext.NewSpan(name, style))
 	}
 
 	return line

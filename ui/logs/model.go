@@ -6,7 +6,7 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/layout"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/ayn2op/tview/scrollbar"
 	"github.com/ayn2op/tview/viewport"
 	"github.com/bluetuith-org/bluetuith/theme"
@@ -57,7 +57,7 @@ func (m Model) Icon() string {
 }
 
 // StatusBar returns the content for the status bar.
-func (m *Model) StatusBar() richtext.Line {
+func (m *Model) StatusBar() []text.Span {
 	return m.h.getLatest()
 }
 

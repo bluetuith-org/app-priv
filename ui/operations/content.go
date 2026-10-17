@@ -3,9 +3,10 @@ package operations
 import (
 	"time"
 
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 )
 
 type content struct {
@@ -50,25 +51,25 @@ func (c *content) fromUpdateMsg(msg opUpdateMsg) {
 	c.cc.RefreshMessage()
 }
 
-func (c *content) Headers() (left richtext.Segment, right richtext.Segment) {
-	hdr := richtext.NewSegment(c.header, theme.Current().Operations.OperationNumber)
-	tm := richtext.NewSegment(time.Now().Format("02/01/2006 15:04:05"), theme.Current().Operations.Time)
+func (c *content) Headers() (left text.Span, right text.Span) {
+	hdr := stext.NewSpan(c.header, theme.Current().Operations.OperationNumber)
+	tm := stext.NewSpan(time.Now().Format("02/01/2006 15:04:05"), theme.Current().Operations.Time)
 
 	return hdr, tm
 }
 
-func (c *content) Message() (marker richtext.Segment, msg richtext.Segment) {
-	var msgSeg richtext.Segment
+func (c *content) Message() (marker text.Span, msg text.Span) {
+	var msgSeg text.Span
 
 	switch c.stage {
 	case operationError:
-		msgSeg = richtext.NewSegment(c.err.Error(), theme.Current().Operations.Error)
+		msgSeg = stext.NewSpan(c.err.Error(), theme.Current().Operations.Error)
 
 	default:
-		msgSeg = richtext.NewSegment(c.msg, theme.Current().Operations.Message)
+		msgSeg = stext.NewSpan(c.msg, theme.Current().Operations.Message)
 	}
 
-	status := richtext.NewSegment(c.stage.Format())
+	status := stext.NewSpan(c.stage.Format())
 
 	return status, msgSeg
 }

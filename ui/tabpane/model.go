@@ -2,12 +2,12 @@ package tabpane
 
 import (
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/tabs"
 	"github.com/gdamore/tcell/v3"
-	"github.com/rivo/uniseg"
+	"github.com/rockorager/go-uucode"
 )
 
 // Model holds a tabbed pane.
@@ -31,7 +31,7 @@ func New(rv ui.RootView) Model {
 		handler:    newHandler(rv),
 		arrowLeft:  leftArrow,
 		arrowRight: rightArrow,
-		arrowWidth: uniseg.StringWidth(leftArrow),
+		arrowWidth: uucode.StringWidth(leftArrow),
 	}
 }
 
@@ -41,12 +41,12 @@ func (m *Model) ViewID() ui.ViewID {
 }
 
 // Header returns the content to print in the title bar.
-func (m *Model) Header() []richtext.Line {
+func (m *Model) Header() [][]text.Span {
 	return m.handler.header()
 }
 
 // Status returns the content to print in the status bar.
-func (m *Model) Status() richtext.Line {
+func (m *Model) Status() []text.Span {
 	return m.handler.status()
 }
 

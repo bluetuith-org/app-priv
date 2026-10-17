@@ -2,7 +2,7 @@ package tabpane
 
 import (
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/logs"
@@ -77,8 +77,8 @@ func (h *viewHandler) update(id ui.ViewID, msg tview.Msg) tview.Cmd {
 	return cmd
 }
 
-func (h *viewHandler) header() []richtext.Line {
-	var lines []richtext.Line
+func (h *viewHandler) header() [][]text.Span {
+	var lines [][]text.Span
 
 	if op := h.operationsModel.Header(); op != nil {
 		lines = append(lines, op)
@@ -87,7 +87,7 @@ func (h *viewHandler) header() []richtext.Line {
 	return lines
 }
 
-func (h *viewHandler) status() richtext.Line {
+func (h *viewHandler) status() []text.Span {
 	return h.logsModel.StatusBar()
 }
 

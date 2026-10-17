@@ -2,13 +2,14 @@ package adtree
 
 import (
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetooth-classic/api/optional"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -36,7 +37,7 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 	dn.parentNoder = parentNode.noder
 
 	newActionsListNode(dn.adNode)
-	parentNode.AddChild(dn.Node.SetVGap(1, 1))
+	parentNode.AddChild(dn.Node)
 
 	dn.Refresh()
 	dn.PopulateActions()
@@ -95,13 +96,13 @@ func (d *deviceNode) SubnodePosition(relpos adSubNodePos) (int, bool) {
 }
 
 // Information returns a message to print adapter/device information.
-func (d *deviceNode) Information() (string, richtext.Text) {
+func (d *deviceNode) Information() (string, []text.Span) {
 	return d.id.String(), nil
 }
 
 // StatusIcons returns the status icon pills for this node.
-func (d *deviceNode) StatusIcons() richtext.Line {
-	var line richtext.Line
+func (d *deviceNode) StatusIcons() []text.Span {
+	var line []text.Span
 
 	for i, state := range [4]struct {
 		Name  string
@@ -128,7 +129,7 @@ func (d *deviceNode) StatusIcons() richtext.Line {
 			state.Style = theme.Current().ADTree.Device.PairedPill
 		}
 
-		line = append(line, richtext.NewSegment(state.Name, state.Style))
+		line = append(line, stext.NewSpan(state.Name, state.Style))
 	}
 
 	return ui.RenderMergedPill(line, theme.Current().Global.GetBackground())

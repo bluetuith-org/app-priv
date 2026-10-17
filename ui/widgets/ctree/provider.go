@@ -4,7 +4,7 @@ import (
 	"iter"
 
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -14,7 +14,7 @@ type Provider interface {
 	Keybind(msg tview.KeyMsg) Action
 
 	// OnChange processes a change in the tree's state and returns a [tview.Msg]
-	OnChange(chg Change) tview.Msg
+	OnChange(node *Node) tview.Msg
 
 	// OnSelect returns a message after processing the selected node.
 	OnSelect(node *Node) tview.Msg
@@ -22,6 +22,12 @@ type Provider interface {
 	// MarkerStyle returns the styles for the markers.
 	MarkerStyle(node *Node) tcell.Style
 
+	// LabelWidth returns the total width of the node's label.
+	LabelWidth(node *Node) int
+
+	// Spacing returns the spacing that has to be applied between nodes.
+	Spacing(node *Node) int
+
 	// StyledLabels returns a sequence of text and their associated styles.
-	StyledLabels(node *Node, selected bool) iter.Seq2[richtext.Line, tcell.Style]
+	StyledLabels(node *Node, selected bool) iter.Seq2[text.Span, tcell.Style]
 }

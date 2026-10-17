@@ -7,7 +7,6 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/column"
-	"github.com/ayn2op/tview/richtext"
 	"github.com/ayn2op/tview/row"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
@@ -80,21 +79,21 @@ func (m Model) View() tview.Widget {
 	}
 
 	header = header.
-		Push(richtext.NewLine(
-			richtext.NewSegment(m.headerContent, theme.Current().App.TitleBar),
+		Push(stext.NewLine(
+			stext.NewSpan(m.headerContent, theme.Current().App.TitleBar),
 		),
 			tview.AlignmentRight,
 		).
 		PushSpace(tview.AlignmentRight)
 
 	cvStyle := theme.Current().App.CurrentViewName
-	line := richtext.NewLine(
-		richtext.NewSegment(" ", cvStyle),
-		richtext.NewSegment(
+	line := stext.NewLine(
+		stext.NewSpan(" ", cvStyle),
+		stext.NewSpan(
 			m.state.Focused().String(),
 			cvStyle,
 		),
-		richtext.NewSegment(" ", cvStyle),
+		stext.NewSpan(" ", cvStyle),
 	)
 
 	status := stext.New().

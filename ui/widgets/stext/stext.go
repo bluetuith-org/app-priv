@@ -3,14 +3,13 @@ package stext
 import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/layout"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/gdamore/tcell/v3"
-	"github.com/rivo/uniseg"
 )
 
 // Widget draws a single line of text.
 type Widget struct {
-	cr, cl        richtext.Line
+	cr, cl        []text.Span
 	width, height layout.Length
 	align         tview.Alignment
 	bgStyle       tcell.Style
@@ -27,7 +26,7 @@ func New() Widget {
 }
 
 // Push pushes a line of content with alignment.
-func (w Widget) Push(line richtext.Line, align tview.Alignment) Widget {
+func (w Widget) Push(line []text.Span, align tview.Alignment) Widget {
 	switch align {
 	case tview.AlignmentLeft:
 		w.cl = append(w.cl, line...)
@@ -43,10 +42,10 @@ func (w Widget) Push(line richtext.Line, align tview.Alignment) Widget {
 func (w Widget) PushSpace(align tview.Alignment) Widget {
 	switch align {
 	case tview.AlignmentLeft:
-		w.cl = append(w.cl, richtext.NewSegment(" ", w.bgStyle))
+		w.cl = append(w.cl, NewSpan(" ", w.bgStyle))
 
 	case tview.AlignmentRight:
-		w.cr = append(w.cr, richtext.NewSegment(" ", w.bgStyle))
+		w.cr = append(w.cr, NewSpan(" ", w.bgStyle))
 	}
 
 	return w
@@ -77,39 +76,14 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 
 	screen.FillArea(area.X, area.Y, area.Width, area.Height, ' ', w.bgStyle)
 
-	textWidth := w.drawLine(screen, w.cl, area.X, area.Y, area)
+	textWidth := DrawLine(screen, w.cl, area.X, area.Y, area)
 
-	w.drawLine(screen, w.cr, area.X+(area.Width-w.cr.Width()), area.Y, tview.Rectangle{
+	DrawLine(screen, w.cr, area.X+(area.Width-LineWidth(w.cr)), area.Y, tview.Rectangle{
 		X:      area.X + textWidth,
 		Y:      area.Y,
 		Width:  area.Width - textWidth,
 		Height: area.Height,
 	})
-}
-
-// drawLine draws line starting at x, keeping only the cells within area.
-//
-// Taken from: https://github.com/ayn2op/tview/blob/master/textview/widget.go
-func (w Widget) drawLine(screen tview.Screen, line richtext.Line, x, y int, area tview.Rectangle) int {
-	var textWidth int
-
-	for _, segment := range line {
-		style := segment.Style
-		str, state := segment.Text, -1
-		for len(str) > 0 {
-			var cluster string
-			var width int
-			cluster, str, width, state = uniseg.FirstGraphemeClusterInString(str, state)
-			width = max(width, 1)
-			if x >= area.X && x+width <= area.X+area.Width {
-				screen.Put(x, y, cluster, style)
-			}
-			x += width
-			textWidth += width
-		}
-	}
-
-	return textWidth
 }
 
 // Handle passes msg through unchanged.

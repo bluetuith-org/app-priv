@@ -3,7 +3,7 @@ module github.com/bluetuith-org/bluetuith
 go 1.27.1
 
 require (
-	github.com/ayn2op/tview v0.0.0-20261013225942-7c4cbe85112a
+	github.com/ayn2op/tview v0.0.0-20261017014958-0756c1611d0f
 	github.com/bluetuith-org/bluetooth-classic v0.0.8
 	github.com/dave/dst v0.28.0
 	github.com/fatih/color v1.19.0
@@ -14,7 +14,7 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.6
 	github.com/lrstanley/bubbletint/v2 v2.0.2
-	github.com/rivo/uniseg v0.4.7
+	github.com/rockorager/go-uucode v1.2.2
 	github.com/spf13/cast v1.10.0
 	github.com/urfave/cli/v2 v2.27.7
 	golang.org/x/text v0.43.0

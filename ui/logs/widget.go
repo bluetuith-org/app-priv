@@ -33,7 +33,6 @@ func newWidget(h *handler, cursor int, selectItem bool) widget {
 
 		return bx
 	}).
-		Gap(0).
 		SelectedStyle(tcell.StyleDefault).
 		Focused(w.focused).
 		OnChange(w.OnChange).

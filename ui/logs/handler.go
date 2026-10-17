@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -16,7 +17,7 @@ type handler struct {
 	rb *ringBuffer[*logContent]
 	rv ui.RootView
 
-	lcontent richtext.Line
+	lcontent []text.Span
 	latest   time.Time
 
 	sync.Mutex
@@ -69,7 +70,7 @@ func (h *handler) count() int {
 	return h.rb.Len()
 }
 
-func (h *handler) getLatest() richtext.Line {
+func (h *handler) getLatest() []text.Span {
 	h.Lock()
 	defer h.Unlock()
 
@@ -81,7 +82,7 @@ func (h *handler) getLatest() richtext.Line {
 	h.latest = c.record.Time
 
 	if h.lcontent == nil {
-		h.lcontent = make(richtext.Line, 3)
+		h.lcontent = make([]text.Span, 3)
 	}
 
 	var levelStyle tcell.Style
@@ -103,9 +104,9 @@ func (h *handler) getLatest() richtext.Line {
 
 	style := theme.Current().StatusBar.Style
 
-	h.lcontent[0] = richtext.NewSegment(levelStr, levelStyle)
-	h.lcontent[1] = richtext.NewSegment(" ", style)
-	h.lcontent[2] = richtext.NewSegment(c.record.Message, style)
+	h.lcontent[0] = stext.NewSpan(levelStr, levelStyle)
+	h.lcontent[1] = stext.NewSpan(" ", style)
+	h.lcontent[2] = stext.NewSpan(c.record.Message, style)
 
 	return h.lcontent
 }

@@ -3,19 +3,19 @@ package card
 import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/layout"
-	"github.com/ayn2op/tview/richtext"
+	"github.com/ayn2op/tview/text"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
-	"github.com/rivo/uniseg"
 )
 
 // Content describes a card content layout.
 type Content struct {
-	headerRight, headerLeft richtext.Segment
+	headerRight, headerLeft text.Span
 
-	content richtext.Text
+	content [][]text.Span
 	cl      int
 
-	message              richtext.Text
+	message              [][]text.Span
 	cRendered, mRendered bool
 
 	cb ContentBuilder
@@ -51,8 +51,8 @@ func (c *Content) RefreshMessage() *Content {
 func (c *Content) Draw(screen tview.Screen, area tview.Rectangle) {
 	x, y, width, _ := area.X, area.Y, area.Width, area.Height
 
-	hd := c.drawSegment(screen, c.headerLeft, x, y, area)
-	c.drawSegment(screen, c.headerRight, x+(width-c.headerRight.Width()), y, tview.Rectangle{
+	hd := stext.DrawSpan(screen, c.headerLeft, x, y, area)
+	stext.DrawSpan(screen, c.headerRight, x+(width-stext.SpanWidth(c.headerRight)), y, tview.Rectangle{
 		X:      x + hd,
 		Y:      y,
 		Width:  width - hd,
@@ -70,7 +70,7 @@ func (c *Content) Draw(screen tview.Screen, area tview.Rectangle) {
 	vstart := max(c.cl-width, 0) / 2
 	canvas := max(c.cl, area.Width)
 	for _, line := range c.content {
-		start := (canvas - line.Width()) / 2
+		start := (canvas - stext.LineWidth(line)) / 2
 
 		c.drawLine(screen, line, cArea.X+start-vstart, cArea.Y, cArea)
 		cArea.Y++
@@ -108,32 +108,11 @@ func (c *Content) Size() (width layout.Length, height layout.Length) {
 	return layout.Fill, layout.Shrink
 }
 
-// drawSegment draws a segment starting at x, keeping only the cells within area.
-func (c *Content) drawSegment(screen tview.Screen, segment richtext.Segment, x, y int, area tview.Rectangle) int {
-	var textWidth int
-
-	style := segment.Style
-	str, state := segment.Text, -1
-	for len(str) > 0 {
-		var cluster string
-		var width int
-		cluster, str, width, state = uniseg.FirstGraphemeClusterInString(str, state)
-		width = max(width, 1)
-		if x >= area.X && x+width <= area.X+area.Width {
-			screen.Put(x, y, cluster, style)
-		}
-		x += width
-		textWidth += width
-	}
-
-	return textWidth
-}
-
-func (c *Content) drawLine(screen tview.Screen, line richtext.Line, x, y int, area tview.Rectangle) int {
+func (c *Content) drawLine(screen tview.Screen, line []text.Span, x, y int, area tview.Rectangle) int {
 	var textWidth int
 
 	for _, seg := range line {
-		textWidth += c.drawSegment(screen, seg, x+textWidth, y, area)
+		textWidth += stext.DrawSpan(screen, seg, x+textWidth, y, area)
 	}
 
 	return textWidth
@@ -173,9 +152,9 @@ func (c *Content) refreshBody(width int) {
 	c.content = nil
 
 	c.cl = 0
-	for _, line := range c.cb.Content() {
-		c.content = append(c.content, richtext.WrapWords(line, width)...)
-		c.cl = max(c.cl, line.Width())
+	c.content = text.Lines(c.cb.Content(), width, text.WrappingWord)
+	for _, line := range c.content {
+		c.cl = max(c.cl, stext.LineWidth(line))
 	}
 
 	c.cRendered = true
@@ -184,9 +163,9 @@ func (c *Content) refreshBody(width int) {
 func (c *Content) refreshMsg(width int) {
 	msgMarker, msgContent := c.cb.Message()
 	spaceBg := msgContent.Style.GetBackground()
-	spaceSeg := richtext.NewSegment(" ", tcell.Style{}.Background(spaceBg))
+	spaceSeg := stext.NewSpan(" ", tcell.Style{}.Background(spaceBg))
 
-	c.message = richtext.WrapWords(richtext.Line{msgMarker, spaceSeg, msgContent}, width)
+	c.message = text.Lines([]text.Span{msgMarker, spaceSeg, msgContent}, width, text.WrappingGlyph)
 	c.mRendered = true
 }
 
