@@ -18,7 +18,6 @@ type viewHandler struct {
 }
 
 type vm interface {
-	ui.View
 	ui.Model
 	ui.TabSection
 }

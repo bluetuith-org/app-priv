@@ -41,64 +41,6 @@ func New(rv ui.RootView) *Model {
 	}
 }
 
-// ViewID returns the view's ID.
-func (m *Model) ViewID() ui.ViewID {
-	return ui.ViewIDLog
-}
-
-// Title returns the title of the tab section.
-func (m *Model) Title() string {
-	return fmt.Sprintf("%s (%s)", m.ViewID().String(), ui.Kb().Log.Show.KeyName)
-}
-
-// Icon returns the icon associated with the tab section.
-func (m *Model) Icon() string {
-	return theme.Icons().Log.String()
-}
-
-// Header returns the content to print in the title bar area.
-func (m *Model) Header() []text.Span {
-	return nil
-}
-
-// Status returns the content to print in the status bar area.
-func (m *Model) Status() []text.Span {
-	return m.h.getLatest()
-}
-
-// ViewKeybind returns the keybinding used to focus the view.
-func (m *Model) ViewKeybind() keybindings.Keybinding {
-	return ui.Kb().Log.Show
-}
-
-// ViewportKeybinds implements keybindings for the viewport.
-func (m *Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
-	switch {
-	case ui.Kb().NavigateTop.Matches(msg):
-		return viewport.ActionTop
-
-	case ui.Kb().NavigateBottom.Matches(msg):
-		return viewport.ActionBottom
-	}
-
-	return viewport.ActionNone
-}
-
-// OnListChange processes a change in the list and returns a message.
-func (m *Model) OnListChange(cursor int) tview.Msg {
-	return m.ViewID().RouterMessage(listChg(cursor))
-}
-
-// OnViewportChange processes a change in the viewport and returns a message.
-func (m *Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
-	return m.ViewID().RouterMessage(scrollMsg{change: *c})
-}
-
-// OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
-func (m *Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
-	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
-}
-
 // Init returns a command to run when the model starts, or nil.
 func (m *Model) Init() tview.Cmd {
 	return nil
@@ -158,6 +100,64 @@ func (m *Model) View(focused bool) tview.Widget {
 	return bx
 }
 
+// ViewID returns the view's ID.
+func (m *Model) ViewID() ui.ViewID {
+	return ui.ViewIDLog
+}
+
+// Title returns the title of the tab section.
+func (m *Model) Title() string {
+	return fmt.Sprintf("%s (%s)", m.ViewID().String(), ui.Kb().Log.Show.KeyName)
+}
+
+// Icon returns the icon associated with the tab section.
+func (m *Model) Icon() string {
+	return theme.Icons().Log.String()
+}
+
+// Header returns the content to print in the title bar area.
+func (m *Model) Header() []text.Span {
+	return nil
+}
+
+// Status returns the content to print in the status bar area.
+func (m *Model) Status() []text.Span {
+	return m.h.getLatest()
+}
+
+// ViewKeybind returns the keybinding used to focus the view.
+func (m *Model) ViewKeybind() keybindings.Keybinding {
+	return ui.Kb().Log.Show
+}
+
+// ViewportKeybinds implements keybindings for the viewport.
+func (m *Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
+	switch {
+	case ui.Kb().NavigateTop.Matches(msg):
+		return viewport.ActionTop
+
+	case ui.Kb().NavigateBottom.Matches(msg):
+		return viewport.ActionBottom
+	}
+
+	return viewport.ActionNone
+}
+
+// OnListChange processes a change in the list and returns a message.
+func (m *Model) OnListChange(cursor int) tview.Msg {
+	return m.ViewID().RouterMessage(listChg(cursor))
+}
+
+// OnViewportChange processes a change in the viewport and returns a message.
+func (m *Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c})
+}
+
+// OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
+func (m *Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
+	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
+}
+
 func (m *Model) setCursor(index int) {
 	if index < 0 {
 		return
@@ -190,5 +190,4 @@ type (
 var (
 	_ ui.Model      = (*Model)(nil)
 	_ ui.TabSection = (*Model)(nil)
-	_ ui.View       = (*Model)(nil)
 )

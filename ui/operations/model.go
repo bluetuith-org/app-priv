@@ -16,7 +16,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
@@ -45,6 +44,69 @@ func New(rv ui.RootView) *Model {
 		run:       make(map[string]*RunningInfo),
 		rv:        rv,
 	}
+}
+
+// Init returns a command to run when the model starts, or nil.
+func (m *Model) Init() tview.Cmd {
+	return nil
+}
+
+// Update receives messages when this model has focus.
+func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
+	switch ms := msg.(type) {
+	case ui.R[listChg]:
+		m.setCursor(int(ms.Value))
+		m.rv.SetFocused(m.ViewID())
+
+	case ui.R[scrollMsg]:
+		m.scrollState = viewport.ScrollState(ms.Value.change)
+		if ms.Value.msg != nil {
+			m.Update(ms.Value.msg, rsp)
+		}
+
+	case ui.R[CreateMsg]:
+		info, action, err := m.createNewOperation(ms.Value)
+		if err != nil {
+			return
+		}
+
+		rsp.PushCmd(func() tview.Msg {
+			return action(info)
+		})
+
+	case ui.R[opUpdateMsg]:
+		m.processUpdateMsg(ms.Value)
+
+	case tview.KeyMsg:
+		switch {
+		case ui.Kb().Operations.ClearAll.Matches(ms):
+			m.clearOperations()
+
+		case ui.Kb().Operations.Cancel.Matches(ms):
+		}
+	}
+}
+
+// View draws this model onto the screen.
+func (m *Model) View(focused bool) tview.Widget {
+	content := newListContent(m, m.cursor, focused)
+
+	ls := list.New(m.cursor, len(m.ord), content.Items).
+		Focused(focused).
+		SelectedStyle(tcell.StyleDefault).
+		OnChange(m.OnListChange).
+		Keybind(m.ListKeybinds)
+
+	vp := viewport.New(ls, m.scrollState).
+		Target(ls.Target(m.target)).
+		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
+		Axes(layout.Axes{Width: true, Height: true}).
+		Focused(focused).
+		Keybind(m.ViewportKeybinds).
+		OnChange(m.OnViewportChange).
+		OnChildMsg(m.OnViewportChildMsg)
+
+	return vp
 }
 
 // Title returns the title of the tab section.
@@ -126,83 +188,6 @@ func (m *Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
 // OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
 func (m *Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
 	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
-}
-
-// Init returns a command to run when the model starts, or nil.
-func (m *Model) Init() tview.Cmd {
-	return nil
-}
-
-// Update receives messages when this model has focus.
-func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
-	switch ms := msg.(type) {
-	case ui.R[listChg]:
-		m.setCursor(int(ms.Value))
-		m.rv.SetFocused(m.ViewID())
-
-	case ui.R[scrollMsg]:
-		m.scrollState = viewport.ScrollState(ms.Value.change)
-		if ms.Value.msg != nil {
-			m.Update(ms.Value.msg, rsp)
-		}
-
-	case ui.R[CreateMsg]:
-		info, action, err := m.createNewOperation(ms.Value)
-		if err != nil {
-			return
-		}
-
-		rsp.PushCmd(func() tview.Msg {
-			return action(info)
-		})
-
-	case ui.R[opUpdateMsg]:
-		m.processUpdateMsg(ms.Value)
-
-	case tview.KeyMsg:
-		switch {
-		case ui.Kb().Operations.ClearAll.Matches(ms):
-			m.clearOperations()
-
-		case ui.Kb().Operations.Cancel.Matches(ms):
-		}
-	}
-}
-
-// View draws this model onto the screen.
-func (m *Model) View(focused bool) tview.Widget {
-	ls := list.New(m.cursor, len(m.ord), func(index int) tview.Widget {
-		info := m.ord[index]
-		style := theme.Current().Global
-
-		borders := tview.BorderSetRound()
-		borderStyle := style
-		if m.cursor == index && focused {
-			borderStyle = theme.Current().Operations.Selection
-			borders = tview.BorderSetThick()
-		}
-
-		return card.New(info.cc).
-			Borders(tview.BordersAll).
-			BorderStyle(borderStyle).
-			BorderSet(borders).
-			Background(style.GetBackground())
-	}).
-		Focused(focused).
-		SelectedStyle(tcell.StyleDefault).
-		OnChange(m.OnListChange).
-		Keybind(m.ListKeybinds)
-
-	vp := viewport.New(ls, m.scrollState).
-		Target(ls.Target(m.target)).
-		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
-		Axes(layout.Axes{Width: true, Height: true}).
-		Focused(focused).
-		Keybind(m.ViewportKeybinds).
-		OnChange(m.OnViewportChange).
-		OnChildMsg(m.OnViewportChildMsg)
-
-	return vp
 }
 
 func (m *Model) setCursor(index int) {

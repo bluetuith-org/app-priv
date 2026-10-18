@@ -21,18 +21,15 @@ type AppBinder interface {
 	// Configuration returns the app's configuration.
 	Configuration() *config.Config
 
+	// Screen returns the screen for the application.
 	Screen() tcell.Screen
-}
-
-// View represents a single View.
-// All views must implement this interface.
-type View interface {
-	// ViewID returns the view's ID.
-	ViewID() ViewID
 }
 
 // Model represents a UI model.
 type Model interface {
+	// ViewID returns the view's ID.
+	ViewID() ViewID
+
 	// Init returns a command to run when the model starts, or nil.
 	Init() tview.Cmd
 

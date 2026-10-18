@@ -23,13 +23,6 @@ func NewResponse() *Response {
 	return &Response{}
 }
 
-// PushRoutedPair appends a routed message and a [tview.Cmd]
-// to the collection.
-func (r *Response) PushRoutedPair(msg Router, cmd tview.Cmd) {
-	r.PushRouted(msg)
-	r.PushCmd(cmd)
-}
-
 // PushMsg appends a [tview.Msg] to the collection.
 func (r *Response) PushMsg(msg tview.Msg) {
 	if msg == nil {

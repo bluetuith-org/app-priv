@@ -49,7 +49,7 @@ func New(rv ui.RootView) *Model {
 	tm := time.NewTimer(dbTime)
 	tm.Reset(dbTime)
 
-	return &Model{
+	m := &Model{
 		root:        root,
 		currentNode: root.Node,
 
@@ -60,6 +60,91 @@ func New(rv ui.RootView) *Model {
 
 		rv: rv,
 	}
+
+	go m.dbTimer()
+
+	return m
+}
+
+// Init returns a command to run when the model starts, or nil.
+func (m *Model) Init() tview.Cmd {
+	return m.populate
+}
+
+// Update receives messages when this model has focus.
+func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
+	switch ms := msg.(type) {
+	case ui.R[dbEvent]:
+		rsp.PushRouted(m.dbHandler())
+
+	case ui.R[scrollMsg]:
+		m.scrollState = viewport.ScrollState(ms.Value.change)
+		if ms.Value.msg != nil {
+			m.Update(ms.Value.msg, rsp)
+		}
+
+	case ui.R[selectionChange]:
+		m.currentNode = ms.Value
+		m.scrollState.ScrollToTarget()
+		m.resetTimer()
+		rsp.PushRouted(m.resetInformation())
+
+	case ui.R[rootNodeMsg]:
+		m.root = ms.Value.node
+		m.setCurrentNode(m.root.Node)
+		m.resetTimer()
+		rsp.PushRouted(m.resetInformation())
+
+	case ui.R[selectedMsg]:
+		m.rv.SetFocused(m.ViewID())
+
+		data := ms.Value.node.Data[*adNode]()
+		if data.nodeType != nodeTypeAction {
+			ms.Value.node.SetExpanded(!ms.Value.node.Expanded())
+			m.setCurrentNode(ms.Value.node)
+			return
+		}
+
+		m.setCurrentNode(ms.Value.node)
+		if actionMsg, ok := acStateToOpMsg(data.ID(), data.actionState); ok {
+			rsp.PushRouted(actionMsg)
+		}
+
+	case tview.KeyMsg:
+		data := m.currentNode.Data[*adNode]()
+		if rmsg, ok := data.Noder().HandleKeys(ms); ok {
+			rsp.PushRouted(rmsg)
+		}
+	}
+}
+
+// View draws this model onto the screen.
+func (m *Model) View(focused bool) tview.Widget {
+	state := m.currentNode
+	if !focused {
+		state = nil
+	}
+
+	tree := ctree.New(m, m.root.Node, state).
+		TopLevel(1).
+		Focused(focused).
+		Graphics(true).
+		GraphicsSet(m.graphicsSet).
+		GraphicsStyle(theme.Current().Global).
+		Markers(m.markers)
+
+	vp := viewport.New(tree, m.scrollState).
+		Target(tree.Target).
+		ContentWidth(tree.RowsWidth).
+		Axes(layout.Axes{Width: true, Height: true}).
+		Focused(focused).
+		Keybind(m.ScrollKeybinds).
+		OnChange(m.OnViewportChange).
+		OnChildMsg(m.OnViewportChildMsg)
+
+	return box.New(vp).
+		Background(theme.Current().Global.GetBackground()).
+		Padding(2, 0, 2, 1)
 }
 
 // ViewID returns the view's ID.
@@ -134,87 +219,6 @@ func (m *Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview
 	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
 }
 
-// Init returns a command to run when the model starts, or nil.
-func (m *Model) Init() tview.Cmd {
-	return tview.Batch(m.populate, m.dbTimer)
-}
-
-// Update receives messages when this model has focus.
-func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
-	switch ms := msg.(type) {
-	case ui.R[dbEvent]:
-		rsp.PushRoutedPair(m.dbHandler())
-
-	case ui.R[scrollMsg]:
-		m.scrollState = viewport.ScrollState(ms.Value.change)
-		if ms.Value.msg != nil {
-			m.Update(ms.Value.msg, rsp)
-		}
-
-	case ui.R[selectionChange]:
-		m.currentNode = ms.Value
-		m.scrollState.ScrollToTarget()
-		m.resetTimer()
-		rsp.PushRouted(m.resetInformation())
-
-	case ui.R[rootNodeMsg]:
-		m.root = ms.Value.node
-		m.setCurrentNode(m.root.Node)
-		m.resetTimer()
-		rsp.PushRouted(m.resetInformation())
-
-	case ui.R[selectedMsg]:
-		m.rv.SetFocused(m.ViewID())
-
-		data := ms.Value.node.Data[*adNode]()
-		if data.nodeType != nodeTypeAction {
-			ms.Value.node.SetExpanded(!ms.Value.node.Expanded())
-			m.setCurrentNode(ms.Value.node)
-			return
-		}
-
-		m.setCurrentNode(ms.Value.node)
-		if actionMsg, ok := acStateToOpMsg(data.ID(), data.actionState); ok {
-			rsp.PushRouted(actionMsg)
-		}
-
-	case tview.KeyMsg:
-		data := m.currentNode.Data[*adNode]()
-		if rmsg, ok := data.Noder().HandleKeys(ms); ok {
-			rsp.PushRouted(rmsg)
-		}
-	}
-}
-
-// View draws this model onto the screen.
-func (m *Model) View(focused bool) tview.Widget {
-	state := m.currentNode
-	if !focused {
-		state = nil
-	}
-
-	tree := ctree.New(m, m.root.Node, state).
-		TopLevel(1).
-		Focused(focused).
-		Graphics(true).
-		GraphicsSet(m.graphicsSet).
-		GraphicsStyle(theme.Current().Global).
-		Markers(m.markers)
-
-	vp := viewport.New(tree, m.scrollState).
-		Target(tree.Target).
-		ContentWidth(tree.RowsWidth).
-		Axes(layout.Axes{Width: true, Height: true}).
-		Focused(focused).
-		Keybind(m.ScrollKeybinds).
-		OnChange(m.OnViewportChange).
-		OnChildMsg(m.OnViewportChildMsg)
-
-	return box.New(vp).
-		Background(theme.Current().Global.GetBackground()).
-		Padding(2, 0, 2, 1)
-}
-
 // MarkerStyle returns the styles for the markers.
 func (m *Model) MarkerStyle(*ctree.Node) tcell.Style {
 	return theme.Current().Global
@@ -282,16 +286,16 @@ func (m *Model) populate() tview.Msg {
 	return ui.ViewIDAdTree.RouterMessage(rootNodeMsg{root})
 }
 
-func (m *Model) dbHandler() (ui.Router, tview.Cmd) {
+func (m *Model) dbHandler() ui.Router {
 	currNode := m.currentNode
 	if currNode == nil {
-		return nil, m.dbTimer
+		return nil
 	}
 
 	node := currNode.Data[*adNode]()
 	rootID := node.noder.RootID()
 	if m.rootident == rootID && !m.reset {
-		return nil, m.dbTimer
+		return nil
 	}
 
 	m.rootident = rootID
@@ -299,7 +303,7 @@ func (m *Model) dbHandler() (ui.Router, tview.Cmd) {
 
 	id, inf := node.noder.Information()
 
-	return info.Msg(id, inf), m.dbTimer
+	return info.Msg(id, inf)
 }
 
 func (m *Model) resetTimer() {
@@ -323,6 +327,7 @@ func (m *Model) resetInformation() ui.Router {
 	}
 
 	m.reset = true
+
 	return info.ResetMsg()
 }
 
@@ -330,9 +335,17 @@ func (m *Model) setCurrentNode(n *ctree.Node) {
 	m.currentNode = n
 }
 
-func (m *Model) dbTimer() tview.Msg {
-	<-m.tm.C
-	return m.ViewID().RouterMessage(dbEvent{})
+func (m *Model) dbTimer() {
+	for {
+		select {
+		case _, ok := <-m.tm.C:
+			if !ok {
+				return
+			}
+
+			m.rv.SendMsg(m.ViewID().RouterMessage(dbEvent{}))
+		}
+	}
 }
 
 type (
@@ -359,5 +372,4 @@ type (
 var (
 	_ ui.Model       = (*Model)(nil)
 	_ ctree.Provider = (*Model)(nil)
-	_ ui.View        = (*Model)(nil)
 )

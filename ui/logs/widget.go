@@ -12,27 +12,16 @@ import (
 type widget struct {
 	list.Widget
 
-	h       *handler
-	focused bool
+	h *handler
+
+	cursor              int
+	selectItem, focused bool
 }
 
 func newWidget(h *handler, cursor int, selectItem bool) widget {
 	w := widget{h: h, focused: selectItem}
 
-	w.Widget = list.New(cursor, w.h.count(), func(index int) tview.Widget {
-		style := theme.Current().Global
-
-		bx := box.New(w.h.rb.Get(index)).
-			Background(style.GetBackground())
-
-		if selectItem && cursor == index {
-			bx = bx.Borders(tview.BordersAll).
-				BorderSet(tview.BorderSetRound()).
-				BorderStyle(theme.Current().Log.Selection)
-		}
-
-		return bx
-	}).
+	w.Widget = list.New(cursor, w.h.count(), w.Items).
 		SelectedStyle(tcell.StyleDefault).
 		Focused(w.focused).
 		OnChange(w.OnChange).
@@ -47,6 +36,21 @@ func (w widget) Draw(screen tview.Screen, area tview.Rectangle) {
 	defer w.h.Unlock()
 
 	w.Widget.Draw(screen, area)
+}
+
+func (w widget) Items(index int) tview.Widget {
+	style := theme.Current().Global
+
+	bx := box.New(w.h.rb.Get(index)).
+		Background(style.GetBackground())
+
+	if w.selectItem && w.cursor == index {
+		bx = bx.Borders(tview.BordersAll).
+			BorderSet(tview.BorderSetRound()).
+			BorderStyle(theme.Current().Log.Selection)
+	}
+
+	return bx
 }
 
 // ListKeybinds implements keybindings for the list.

@@ -27,6 +27,50 @@ func New(rv ui.RootView) *Model {
 	}
 }
 
+// Init returns a command to run when the model starts, or nil.
+func (m *Model) Init() tview.Cmd {
+	return m.handler.init()
+}
+
+// Update returns the model changed in response to a message and a command to run, or nil.
+func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
+	switch ms := msg.(type) {
+	case ui.R[selectedMsg]:
+		m.handler.setActiveIndex(ms.Value.index)
+		m.rv.SetFocused(m.handler.activeID())
+
+	default:
+		m.handler.updateAll(msg, rsp)
+	}
+}
+
+// View returns the element that draws the model.
+func (m *Model) View(focused bool) tview.Widget {
+	bgStyle := theme.Current().Global
+
+	t := tabs.New(m.handler.labels...).
+		Active(m.handler.activeIndex).
+		Style(theme.Current().TabsPane.Tab).
+		ActiveStyle(theme.Current().TabsPane.FocusedTab).
+		Alignment(tview.AlignmentCenter).
+		Separator(" ").
+		Padding(" ", " ").
+		Arrows(theme.Icons().ArrowLeft.String(), theme.Icons().ArrowRight.String()).
+		ArrowStyle(theme.Current().TabsPane.ArrowStyle).
+		ClickableArrows(true).
+		Wrap(true).
+		Keybind(m.Keybind).
+		OnSelect(m.OnSelect)
+
+	content := box.New(m.handler.activeContent(focused)).
+		Background(bgStyle.GetBackground()).
+		Padding(1, 0, 0, 0)
+
+	return box.New(column.New(t, content)).
+		Background(bgStyle.GetBackground()).
+		Padding(1, 0, 0, 0)
+}
+
 // ViewID returns the view's ID.
 func (m *Model) ViewID() ui.ViewID {
 	return ui.ViewIDTabs
@@ -95,50 +139,6 @@ func (m *Model) OnSelect(index int) tview.Msg {
 	return ui.ViewIDTabs.RouterMessage(selectedMsg{index})
 }
 
-// Init returns a command to run when the model starts, or nil.
-func (m *Model) Init() tview.Cmd {
-	return m.handler.init()
-}
-
-// Update returns the model changed in response to a message and a command to run, or nil.
-func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
-	switch ms := msg.(type) {
-	case ui.R[selectedMsg]:
-		m.handler.setActiveIndex(ms.Value.index)
-		m.rv.SetFocused(m.handler.activeID())
-
-	default:
-		m.handler.updateAll(msg, rsp)
-	}
-}
-
-// View returns the element that draws the model.
-func (m *Model) View(focused bool) tview.Widget {
-	bgStyle := theme.Current().Global
-
-	t := tabs.New(m.handler.labels...).
-		Active(m.handler.activeIndex).
-		Style(theme.Current().TabsPane.Tab).
-		ActiveStyle(theme.Current().TabsPane.FocusedTab).
-		Alignment(tview.AlignmentCenter).
-		Separator(" ").
-		Padding(" ", " ").
-		Arrows(theme.Icons().ArrowLeft.String(), theme.Icons().ArrowRight.String()).
-		ArrowStyle(theme.Current().TabsPane.ArrowStyle).
-		ClickableArrows(true).
-		Wrap(true).
-		Keybind(m.Keybind).
-		OnSelect(m.OnSelect)
-
-	content := box.New(m.handler.activeContent(focused)).
-		Background(bgStyle.GetBackground()).
-		Padding(1, 0, 0, 0)
-
-	return box.New(column.New(t, content)).
-		Background(bgStyle.GetBackground()).
-		Padding(1, 0, 0, 0)
-}
-
 // SetViewKeybind focuses the view if the keybind matches.
 func (m *Model) SetViewKeybind(msg tview.KeyMsg) bool {
 	return m.handler.setActive(msg)
@@ -148,7 +148,4 @@ type selectedMsg struct {
 	index int
 }
 
-var (
-	_ ui.Model = (*Model)(nil)
-	_ ui.View  = (*Model)(nil)
-)
+var _ ui.Model = (*Model)(nil)

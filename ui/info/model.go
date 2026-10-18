@@ -33,6 +33,32 @@ func New(rv ui.RootView) *Model {
 	}
 }
 
+// Init returns a command to run when the model starts, or nil.
+func (m *Model) Init() tview.Cmd {
+	return nil
+}
+
+// Update receives messages when this model has focus.
+func (m *Model) Update(msg tview.Msg, _ *ui.Response) {
+	switch ms := msg.(type) {
+	case ui.R[scrollMsg]:
+
+	case ui.R[infoMsg]:
+		m.text = ms.Value.content
+
+	case ui.R[resetMsg]:
+		m.text = m.placeholder
+
+	default:
+	}
+}
+
+// View draws this model onto the screen.
+func (m *Model) View(_ bool) tview.Widget {
+	return text.Rich(m.text...).
+		Style(theme.Current().Global)
+}
+
 // Title returns the title of the tab section.
 func (m *Model) Title() string {
 	return fmt.Sprintf("%s (%s)", m.ViewID().String(), ui.Kb().Information.Show.KeyName)
@@ -63,36 +89,9 @@ func (m *Model) ViewKeybind() keybindings.Keybinding {
 	return ui.Kb().Information.Show
 }
 
-// Init returns a command to run when the model starts, or nil.
-func (m *Model) Init() tview.Cmd {
-	return nil
-}
-
-// Update receives messages when this model has focus.
-func (m *Model) Update(msg tview.Msg, _ *ui.Response) {
-	switch ms := msg.(type) {
-	case ui.R[scrollMsg]:
-
-	case ui.R[infoMsg]:
-		m.text = ms.Value.content
-
-	case ui.R[resetMsg]:
-		m.text = m.placeholder
-
-	default:
-	}
-}
-
-// View draws this model onto the screen.
-func (m *Model) View(_ bool) tview.Widget {
-	return text.Rich(m.text...).
-		Style(theme.Current().Global)
-}
-
 type scrollMsg struct{}
 
 var (
 	_ ui.Model      = (*Model)(nil)
 	_ ui.TabSection = (*Model)(nil)
-	_ ui.View       = (*Model)(nil)
 )
