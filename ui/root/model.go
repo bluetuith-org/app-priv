@@ -21,44 +21,58 @@ type Model struct {
 
 	headerContent string
 
-	adTreeModel adtree.Model
-	tabsModel   tabpane.Model
+	adTreeModel *adtree.Model
+	tabsModel   *tabpane.Model
 
 	state *focusState
 	ev    *evState
 }
 
 // New returns a new root model.
-func New(binder ui.AppBinder) Model {
-	m := Model{
+func New(binder ui.AppBinder) *Model {
+	m := &Model{
 		AppBinder:     binder,
 		headerContent: fmt.Sprintf("bluetuith %s (%s)", binder.Configuration().Version, binder.Configuration().Revision),
 
 		ev: newEvState(binder.Screen()),
 	}
 
-	m.adTreeModel = adtree.New(&m)
-	m.tabsModel = tabpane.New(&m)
+	m.adTreeModel = adtree.New(m)
+	m.tabsModel = tabpane.New(m)
 	m.state = newFocusState(ui.ViewIDAdTree)
 
 	return m
 }
 
 // Init returns a command to run when the model starts, or nil.
-func (m Model) Init() tview.Cmd {
+func (m *Model) Init() tview.Cmd {
 	ui.StartLogHandler()
 
 	return tview.Batch(m.adTreeModel.Init(), m.tabsModel.Init())
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(msg)
-	return m, cmd
+func (m *Model) Update(msg tview.Msg) (*Model, tview.Cmd) {
+	rsp := ui.NewResponse()
+	depth := 10
+
+	m.updateModel(msg, rsp)
+	for range depth {
+		msgs, ok := rsp.Msgs()
+		if !ok {
+			break
+		}
+
+		for _, msg := range msgs {
+			m.updateModel(msg, rsp)
+		}
+	}
+
+	return m, rsp.Cmds()
 }
 
 // View draws this model onto the screen.
-func (m Model) View() tview.Widget {
+func (m *Model) View() tview.Widget {
 	panelFocused := m.PanelFocused()
 
 	header := stext.New().
@@ -67,8 +81,8 @@ func (m Model) View() tview.Widget {
 		Push(m.adTreeModel.Header(), tview.AlignmentLeft).
 		PushSpace(tview.AlignmentLeft)
 
-	for _, h := range m.tabsModel.Header() {
-		header = header.Push(h, tview.AlignmentLeft).PushSpace(tview.AlignmentLeft)
+	for line := range m.tabsModel.Header() {
+		header = header.Push(line, tview.AlignmentLeft).PushSpace(tview.AlignmentLeft)
 	}
 
 	header = header.
@@ -90,8 +104,13 @@ func (m Model) View() tview.Widget {
 	)
 
 	status := stext.New().
-		Background(theme.Current().StatusBar.Style).
-		Push(m.tabsModel.Status(), tview.AlignmentLeft).
+		Background(theme.Current().StatusBar.Style)
+
+	for line := range m.tabsModel.Status() {
+		status = status.Push(line, tview.AlignmentLeft)
+	}
+
+	status = status.
 		PushSpace(tview.AlignmentLeft).
 		Push(line, tview.AlignmentRight)
 
@@ -129,26 +148,16 @@ func (m *Model) SendMsg(msg tcell.Event) {
 	m.ev.sendMsg(msg)
 }
 
-// SendRoutedUpdateMsg routes the message to the specified view.
-// Should only be called from the view's [Update] function.
-func (m *Model) SendRoutedUpdateMsg(msg ui.Router) tview.Cmd {
-	if msg == nil || !msg.IsValid() {
-		return nil
-	}
-
-	return m.updateModel(msg)
-}
-
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
+func (m *Model) updateModel(msg tview.Msg, rsp *ui.Response) {
 	switch ms := msg.(type) {
 	case tview.KeyMsg:
 		if m.tabsModel.SetViewKeybind(ms) {
-			return nil
+			return
 		}
 
 		switch {
 		case ui.Kb().Quit.Matches(ms):
-			return m.quitCmd()
+			rsp.PushCmd(m.quitCmd())
 
 		case ui.Kb().ADTree.TabPane.Matches(ms):
 			if m.Focused() == ui.ViewIDAdTree {
@@ -159,47 +168,37 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 			if m.Focused() != ui.ViewIDAdTree {
 				m.state.SetFocus(ui.ViewIDAdTree)
 			}
-		}
 
-		return m.routeMessageToView(m.Focused(), ms)
+		default:
+			m.routeMessageToView(m.Focused(), ms, rsp)
+		}
 
 	case ui.Router:
 		if ms == nil || !ms.IsValid() {
-			return nil
+			return
 		}
 
-		return m.routeMessageToView(ms.ViewID(), ms)
-	}
+		m.routeMessageToView(ms.ViewID(), ms, rsp)
+		return
 
-	return m.updateAllViews(msg)
+	default:
+		m.updateAllViews(msg, rsp)
+	}
 }
 
-func (m *Model) updateAllViews(msg tview.Msg) tview.Cmd {
-	cmds := make([]tview.Cmd, 0, 2)
-	var cmd tview.Cmd
+func (m *Model) updateAllViews(msg tview.Msg, rsp *ui.Response) {
+	m.adTreeModel.Update(msg, rsp)
 
-	m.adTreeModel, cmd = m.adTreeModel.Update(msg)
-	if cmd != nil {
-		cmds = append(cmds, cmd)
-	}
-
-	m.tabsModel, cmd = m.tabsModel.Update(msg)
-	if cmd != nil {
-		cmds = append(cmds, cmd)
-	}
-
-	return tview.Batch(cmds...)
+	m.tabsModel.Update(msg, rsp)
 }
 
-func (m *Model) routeMessageToView(id ui.ViewID, routedMsg tview.Msg) tview.Cmd {
-	var cmd tview.Cmd
-
+func (m *Model) routeMessageToView(id ui.ViewID, routedMsg tview.Msg, rsp *ui.Response) {
 	if id == ui.ViewIDAdTree {
-		m.adTreeModel, cmd = m.adTreeModel.Update(routedMsg)
-		return cmd
+		m.adTreeModel.Update(routedMsg, rsp)
+		return
 	}
 
-	return m.tabsModel.HandleRouterMsg(id, routedMsg)
+	m.tabsModel.HandleRouterMsg(id, routedMsg, rsp)
 }
 
 func (m *Model) quitCmd() tview.Cmd {
@@ -209,6 +208,6 @@ func (m *Model) quitCmd() tview.Cmd {
 }
 
 var (
-	_ ui.RootView        = (&Model{})
-	_ tview.Model[Model] = (Model{})
+	_ ui.RootView         = (*Model)(nil)
+	_ tview.Model[*Model] = (*Model)(nil)
 )

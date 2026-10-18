@@ -1,6 +1,8 @@
 package tabpane
 
 import (
+	"iter"
+
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/column"
@@ -18,8 +20,8 @@ type Model struct {
 }
 
 // New returns a new tabbed pane.
-func New(rv ui.RootView) Model {
-	return Model{
+func New(rv ui.RootView) *Model {
+	return &Model{
 		rv:      rv,
 		handler: newHandler(rv),
 	}
@@ -31,13 +33,29 @@ func (m *Model) ViewID() ui.ViewID {
 }
 
 // Header returns the content to print in the title bar.
-func (m *Model) Header() [][]text.Span {
-	return m.handler.header()
+func (m *Model) Header() iter.Seq[[]text.Span] {
+	return func(yield func([]text.Span) bool) {
+		for _, v := range m.handler.views {
+			if content := v.Header(); content != nil {
+				if !yield(content) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // Status returns the content to print in the status bar.
-func (m *Model) Status() []text.Span {
-	return m.handler.status()
+func (m *Model) Status() iter.Seq[[]text.Span] {
+	return func(yield func([]text.Span) bool) {
+		for _, v := range m.handler.views {
+			if content := v.Status(); content != nil {
+				if !yield(content) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // GetActiveID returns the current active tab view.
@@ -46,12 +64,13 @@ func (m *Model) GetActiveID() ui.ViewID {
 }
 
 // HandleRouterMsg handles the routed message.
-func (m *Model) HandleRouterMsg(id ui.ViewID, routedMsg tview.Msg) tview.Cmd {
+func (m *Model) HandleRouterMsg(id ui.ViewID, routedMsg tview.Msg, rsp *ui.Response) {
 	if id == ui.ViewIDTabs {
-		return m.updateModel(routedMsg)
+		m.Update(routedMsg, rsp)
+		return
 	}
 
-	return m.handler.updateRouted(id, routedMsg)
+	m.handler.updateRouted(id, routedMsg, rsp)
 }
 
 // Keybind converts a [tview.KeyMsg] to an [Action].
@@ -72,23 +91,29 @@ func (m *Model) Keybind(msg tview.KeyMsg) tabs.Action {
 }
 
 // OnSelect is called when a new tab item is selected.
-func (m Model) OnSelect(index int) tview.Msg {
+func (m *Model) OnSelect(index int) tview.Msg {
 	return ui.ViewIDTabs.RouterMessage(selectedMsg{index})
 }
 
 // Init returns a command to run when the model starts, or nil.
-func (m Model) Init() tview.Cmd {
+func (m *Model) Init() tview.Cmd {
 	return m.handler.init()
 }
 
 // Update returns the model changed in response to a message and a command to run, or nil.
-func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(msg)
-	return m, cmd
+func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
+	switch ms := msg.(type) {
+	case ui.R[selectedMsg]:
+		m.handler.setActiveIndex(ms.Value.index)
+		m.rv.SetFocused(m.handler.activeID())
+
+	default:
+		m.handler.updateAll(msg, rsp)
+	}
 }
 
 // View returns the element that draws the model.
-func (m Model) View(focused bool) tview.Widget {
+func (m *Model) View(focused bool) tview.Widget {
 	bgStyle := theme.Current().Global
 
 	t := tabs.New(m.handler.labels...).
@@ -116,21 +141,7 @@ func (m Model) View(focused bool) tview.Widget {
 
 // SetViewKeybind focuses the view if the keybind matches.
 func (m *Model) SetViewKeybind(msg tview.KeyMsg) bool {
-	_, ok := m.handler.setActive(msg)
-
-	return ok
-}
-
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
-	switch ms := msg.(type) {
-	case ui.R[selectedMsg]:
-		m.handler.setActiveIndex(ms.Value.index)
-		m.rv.SetFocused(m.handler.activeID())
-
-	default:
-	}
-
-	return m.handler.updateAll(msg)
+	return m.handler.setActive(msg)
 }
 
 type selectedMsg struct {
@@ -138,6 +149,6 @@ type selectedMsg struct {
 }
 
 var (
-	_ ui.Model[Model] = Model{}
-	_ ui.View         = (*Model)(nil)
+	_ ui.Model = (*Model)(nil)
+	_ ui.View  = (*Model)(nil)
 )

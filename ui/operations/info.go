@@ -50,18 +50,10 @@ func (o *CreationInfo) getID() string {
 	return o.ct.id
 }
 
-func (o *CreationInfo) fromUpdateMsg(msg opUpdateMsg) {
-	o.ct.fromUpdateMsg(msg)
-}
-
 func (o *CreationInfo) updateHeader(header string) *CreationInfo {
 	o.ct.setHeader(header)
 
 	return o
-}
-
-func (o *CreationInfo) getContent() *card.Content {
-	return o.ct.cc
 }
 
 // RunningInfo holds the current state of the running operation.

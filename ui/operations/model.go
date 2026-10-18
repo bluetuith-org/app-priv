@@ -12,6 +12,7 @@ import (
 	"github.com/ayn2op/tview/scrollbar"
 	"github.com/ayn2op/tview/text"
 	"github.com/ayn2op/tview/viewport"
+	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
@@ -35,8 +36,8 @@ type Model struct {
 }
 
 // New returns a new operations view.
-func New(rv ui.RootView) Model {
-	return Model{
+func New(rv ui.RootView) *Model {
+	return &Model{
 		cursor:    0,
 		target:    0,
 		scrollBar: scrollbar.New(),
@@ -46,17 +47,17 @@ func New(rv ui.RootView) Model {
 }
 
 // Title returns the title of the tab section.
-func (m Model) Title() string {
+func (m *Model) Title() string {
 	return fmt.Sprintf("%s (%s)", m.ViewID().String(), ui.Kb().Operations.Show.KeyName)
 }
 
 // Icon returns the icon associated with the tab section.
-func (m Model) Icon() string {
+func (m *Model) Icon() string {
 	return theme.Icons().Operations.String()
 }
 
 // ViewID returns the view's ID.
-func (m Model) ViewID() ui.ViewID {
+func (m *Model) ViewID() ui.ViewID {
 	return ui.ViewIDOperations
 }
 
@@ -75,8 +76,18 @@ func (m *Model) Header() []text.Span {
 	)
 }
 
+// Status returns the content to print in the status bar area.
+func (m *Model) Status() []text.Span {
+	return nil
+}
+
+// ViewKeybind returns the keybinding used to focus the view.
+func (m *Model) ViewKeybind() keybindings.Keybinding {
+	return ui.Kb().Operations.Show
+}
+
 // ListKeybinds implements keybindings for the list.
-func (m Model) ListKeybinds(msg tview.KeyMsg) list.Action {
+func (m *Model) ListKeybinds(msg tview.KeyMsg) list.Action {
 	switch {
 	case ui.Kb().NavigateUp.Matches(msg):
 		return list.ActionSelectUp
@@ -89,7 +100,7 @@ func (m Model) ListKeybinds(msg tview.KeyMsg) list.Action {
 }
 
 // ViewportKeybinds implements keybindings for the viewport.
-func (m Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
+func (m *Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 	switch {
 	case ui.Kb().NavigateTop.Matches(msg):
 		return viewport.ActionTop
@@ -102,33 +113,67 @@ func (m Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 }
 
 // OnListChange processes a change in the list and returns a message.
-func (m Model) OnListChange(cursor int) tview.Msg {
+func (m *Model) OnListChange(cursor int) tview.Msg {
 	return m.ViewID().RouterMessage(listChg(cursor))
 }
 
 // OnViewportChange processes a change in the viewport and returns a message.
-func (m Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
+func (m *Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
 	return m.ViewID().RouterMessage(scrollMsg{change: *c})
 }
 
 // OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
-func (m Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
+func (m *Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
 	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
 }
 
 // Init returns a command to run when the model starts, or nil.
-func (m Model) Init() tview.Cmd {
+func (m *Model) Init() tview.Cmd {
 	return nil
 }
 
 // Update receives messages when this model has focus.
-func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
-	cmd := m.updateModel(msg)
-	return m, cmd
+func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
+	switch ms := msg.(type) {
+	case ui.R[listChg]:
+		m.setCursor(int(ms.Value))
+		m.rv.SetFocused(m.ViewID())
+
+	case ui.R[scrollMsg]:
+		m.scrollState = viewport.ScrollState(ms.Value.change)
+		if ms.Value.msg != nil {
+			m.Update(ms.Value.msg, rsp)
+		}
+
+	case ui.R[CreateMsg]:
+		info, action, err := m.createNewOperation(ms.Value)
+		if err != nil {
+			return
+		}
+
+		rsp.PushCmd(func() tview.Msg {
+			defer m.deleteOperationCmd(info.id)
+			return action(info)
+		})
+
+	case ui.R[opUpdateMsg]:
+		m.processUpdateMsg(ms.Value)
+
+	case ui.R[opDeleteMsg]:
+		m.deleteOperation(ms.Value.id)
+
+	case tview.KeyMsg:
+		switch {
+		case ui.Kb().Operations.ClearAll.Matches(ms):
+			m.clearOperations()
+
+		case ui.Kb().Operations.Cancel.Matches(ms):
+		}
+	}
 }
 
 // View draws this model onto the screen.
-func (m Model) View(focused bool) tview.Widget {
+func (m *Model) View(focused bool) tview.Widget {
 	ls := list.New(m.cursor, len(m.ord), func(index int) tview.Widget {
 		info := m.ord[index]
 		style := theme.Current().Global
@@ -170,46 +215,6 @@ func (m *Model) setCursor(index int) {
 	}
 
 	m.cursor = max(index, -1)
-}
-
-func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
-	switch ms := msg.(type) {
-	case ui.R[listChg]:
-		m.setCursor(int(ms.Value))
-		m.rv.SetFocused(m.ViewID())
-
-	case ui.R[scrollMsg]:
-		m.scrollState = viewport.ScrollState(ms.Value.change)
-		if ms.Value.msg != nil {
-			return m.updateModel(ms.Value.msg)
-		}
-
-	case ui.R[CreateMsg]:
-		info, action, err := m.createNewOperation(ms.Value)
-		if err != nil {
-			return nil
-		}
-
-		return tview.Sequence(func() tview.Msg {
-			return action(info)
-		}, m.deleteOperationCmd(info.id))
-
-	case ui.R[opUpdateMsg]:
-		m.processUpdateMsg(ms.Value)
-
-	case ui.R[opDeleteMsg]:
-		m.deleteOperation(ms.Value.id)
-
-	case tview.KeyMsg:
-		switch {
-		case ui.Kb().Operations.ClearAll.Matches(ms):
-			m.clearOperations()
-
-		case ui.Kb().Operations.Cancel.Matches(ms):
-		}
-	}
-
-	return nil
 }
 
 func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error) {
@@ -272,8 +277,8 @@ type (
 )
 
 var (
-	_ ui.Model[Model] = Model{}
-	_ ui.TabSection   = Model{}
+	_ ui.Model      = (*Model)(nil)
+	_ ui.TabSection = (*Model)(nil)
 )
 
 var (

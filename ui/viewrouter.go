@@ -3,7 +3,6 @@ package ui
 import (
 	"time"
 
-	"github.com/ayn2op/tview"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -69,9 +68,6 @@ type Router interface {
 
 	// ViewID returns the view's ID that the message has to be routed to.
 	ViewID() ViewID
-
-	// SendRoutedMsg prefixes the message with the destination view's [ViewID], and sends the message.
-	SendRoutedMsg(rv RootView) tview.Cmd
 }
 
 // RouterMsg describes a message to be routed to a [View].
@@ -99,11 +95,6 @@ func (r *RouterMsg[T]) IsValid() bool {
 // ViewID returns the view's ID that the message has to be routed to.
 func (r *RouterMsg[T]) ViewID() ViewID {
 	return r.ID
-}
-
-// SendRoutedMsg prefixes the message with the destination view's [ViewID], and sends the message.
-func (r *RouterMsg[T]) SendRoutedMsg(rv RootView) tview.Cmd {
-	return rv.SendRoutedUpdateMsg(r)
 }
 
 // When implements [tcell.Event].

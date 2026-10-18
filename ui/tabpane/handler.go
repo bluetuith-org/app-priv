@@ -2,7 +2,6 @@ package tabpane
 
 import (
 	"github.com/ayn2op/tview"
-	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/logs"
@@ -12,18 +11,15 @@ import (
 type viewHandler struct {
 	activeIndex int
 
-	views  []ui.ViewID
+	views  []vm
 	labels []string
-
-	infoModel       info.Model
-	operationsModel operations.Model
-	logsModel       logs.Model
 
 	rv ui.RootView
 }
 
 type vm interface {
 	ui.View
+	ui.Model
 	ui.TabSection
 }
 
@@ -32,152 +28,82 @@ func newHandler(rv ui.RootView) *viewHandler {
 		rv: rv,
 	}
 
-	h.operationsModel = operations.New(rv)
-	h.addModel(h.operationsModel)
-
-	h.logsModel = logs.New(rv)
-	h.addModel(h.logsModel)
-
-	h.infoModel = info.New(rv)
-	h.addModel(h.infoModel)
+	h.addModel(operations.New(rv))
+	h.addModel(logs.New(rv))
+	h.addModel(info.New(rv))
 
 	return h
 }
 
 func (h *viewHandler) addModel[T vm](v T) {
-	h.views = append(h.views, v.ViewID())
+	h.views = append(h.views, v)
 
 	icon, title := v.Icon(), v.Title()
 	h.labels = append(h.labels, icon+" "+title)
 }
 
 func (h *viewHandler) init() tview.Cmd {
-	return tview.Batch(
-		h.infoModel.Init(),
-		h.operationsModel.Init(),
-		h.logsModel.Init(),
-	)
-}
-
-func (h *viewHandler) update(id ui.ViewID, msg tview.Msg) tview.Cmd {
-	var cmd tview.Cmd
-
-	switch id {
-	case ui.ViewIDInfo:
-		h.infoModel, cmd = h.infoModel.Update(msg)
-
-	case ui.ViewIDOperations:
-		h.operationsModel, cmd = h.operationsModel.Update(msg)
-
-	case ui.ViewIDLog:
-		h.logsModel, cmd = h.logsModel.Update(msg)
-
-	default:
+	r := ui.NewResponse()
+	for _, views := range h.views {
+		r.PushCmd(views.Init())
 	}
 
-	return cmd
+	return r.Cmds()
 }
 
-func (h *viewHandler) header() [][]text.Span {
-	var lines [][]text.Span
+func (h *viewHandler) update(id ui.ViewID, msg tview.Msg, rsp *ui.Response) {
+	for _, v := range h.views {
+		if v.ViewID() != id {
+			continue
+		}
 
-	if op := h.operationsModel.Header(); op != nil {
-		lines = append(lines, op)
+		v.Update(msg, rsp)
+		return
 	}
-
-	return lines
-}
-
-func (h *viewHandler) status() []text.Span {
-	return h.logsModel.StatusBar()
 }
 
 func (h *viewHandler) activeID() ui.ViewID {
-	return h.views[h.activeIndex]
+	return h.views[h.activeIndex].ViewID()
 }
 
 func (h *viewHandler) setActiveIndex(idx int) {
 	h.activeIndex = idx
 }
 
-func (h *viewHandler) setActive(msg tview.KeyMsg) (tview.Cmd, bool) {
+func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
 	var id ui.ViewID
 
-	switch {
-	case ui.Kb().Information.Show.Matches(msg):
-		id = ui.ViewIDInfo
-
-	case ui.Kb().Operations.Show.Matches(msg):
-		id = ui.ViewIDOperations
-
-	case ui.Kb().Transfers.Show.Matches(msg):
-		id = ui.ViewIDTransfers
-
-	case ui.Kb().Log.Show.Matches(msg):
-		id = ui.ViewIDLog
-
-	default:
-		return nil, false
-	}
-
 	idx := -1
-	for i, vid := range h.views {
-		if vid == id {
-			idx = i
-			break
+	for i, view := range h.views {
+		if !view.ViewKeybind().Matches(msg) {
+			continue
 		}
-	}
 
+		idx = i
+		id = view.ViewID()
+
+		break
+	}
 	if idx < 0 {
-		return nil, false
+		return false
 	}
 
 	h.activeIndex = idx
 	h.rv.SetFocused(id)
 
-	return nil, true
+	return true
 }
 
 func (h *viewHandler) activeContent(focused bool) tview.Widget {
-	id := h.views[h.activeIndex]
-
-	switch id {
-	case ui.ViewIDInfo:
-		return h.infoModel.View(focused)
-
-	case ui.ViewIDOperations:
-		return h.operationsModel.View(focused)
-
-	case ui.ViewIDLog:
-		return h.logsModel.View(focused)
-
-	default:
-	}
-
-	return nil
+	return h.views[h.activeIndex].View(focused)
 }
 
-func (h *viewHandler) updateRouted(id ui.ViewID, msg tview.Msg) tview.Cmd {
-	return h.update(id, msg)
+func (h *viewHandler) updateRouted(id ui.ViewID, msg tview.Msg, rsp *ui.Response) {
+	h.update(id, msg, rsp)
 }
 
-func (h *viewHandler) updateAll(msg tview.Msg) tview.Cmd {
-	var cmds []tview.Cmd
-
-	for _, id := range h.views {
-		cmd := h.update(id, msg)
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
+func (h *viewHandler) updateAll(msg tview.Msg, rsp *ui.Response) {
+	for _, view := range h.views {
+		view.Update(msg, rsp)
 	}
-
-	if cmds == nil {
-		return nil
-	}
-
-	if len(cmds) == 1 {
-		return cmds[0]
-	}
-
-	return tview.Batch(cmds...)
 }

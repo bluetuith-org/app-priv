@@ -11,7 +11,7 @@ import (
 
 // Application represents an application.
 type Application struct {
-	app *tview.Application[root.Model]
+	app *tview.Application[*root.Model]
 
 	session  bluetooth.Session
 	features *appfeatures.FeatureSet

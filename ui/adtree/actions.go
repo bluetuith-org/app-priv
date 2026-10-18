@@ -92,18 +92,23 @@ func actionHandleKeyMsg(p tview.KeyMsg, node *ctree.Node) (ui.Router, bool) {
 		return ui.EmptyRouterMsg(), false
 	}
 
-	return acStateToOpMsg(result.id, result.state), true
+	msg, ok := acStateToOpMsg(result.id, result.state)
+	if !ok {
+		return ui.EmptyRouterMsg(), false
+	}
+
+	return msg, true
 }
 
-func acStateToOpMsg(id string, state *adActionState) ui.Router {
+func acStateToOpMsg(id string, state *adActionState) (ui.Router, bool) {
 	if state == nil || id == "" {
-		return ui.EmptyRouterMsg()
+		return ui.EmptyRouterMsg(), false
 	}
 
 	createInfo, opFunc := state.invokeAction(state)
 	createInfo.UpdateID(id)
 
-	return operations.MsgCreate(createInfo, opFunc)
+	return operations.MsgCreate(createInfo, opFunc), true
 }
 
 // actionKeyIterResult holds the action-key iteration result.

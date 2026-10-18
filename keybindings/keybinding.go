@@ -26,7 +26,7 @@ func newKeybinding(id KeyID, keyCombo TcellKey, keyName string) Keybinding {
 }
 
 // Matches returns if the keybinding matches the [tea.KeyPressMsg].
-func (k *Keybinding) Matches(p tview.KeyMsg) bool {
+func (k Keybinding) Matches(p tview.KeyMsg) bool {
 	return p.Key() == k.Key && p.Str() == k.Str && p.Modifiers() == k.Mod
 }
 
