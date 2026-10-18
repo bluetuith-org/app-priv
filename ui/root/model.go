@@ -1,7 +1,6 @@
 package root
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ayn2op/tview"
@@ -13,6 +12,7 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui/adtree"
 	"github.com/bluetuith-org/bluetuith/ui/tabpane"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
+	"github.com/gdamore/tcell/v3"
 )
 
 // Model holds and renders a set of views for the application.
@@ -24,24 +24,17 @@ type Model struct {
 	adTreeModel adtree.Model
 	tabsModel   tabpane.Model
 
-	ctx     context.Context
-	cancel  context.CancelFunc
-	msgChan chan tview.Msg
-
 	state *focusState
+	ev    *evState
 }
 
 // New returns a new root model.
 func New(binder ui.AppBinder) Model {
-	ctx, cancel := context.WithCancel(context.Background())
-
 	m := Model{
 		AppBinder:     binder,
 		headerContent: fmt.Sprintf("bluetuith %s (%s)", binder.Configuration().Version, binder.Configuration().Revision),
 
-		ctx:     ctx,
-		cancel:  cancel,
-		msgChan: make(chan tview.Msg),
+		ev: newEvState(binder.Screen()),
 	}
 
 	m.adTreeModel = adtree.New(&m)
@@ -55,7 +48,7 @@ func New(binder ui.AppBinder) Model {
 func (m Model) Init() tview.Cmd {
 	ui.StartLogHandler()
 
-	return tview.Batch(m.listenForMsg(), m.adTreeModel.Init(), m.tabsModel.Init())
+	return tview.Batch(m.adTreeModel.Init(), m.tabsModel.Init())
 }
 
 // Update receives messages when this model has focus.
@@ -66,7 +59,7 @@ func (m Model) Update(msg tview.Msg) (Model, tview.Cmd) {
 
 // View draws this model onto the screen.
 func (m Model) View() tview.Widget {
-	panelFocused := m.state.Focused() != ui.ViewIDAdTree
+	panelFocused := m.PanelFocused()
 
 	header := stext.New().
 		Background(theme.Current().App.TitleBar).
@@ -132,11 +125,8 @@ func (m *Model) PanelFocused() bool {
 }
 
 // SendMsg sends a message to the program.
-func (m *Model) SendMsg(msg tview.Msg) {
-	select {
-	case <-m.ctx.Done():
-	case m.msgChan <- msg:
-	}
+func (m *Model) SendMsg(msg tcell.Event) {
+	m.ev.sendMsg(msg)
 }
 
 // SendRoutedUpdateMsg routes the message to the specified view.
@@ -172,9 +162,6 @@ func (m *Model) updateModel(msg tview.Msg) tview.Cmd {
 		}
 
 		return m.routeMessageToView(m.Focused(), ms)
-
-	case externalMsg:
-		return tview.Batch(m.updateModel(ms.msg), m.listenForMsg())
 
 	case ui.Router:
 		if ms == nil || !ms.IsValid() {
@@ -215,21 +202,10 @@ func (m *Model) routeMessageToView(id ui.ViewID, routedMsg tview.Msg) tview.Cmd 
 	return m.tabsModel.HandleRouterMsg(id, routedMsg)
 }
 
-type externalMsg struct {
-	msg tview.Msg
-}
-
-func (m *Model) listenForMsg() tview.Cmd {
-	return func() tview.Msg {
-		return externalMsg{<-m.msgChan}
-	}
-}
-
 func (m *Model) quitCmd() tview.Cmd {
-	return tview.Batch(func() tview.Msg {
-		m.cancel()
-		return nil
-	}, tview.Quit())
+	m.ev.close()
+
+	return tview.Quit()
 }
 
 var (

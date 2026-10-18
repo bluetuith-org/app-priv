@@ -5,6 +5,7 @@ import (
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/config"
+	"github.com/gdamore/tcell/v3"
 )
 
 // AppBinder represents an interface to interact with the root application itself.
@@ -17,6 +18,8 @@ type AppBinder interface {
 
 	// Configuration returns the app's configuration.
 	Configuration() *config.Config
+
+	Screen() tcell.Screen
 }
 
 // View represents a single View.
@@ -53,7 +56,7 @@ type RootView interface {
 	PanelFocused() bool
 
 	// SendMsg sends a message to the program.
-	SendMsg(msg tview.Msg)
+	SendMsg(msg tcell.Event)
 
 	// SendRoutedUpdateMsg routes the message to the specified view.
 	// Should only be called from the model's [Model.Update] function.
