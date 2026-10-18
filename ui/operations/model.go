@@ -3,6 +3,7 @@ package operations
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 
@@ -152,15 +153,11 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 		}
 
 		rsp.PushCmd(func() tview.Msg {
-			defer m.deleteOperationCmd(info.id)
 			return action(info)
 		})
 
 	case ui.R[opUpdateMsg]:
 		m.processUpdateMsg(ms.Value)
-
-	case ui.R[opDeleteMsg]:
-		m.deleteOperation(ms.Value.id)
 
 	case tview.KeyMsg:
 		switch {
@@ -248,6 +245,9 @@ func (m *Model) processUpdateMsg(msg opUpdateMsg) bool {
 	}
 
 	info.fromUpdateMsg(msg)
+	if info.stage != operationInProgress {
+		m.deleteOperation(info.id)
+	}
 
 	return true
 }
@@ -257,14 +257,13 @@ func (m *Model) deleteOperation(id string) {
 }
 
 func (m *Model) clearOperations() {
-	clear(m.run)
-	m.ord = nil
-}
+	maps.DeleteFunc(m.run, func(_ string, v *RunningInfo) bool {
+		return v.stage != operationInProgress
+	})
 
-func (m *Model) deleteOperationCmd(id string) tview.Cmd {
-	return func() tview.Msg {
-		return msgOpDelete(id)
-	}
+	m.ord = slices.DeleteFunc(m.ord, func(r *RunningInfo) bool {
+		return r.stage != operationInProgress
+	})
 }
 
 type (
