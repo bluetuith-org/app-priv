@@ -278,7 +278,7 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 
 		markerStyle := w.MarkerStyle(node)
 		textX := current.tx
-		textX += tview.Print(screen, w.marker(node), x+textX, y, width-textX, tview.AlignmentLeft, markerStyle)
+		textX += tview.Print(screen, w.marker(node), x+textX, y, width-textX, tview.HorizontalAlignmentLeft, markerStyle)
 		for span, style := range w.StyledLabels(node, index == v.current) {
 			if textX >= width {
 				break
@@ -286,7 +286,7 @@ func (w Widget) Draw(screen tview.Screen, area tview.Rectangle) {
 			if style == (tcell.Style{}) {
 				style = span.Style
 			}
-			textX += tview.Print(screen, span.Text, x+textX, y, width-textX, tview.AlignmentLeft, style)
+			textX += tview.Print(screen, span.Text, x+textX, y, width-textX, tview.HorizontalAlignmentLeft, style)
 		}
 	}
 }

@@ -11,7 +11,7 @@ import (
 type Widget struct {
 	cr, cl        []text.Span
 	width, height layout.Length
-	align         tview.Alignment
+	align         tview.HorizontalAlignment
 	bgStyle       tcell.Style
 }
 
@@ -26,12 +26,12 @@ func New() Widget {
 }
 
 // Push pushes a line of content with alignment.
-func (w Widget) Push(line []text.Span, align tview.Alignment) Widget {
+func (w Widget) Push(line []text.Span, align tview.HorizontalAlignment) Widget {
 	switch align {
-	case tview.AlignmentLeft:
+	case tview.HorizontalAlignmentLeft:
 		w.cl = append(w.cl, line...)
 
-	case tview.AlignmentRight:
+	case tview.HorizontalAlignmentRight:
 		w.cr = append(w.cr, line...)
 	}
 
@@ -39,12 +39,12 @@ func (w Widget) Push(line []text.Span, align tview.Alignment) Widget {
 }
 
 // PushSpace appends a space between segments.
-func (w Widget) PushSpace(align tview.Alignment) Widget {
+func (w Widget) PushSpace(align tview.HorizontalAlignment) Widget {
 	switch align {
-	case tview.AlignmentLeft:
+	case tview.HorizontalAlignmentLeft:
 		w.cl = append(w.cl, NewSpan(" ", w.bgStyle))
 
-	case tview.AlignmentRight:
+	case tview.HorizontalAlignmentRight:
 		w.cr = append(w.cr, NewSpan(" ", w.bgStyle))
 	}
 

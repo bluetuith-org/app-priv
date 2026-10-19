@@ -89,12 +89,11 @@ func (m *Model) View(focused bool) tview.Widget {
 		OnChildMsg(m.OnViewportChildMsg)
 
 	bx := box.New(vp).
-		TitleStyle(theme.Current().Log.FollowIndicator).
-		TitleAlignment(tview.AlignmentRight).
+		TitleAlignment(tview.HorizontalAlignmentRight).
 		Background(theme.Current().Global.GetBackground())
 
 	if m.follow {
-		bx = bx.Title("- Following -")
+		bx = bx.Title(text.New("- Following -").Style(theme.Current().Log.FollowIndicator))
 	}
 
 	return bx

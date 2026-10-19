@@ -77,21 +77,21 @@ func (m *Model) View() tview.Widget {
 
 	header := stext.New().
 		Background(theme.Current().App.TitleBar).
-		PushSpace(tview.AlignmentLeft).
-		Push(m.adTreeModel.Header(), tview.AlignmentLeft).
-		PushSpace(tview.AlignmentLeft)
+		PushSpace(tview.HorizontalAlignmentLeft).
+		Push(m.adTreeModel.Header(), tview.HorizontalAlignmentLeft).
+		PushSpace(tview.HorizontalAlignmentLeft)
 
 	for line := range m.tabsModel.Header() {
-		header = header.Push(line, tview.AlignmentLeft).PushSpace(tview.AlignmentLeft)
+		header = header.Push(line, tview.HorizontalAlignmentLeft).PushSpace(tview.HorizontalAlignmentLeft)
 	}
 
 	header = header.
 		Push(stext.NewLine(
 			stext.NewSpan(m.headerContent, theme.Current().App.TitleBar),
 		),
-			tview.AlignmentRight,
+			tview.HorizontalAlignmentRight,
 		).
-		PushSpace(tview.AlignmentRight)
+		PushSpace(tview.HorizontalAlignmentRight)
 
 	cvStyle := theme.Current().App.CurrentViewName
 	line := stext.NewLine(
@@ -107,12 +107,12 @@ func (m *Model) View() tview.Widget {
 		Background(theme.Current().StatusBar.Style)
 
 	for line := range m.tabsModel.Status() {
-		status = status.Push(line, tview.AlignmentLeft)
+		status = status.Push(line, tview.HorizontalAlignmentLeft)
 	}
 
 	status = status.
-		PushSpace(tview.AlignmentLeft).
-		Push(line, tview.AlignmentRight)
+		PushSpace(tview.HorizontalAlignmentLeft).
+		Push(line, tview.HorizontalAlignmentRight)
 
 	vflex := row.New(
 		m.adTreeModel.View(!panelFocused),

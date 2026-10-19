@@ -6,6 +6,7 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/column"
+	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/tabs"
 	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
@@ -52,13 +53,14 @@ func (m *Model) View(focused bool) tview.Widget {
 		Active(m.handler.activeIndex).
 		Style(theme.Current().TabsPane.Tab).
 		ActiveStyle(theme.Current().TabsPane.FocusedTab).
-		Alignment(tview.AlignmentCenter).
+		Alignment(tview.HorizontalAlignmentCenter).
 		Separator(" ").
 		Padding(" ", " ").
 		Arrows(theme.Icons().ArrowLeft.String(), theme.Icons().ArrowRight.String()).
 		ArrowStyle(theme.Current().TabsPane.ArrowStyle).
 		ClickableArrows(true).
 		Wrap(true).
+		Width(layout.Fill).
 		Keybind(m.Keybind).
 		OnSelect(m.OnSelect)
 
