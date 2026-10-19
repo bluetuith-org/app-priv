@@ -68,5 +68,5 @@ func (w widget) ListKeybinds(msg tview.KeyMsg) list.Action {
 
 // OnChange implements a handler that returns a message when the list's state is changed.
 func (w widget) OnChange(index int) tview.Msg {
-	return ui.ViewIDLog.RouterMessage(listChg(index))
+	return ui.ViewIDLog.R(listChg(index))
 }

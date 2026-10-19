@@ -188,12 +188,12 @@ func (m *Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
 
 // OnChange processes a change in the tree's state and returns a [tview.Msg]
 func (m *Model) OnChange(chg *ctree.Node) tview.Msg {
-	return m.ViewID().RouterMessage(selectionChange(chg))
+	return m.ViewID().R(selectionChange(chg))
 }
 
 // OnSelect returns a message after processing the selected node.
 func (m *Model) OnSelect(node *ctree.Node) tview.Msg {
-	return m.ViewID().RouterMessage(selectedMsg{node})
+	return m.ViewID().R(selectedMsg{node})
 }
 
 // ViewportKeybinds implements keybindings for the viewport.
@@ -211,12 +211,12 @@ func (m *Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 
 // OnViewportChange processes a change in the viewport and returns a message.
 func (m *Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
-	return m.ViewID().RouterMessage(scrollMsg{change: *c})
+	return m.ViewID().R(scrollMsg{change: *c})
 }
 
 // OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
 func (m *Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
-	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
+	return m.ViewID().R(scrollMsg{change: *c, msg: msg})
 }
 
 // MarkerStyle returns the styles for the markers.
@@ -283,7 +283,7 @@ func (m *Model) populate() tview.Msg {
 		root.addAdapter(adapter, devices)
 	}
 
-	return ui.ViewIDAdTree.RouterMessage(rootNodeMsg{root})
+	return ui.ViewIDAdTree.R(rootNodeMsg{root})
 }
 
 func (m *Model) dbHandler() ui.Router {
@@ -343,7 +343,7 @@ func (m *Model) dbTimer() {
 				return
 			}
 
-			m.rv.SendMsg(m.ViewID().RouterMessage(dbEvent{}))
+			m.rv.SendMsg(m.ViewID().R(dbEvent{}))
 		}
 	}
 }

@@ -144,17 +144,17 @@ func (m *Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 
 // OnListChange processes a change in the list and returns a message.
 func (m *Model) OnListChange(cursor int) tview.Msg {
-	return m.ViewID().RouterMessage(listChg(cursor))
+	return m.ViewID().R(listChg(cursor))
 }
 
 // OnViewportChange processes a change in the viewport and returns a message.
 func (m *Model) OnViewportChange(c *viewport.ScrollState) tview.Msg {
-	return m.ViewID().RouterMessage(scrollMsg{change: *c})
+	return m.ViewID().R(scrollMsg{change: *c})
 }
 
 // OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
 func (m *Model) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
-	return m.ViewID().RouterMessage(scrollMsg{change: *c, msg: msg})
+	return m.ViewID().R(scrollMsg{change: *c, msg: msg})
 }
 
 func (m *Model) setCursor(index int) {

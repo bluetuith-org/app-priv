@@ -138,7 +138,7 @@ func (m *Model) Keybind(msg tview.KeyMsg) tabs.Action {
 
 // OnSelect is called when a new tab item is selected.
 func (m *Model) OnSelect(index int) tview.Msg {
-	return ui.ViewIDTabs.RouterMessage(selectedMsg{index})
+	return ui.ViewIDTabs.R(selectedMsg{index})
 }
 
 // SetViewKeybind focuses the view if the keybind matches.

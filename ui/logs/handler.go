@@ -48,7 +48,7 @@ func (h *handler) Handle(_ context.Context, record slog.Record) error {
 		h.Unlock()
 	}
 
-	h.rv.SendMsg(ui.ViewIDLog.RouterMessage(newLogMsg{idx}))
+	h.rv.SendMsg(ui.ViewIDLog.R(newLogMsg{idx}))
 
 	return nil
 }

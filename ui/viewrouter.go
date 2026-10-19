@@ -25,8 +25,8 @@ func (v ViewID) IsValid() bool {
 	return v != ViewIDNone
 }
 
-// RouterMessage creates a router message for a [ViewID].
-func (v ViewID) RouterMessage[T any](t T) *RouterMsg[T] {
+// R creates a router message for a [ViewID].
+func (v ViewID) R[T any](t T) *RouterMsg[T] {
 	return NewRouterMsg(v, t)
 }
 
