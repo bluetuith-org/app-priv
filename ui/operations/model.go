@@ -46,6 +46,11 @@ func New(rv ui.RootView) *Model {
 	}
 }
 
+// ViewID returns the view's ID.
+func (m *Model) ViewID() ui.ViewID {
+	return ui.ViewIDOperations
+}
+
 // Init returns a command to run when the model starts, or nil.
 func (m *Model) Init() tview.Cmd {
 	return nil
@@ -117,11 +122,6 @@ func (m *Model) Title() string {
 // Icon returns the icon associated with the tab section.
 func (m *Model) Icon() string {
 	return theme.Icons().Operations.String()
-}
-
-// ViewID returns the view's ID.
-func (m *Model) ViewID() ui.ViewID {
-	return ui.ViewIDOperations
 }
 
 // Header returns the content to print in the title bar.
@@ -260,10 +260,7 @@ type (
 	}
 )
 
-var (
-	_ ui.Model      = (*Model)(nil)
-	_ ui.TabSection = (*Model)(nil)
-)
+var _ ui.TabSection = (*Model)(nil)
 
 var (
 	errOpAlreadyInProgress = errors.New("this operation is already in progress")

@@ -61,6 +61,8 @@ type RootView interface {
 // TabSection defines a section of the tabs widget where
 // the selected view is shown.
 type TabSection interface {
+	Model
+
 	// Title returns the title of the tab section.
 	Title() string
 

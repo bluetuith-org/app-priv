@@ -19,6 +19,11 @@ type Model struct {
 	rv ui.RootView
 }
 
+// ViewID returns the view's ID.
+func (m *Model) ViewID() ui.ViewID {
+	return ui.ViewIDInfo
+}
+
 // New returns a new information section.
 func New(rv ui.RootView) *Model {
 	return &Model{
@@ -69,11 +74,6 @@ func (m *Model) Icon() string {
 	return theme.Icons().Info.String()
 }
 
-// ViewID returns the view's ID.
-func (m *Model) ViewID() ui.ViewID {
-	return ui.ViewIDInfo
-}
-
 // Header returns the content to print in the title bar area.
 func (m *Model) Header() []text.Span {
 	return nil
@@ -91,7 +91,4 @@ func (m *Model) ViewKeybind() keybindings.Keybinding {
 
 type scrollMsg struct{}
 
-var (
-	_ ui.Model      = (*Model)(nil)
-	_ ui.TabSection = (*Model)(nil)
-)
+var _ ui.TabSection = (*Model)(nil)

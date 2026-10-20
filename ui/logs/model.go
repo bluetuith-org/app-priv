@@ -41,6 +41,11 @@ func New(rv ui.RootView) *Model {
 	}
 }
 
+// ViewID returns the view's ID.
+func (m *Model) ViewID() ui.ViewID {
+	return ui.ViewIDLog
+}
+
 // Init returns a command to run when the model starts, or nil.
 func (m *Model) Init() tview.Cmd {
 	return nil
@@ -97,11 +102,6 @@ func (m *Model) View(focused bool) tview.Widget {
 	}
 
 	return bx
-}
-
-// ViewID returns the view's ID.
-func (m *Model) ViewID() ui.ViewID {
-	return ui.ViewIDLog
 }
 
 // Title returns the title of the tab section.
@@ -186,7 +186,4 @@ type (
 	}
 )
 
-var (
-	_ ui.Model      = (*Model)(nil)
-	_ ui.TabSection = (*Model)(nil)
-)
+var _ ui.TabSection = (*Model)(nil)

@@ -35,6 +35,11 @@ type Model struct {
 	rv ui.RootView
 }
 
+// ViewID returns the view's ID.
+func (m *Model) ViewID() ui.ViewID {
+	return ui.ViewIDAdTree
+}
+
 // New returns a new adapter-device tree.
 func New(rv ui.RootView) *Model {
 	root := newRootNode(rv)
@@ -145,11 +150,6 @@ func (m *Model) View(focused bool) tview.Widget {
 	return box.New(vp).
 		Background(theme.Current().Global.GetBackground()).
 		Padding(2, 0, 2, 1)
-}
-
-// ViewID returns the view's ID.
-func (m *Model) ViewID() ui.ViewID {
-	return ui.ViewIDAdTree
 }
 
 // Header returns the content to print in the title bar.

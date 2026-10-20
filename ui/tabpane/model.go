@@ -28,6 +28,11 @@ func New(rv ui.RootView) *Model {
 	}
 }
 
+// ViewID returns the view's ID.
+func (m *Model) ViewID() ui.ViewID {
+	return ui.ViewIDTabs
+}
+
 // Init returns a command to run when the model starts, or nil.
 func (m *Model) Init() tview.Cmd {
 	return m.handler.init()
@@ -71,11 +76,6 @@ func (m *Model) View(focused bool) tview.Widget {
 	return box.New(column.New(t, content)).
 		Background(bgStyle.GetBackground()).
 		Padding(1, 0, 0, 0)
-}
-
-// ViewID returns the view's ID.
-func (m *Model) ViewID() ui.ViewID {
-	return ui.ViewIDTabs
 }
 
 // Header returns the content to print in the title bar.
