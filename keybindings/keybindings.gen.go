@@ -18,12 +18,15 @@ type Keybindings struct {
 	Suspend Keybinding
 	Quit    Keybinding
 
-	NavigateUp     Keybinding
-	NavigateDown   Keybinding
-	NavigateLeft   Keybinding
-	NavigateRight  Keybinding
-	NavigateTop    Keybinding
-	NavigateBottom Keybinding
+	NavigateUp    Keybinding
+	NavigateDown  Keybinding
+	NavigateLeft  Keybinding
+	NavigateRight Keybinding
+
+	ScrollTop    Keybinding
+	ScrollBottom Keybinding
+	ScrollLeft   Keybinding
+	ScrollRight  Keybinding
 
 	Adapter struct {
 		TogglePower        Keybinding
@@ -113,8 +116,10 @@ const (
 	KeyNavigateDown
 	KeyNavigateLeft
 	KeyNavigateRight
-	KeyNavigateTop
-	KeyNavigateBottom
+	KeyScrollTop
+	KeyScrollBottom
+	KeyScrollLeft
+	KeyScrollRight
 	KeyAdapterTogglePower
 	KeyAdapterToggleDiscoverable
 	KeyAdapterTogglePairable
@@ -193,11 +198,17 @@ func defaultConfig() *Keybindings {
 	k.NavigateRight = newKeybinding(
 		KeyNavigateRight, newTcellKey(tcell.Key(259), "", tcell.ModNone), "right",
 	)
-	k.NavigateTop = newKeybinding(
-		KeyNavigateTop, newTcellKey(tcell.Key(266), "", tcell.ModNone), "pgup",
+	k.ScrollTop = newKeybinding(
+		KeyScrollTop, newTcellKey(tcell.Key(266), "", tcell.ModNone), "pgup",
 	)
-	k.NavigateBottom = newKeybinding(
-		KeyNavigateBottom, newTcellKey(tcell.Key(267), "", tcell.ModNone), "pgdn",
+	k.ScrollBottom = newKeybinding(
+		KeyScrollBottom, newTcellKey(tcell.Key(267), "", tcell.ModNone), "pgdn",
+	)
+	k.ScrollLeft = newKeybinding(
+		KeyScrollLeft, newTcellKey(tcell.Key(260), "", tcell.ModShift), "shift+left",
+	)
+	k.ScrollRight = newKeybinding(
+		KeyScrollRight, newTcellKey(tcell.Key(259), "", tcell.ModShift), "shift+right",
 	)
 	k.Adapter.TogglePower = newKeybinding(
 		KeyAdapterTogglePower, newTcellKey(tcell.Key(256), "o", tcell.ModNone), "o",
@@ -337,7 +348,7 @@ func iterProperties(kb *Keybindings, cfg *Configuration) iter.Seq[parseKeybindin
 	}
 
 	return func(yield func(parseKeybindingInfo) bool) {
-		for i := range 53 {
+		for i := range 55 {
 			if !yield(getProperty(kb, cfg, i)) {
 				return
 			}
@@ -390,174 +401,182 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.NavigateRight
 
 	case 10:
-		p.kb = &kb.NavigateTop
-		p.cmpCfg = cfg.NavigateTop
+		p.kb = &kb.ScrollTop
+		p.cmpCfg = cfg.ScrollTop
 
 	case 11:
-		p.kb = &kb.NavigateBottom
-		p.cmpCfg = cfg.NavigateBottom
+		p.kb = &kb.ScrollBottom
+		p.cmpCfg = cfg.ScrollBottom
 
 	case 12:
+		p.kb = &kb.ScrollLeft
+		p.cmpCfg = cfg.ScrollLeft
+
+	case 13:
+		p.kb = &kb.ScrollRight
+		p.cmpCfg = cfg.ScrollRight
+
+	case 14:
 		p.kb = &kb.Adapter.TogglePower
 		p.cmpCfg = cfg.Adapter.TogglePower
 
-	case 13:
+	case 15:
 		p.kb = &kb.Adapter.ToggleDiscoverable
 		p.cmpCfg = cfg.Adapter.ToggleDiscoverable
 
-	case 14:
+	case 16:
 		p.kb = &kb.Adapter.TogglePairable
 		p.cmpCfg = cfg.Adapter.TogglePairable
 
-	case 15:
+	case 17:
 		p.kb = &kb.Adapter.ToggleScan
 		p.cmpCfg = cfg.Adapter.ToggleScan
 
-	case 16:
+	case 18:
 		p.kb = &kb.Device.ToggleConnection
 		p.cmpCfg = cfg.Device.ToggleConnection
 
-	case 17:
+	case 19:
 		p.kb = &kb.Device.TogglePairedState
 		p.cmpCfg = cfg.Device.TogglePairedState
 
-	case 18:
+	case 20:
 		p.kb = &kb.Device.Trust
 		p.cmpCfg = cfg.Device.Trust
 
-	case 19:
+	case 21:
 		p.kb = &kb.Device.SendFiles
 		p.cmpCfg = cfg.Device.SendFiles
 
-	case 20:
+	case 22:
 		p.kb = &kb.Device.NetworkOptions
 		p.cmpCfg = cfg.Device.NetworkOptions
 
-	case 21:
+	case 23:
 		p.kb = &kb.Device.AudioProfiles
 		p.cmpCfg = cfg.Device.AudioProfiles
 
-	case 22:
+	case 24:
 		p.kb = &kb.Device.Block
 		p.cmpCfg = cfg.Device.Block
 
-	case 23:
+	case 25:
 		p.kb = &kb.Filebrowser.CdForward
 		p.cmpCfg = cfg.Filebrowser.CdForward
 
-	case 24:
+	case 26:
 		p.kb = &kb.Filebrowser.CdBack
 		p.cmpCfg = cfg.Filebrowser.CdBack
 
-	case 25:
+	case 27:
 		p.kb = &kb.Filebrowser.SelectOne
 		p.cmpCfg = cfg.Filebrowser.SelectOne
 
-	case 26:
+	case 28:
 		p.kb = &kb.Filebrowser.SelectAll
 		p.cmpCfg = cfg.Filebrowser.SelectAll
 
-	case 27:
+	case 29:
 		p.kb = &kb.Filebrowser.InvertSelection
 		p.cmpCfg = cfg.Filebrowser.InvertSelection
 
-	case 28:
+	case 30:
 		p.kb = &kb.Filebrowser.ConfirmSelection
 		p.cmpCfg = cfg.Filebrowser.ConfirmSelection
 
-	case 29:
+	case 31:
 		p.kb = &kb.Filebrowser.Refresh
 		p.cmpCfg = cfg.Filebrowser.Refresh
 
-	case 30:
+	case 32:
 		p.kb = &kb.Filebrowser.ToggleHiddenFiles
 		p.cmpCfg = cfg.Filebrowser.ToggleHiddenFiles
 
-	case 31:
+	case 33:
 		p.kb = &kb.ADTree.ExpandOrSelect
 		p.cmpCfg = cfg.ADTree.ExpandOrSelect
 
-	case 32:
+	case 34:
 		p.kb = &kb.ADTree.TabPane
 		p.cmpCfg = cfg.ADTree.TabPane
 
-	case 33:
+	case 35:
 		p.kb = &kb.TabPane.Next
 		p.cmpCfg = cfg.TabPane.Next
 
-	case 34:
+	case 36:
 		p.kb = &kb.TabPane.Previous
 		p.cmpCfg = cfg.TabPane.Previous
 
-	case 35:
+	case 37:
 		p.kb = &kb.TabPane.ADTree
 		p.cmpCfg = cfg.TabPane.ADTree
 
-	case 36:
+	case 38:
 		p.kb = &kb.Information.Show
 		p.cmpCfg = cfg.Information.Show
 
-	case 37:
+	case 39:
 		p.kb = &kb.Operations.Show
 		p.cmpCfg = cfg.Operations.Show
 
-	case 38:
+	case 40:
 		p.kb = &kb.Operations.Cancel
 		p.cmpCfg = cfg.Operations.Cancel
 
-	case 39:
+	case 41:
 		p.kb = &kb.Operations.ClearAll
 		p.cmpCfg = cfg.Operations.ClearAll
 
-	case 40:
+	case 42:
 		p.kb = &kb.Transfers.Show
 		p.cmpCfg = cfg.Transfers.Show
 
-	case 41:
+	case 43:
 		p.kb = &kb.Transfers.Suspend
 		p.cmpCfg = cfg.Transfers.Suspend
 
-	case 42:
+	case 44:
 		p.kb = &kb.Transfers.Resume
 		p.cmpCfg = cfg.Transfers.Resume
 
-	case 43:
+	case 45:
 		p.kb = &kb.Transfers.Cancel
 		p.cmpCfg = cfg.Transfers.Cancel
 
-	case 44:
+	case 46:
 		p.kb = &kb.Log.Show
 		p.cmpCfg = cfg.Log.Show
 
-	case 45:
+	case 47:
 		p.kb = &kb.Log.Follow
 		p.cmpCfg = cfg.Log.Follow
 
-	case 46:
+	case 48:
 		p.kb = &kb.Player.ToggleDisplay
 		p.cmpCfg = cfg.Player.ToggleDisplay
 
-	case 47:
+	case 49:
 		p.kb = &kb.Player.ToggleMediaPlaying
 		p.cmpCfg = cfg.Player.ToggleMediaPlaying
 
-	case 48:
+	case 50:
 		p.kb = &kb.Player.Next
 		p.cmpCfg = cfg.Player.Next
 
-	case 49:
+	case 51:
 		p.kb = &kb.Player.Previous
 		p.cmpCfg = cfg.Player.Previous
 
-	case 50:
+	case 52:
 		p.kb = &kb.Player.SeekForward
 		p.cmpCfg = cfg.Player.SeekForward
 
-	case 51:
+	case 53:
 		p.kb = &kb.Player.SeekBackward
 		p.cmpCfg = cfg.Player.SeekBackward
 
-	case 52:
+	case 54:
 		p.kb = &kb.Player.Stop
 		p.cmpCfg = cfg.Player.Stop
 

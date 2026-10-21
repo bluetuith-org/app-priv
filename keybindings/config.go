@@ -12,12 +12,15 @@ type Configuration struct {
 	Suspend string `keydef:"ctrl+z"`
 	Quit    string `keydef:"q"`
 
-	NavigateUp     string `keydef:"up"`
-	NavigateDown   string `keydef:"down"`
-	NavigateLeft   string `keydef:"left"`
-	NavigateRight  string `keydef:"right"`
-	NavigateTop    string `keydef:"pgup"`
-	NavigateBottom string `keydef:"pgdn"`
+	NavigateUp    string `keydef:"up"`
+	NavigateDown  string `keydef:"down"`
+	NavigateLeft  string `keydef:"left"`
+	NavigateRight string `keydef:"right"`
+
+	ScrollTop    string `keydef:"pgup"`
+	ScrollBottom string `keydef:"pgdn"`
+	ScrollLeft   string `keydef:"shift+left"`
+	ScrollRight  string `keydef:"shift+right"`
 
 	Adapter struct {
 		TogglePower        string `keydef:"o"`

@@ -143,7 +143,7 @@ func (m *Model) View(focused bool) tview.Widget {
 		ContentWidth(tree.RowsWidth).
 		Axes(layout.Axes{Width: true, Height: true}).
 		Focused(focused).
-		Keybind(m.ScrollKeybinds).
+		Keybind(m.ViewportKeybinds).
 		OnChange(m.OnViewportChange).
 		OnChildMsg(m.OnViewportChildMsg)
 
@@ -173,19 +173,6 @@ func (m *Model) Keybind(msg tview.KeyMsg) ctree.Action {
 	return ctree.ActionNone
 }
 
-// ScrollKeybinds processes a change in the viewport's state and returns a [viewport.Action].
-func (m *Model) ScrollKeybinds(msg tview.KeyMsg) viewport.Action {
-	switch {
-	case ui.Kb().NavigateTop.Matches(msg):
-		return viewport.ActionTop
-
-	case ui.Kb().NavigateBottom.Matches(msg):
-		return viewport.ActionBottom
-	}
-
-	return viewport.ActionNone
-}
-
 // OnChange processes a change in the tree's state and returns a [tview.Msg]
 func (m *Model) OnChange(chg *ctree.Node) tview.Msg {
 	return m.ViewID().R(selectionChange(chg))
@@ -199,11 +186,17 @@ func (m *Model) OnSelect(node *ctree.Node) tview.Msg {
 // ViewportKeybinds implements keybindings for the viewport.
 func (m *Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 	switch {
-	case ui.Kb().NavigateTop.Matches(msg):
+	case ui.Kb().ScrollTop.Matches(msg):
 		return viewport.ActionTop
 
-	case ui.Kb().NavigateBottom.Matches(msg):
+	case ui.Kb().ScrollBottom.Matches(msg):
 		return viewport.ActionBottom
+
+	case ui.Kb().ScrollLeft.Matches(msg):
+		return viewport.ActionLeft
+
+	case ui.Kb().ScrollRight.Matches(msg):
+		return viewport.ActionRight
 	}
 
 	return viewport.ActionNone

@@ -165,11 +165,17 @@ func (m *Model) ListKeybinds(msg tview.KeyMsg) list.Action {
 // ViewportKeybinds implements keybindings for the viewport.
 func (m *Model) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 	switch {
-	case ui.Kb().NavigateTop.Matches(msg):
+	case ui.Kb().ScrollTop.Matches(msg):
 		return viewport.ActionTop
 
-	case ui.Kb().NavigateBottom.Matches(msg):
+	case ui.Kb().ScrollBottom.Matches(msg):
 		return viewport.ActionBottom
+
+	case ui.Kb().ScrollLeft.Matches(msg):
+		return viewport.ActionLeft
+
+	case ui.Kb().ScrollRight.Matches(msg):
+		return viewport.ActionRight
 	}
 
 	return viewport.ActionNone
