@@ -111,9 +111,9 @@ func (a *adapterNode) StatusIcons() []text.Span {
 		Opt   optional.Optional[bool]
 		Style tcell.Style
 	}{
-		{" Scn ", a.adapter.Discovering, theme.Current().ADTree.Adapter.ScanningPill},
-		{" Dsc ", a.adapter.Discoverable, theme.Current().ADTree.Adapter.DiscoverablePill},
-		{" Pbl ", a.adapter.Pairable, theme.Current().ADTree.Adapter.PairablePill},
+		{" Sc ", a.adapter.Discovering, theme.Current().ADTree.Adapter.ScanningPill},
+		{" Ds ", a.adapter.Discoverable, theme.Current().ADTree.Adapter.DiscoverablePill},
+		{" Pb ", a.adapter.Pairable, theme.Current().ADTree.Adapter.PairablePill},
 	} {
 		if v, ok := state.Opt.Get(); !ok || !v {
 			continue
@@ -122,7 +122,7 @@ func (a *adapterNode) StatusIcons() []text.Span {
 		line = append(line, stext.NewSpan(state.Name, state.Style))
 	}
 
-	return ui.RenderMergedPill(line, theme.Current().Global.GetBackground())
+	return line
 }
 
 // PopulateActions populates all actions within a node of type [nodeTypeAction].

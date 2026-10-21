@@ -132,7 +132,7 @@ func (d *deviceNode) StatusIcons() []text.Span {
 		line = append(line, stext.NewSpan(state.Name, state.Style))
 	}
 
-	return ui.RenderMergedPill(line, theme.Current().Global.GetBackground())
+	return line
 }
 
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
