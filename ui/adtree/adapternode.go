@@ -38,8 +38,8 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	an.adNode = adapterNode
 	an.adapter = adapter
 
-	newActionsListNode(an.adNode).SubAdNode()
-	newDeviceListNode(adapterNode, devices).SubAdNode()
+	newActionsListNode(an.adNode)
+	newDeviceListNode(adapterNode, devices)
 
 	rootNode.AddChild(adapterNode.Node)
 
@@ -160,20 +160,20 @@ func (a *adapterNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdat
 	state := actionNode.actionState
 	updateMsg.updateState(actionNode.ID(), state)
 
-	var text string
+	var txt string
 
 	switch state.key {
 	case ui.Kb().Adapter.TogglePower:
-		text = "Power"
+		txt = "Power"
 
 	case ui.Kb().Adapter.ToggleDiscoverable:
-		text = "Discoverable"
+		txt = "Discoverable"
 
 	case ui.Kb().Adapter.TogglePairable:
-		text = "Pairable"
+		txt = "Pairable"
 
 	case ui.Kb().Adapter.ToggleScan:
-		text = "Device Scanning"
+		txt = "Device Scanning"
 
 	default:
 		return
@@ -184,10 +184,10 @@ func (a *adapterNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdat
 		actionText = "On"
 	}
 
-	displayName := useStringBuffer(len(text)+len(actionText)+10, func(b *strings.Builder) {
+	displayName := useStringBuffer(len(txt)+len(actionText)+10, func(b *strings.Builder) {
 		b.WriteString("Switch ")
 
-		b.WriteString(text)
+		b.WriteString(txt)
 		b.WriteString(" ")
 
 		b.WriteString(actionText)
