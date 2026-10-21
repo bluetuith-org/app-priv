@@ -10,15 +10,15 @@ type listContent struct {
 	cursor  int
 	focused bool
 
-	m *Model
+	ord []*RunningInfo
 }
 
-func newListContent(m *Model, cursor int, focused bool) listContent {
-	return listContent{cursor, focused, m}
+func newListContent(ord []*RunningInfo, cursor int, focused bool) listContent {
+	return listContent{cursor, focused, ord}
 }
 
 func (l *listContent) Items(index int) tview.Widget {
-	info := l.m.ord[index]
+	info := l.ord[index]
 	style := theme.Current().Global
 
 	borders := tview.BorderSetRound()

@@ -94,7 +94,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 
 // View draws this model onto the screen.
 func (m *Model) View(focused bool) tview.Widget {
-	content := newListContent(m, m.cursor, focused)
+	content := newListContent(m.ord, m.cursor, focused)
 
 	ls := list.New(m.cursor, len(m.ord), content.Items).
 		Focused(focused).

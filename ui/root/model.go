@@ -24,8 +24,8 @@ type Model struct {
 	adTreeModel *adtree.Model
 	tabsModel   *tabpane.Model
 
-	state *focusState
-	ev    *evState
+	focused ui.ViewID
+	ev      *evState
 }
 
 // New returns a new root model.
@@ -39,7 +39,7 @@ func New(binder ui.AppBinder) *Model {
 
 	m.adTreeModel = adtree.New(m)
 	m.tabsModel = tabpane.New(m)
-	m.state = newFocusState(ui.ViewIDAdTree)
+	m.focused = ui.ViewIDAdTree
 
 	return m
 }
@@ -97,7 +97,7 @@ func (m *Model) View() tview.Widget {
 	line := stext.NewLine(
 		stext.NewSpan(" ", cvStyle),
 		stext.NewSpan(
-			m.state.Focused().String(),
+			m.focused.String(),
 			cvStyle,
 		),
 		stext.NewSpan(" ", cvStyle),
@@ -130,12 +130,12 @@ func (m *Model) View() tview.Widget {
 
 // Focused returns the currently focused view.
 func (m *Model) Focused() ui.ViewID {
-	return m.state.Focused()
+	return m.focused
 }
 
 // SetFocused stores the currently focused view.
 func (m *Model) SetFocused(id ui.ViewID) {
-	m.state.SetFocus(id)
+	m.focused = id
 }
 
 // PanelFocused returns whether the panel is focused.
@@ -161,12 +161,12 @@ func (m *Model) updateModel(msg tview.Msg, rsp *ui.Response) {
 
 		case ui.Kb().ADTree.TabPane.Matches(ms):
 			if m.Focused() == ui.ViewIDAdTree {
-				m.state.SetFocus(m.tabsModel.GetActiveID())
+				m.focused = m.tabsModel.GetActiveID()
 			}
 
 		case ui.Kb().TabPane.ADTree.Matches(ms):
 			if m.Focused() != ui.ViewIDAdTree {
-				m.state.SetFocus(ui.ViewIDAdTree)
+				m.focused = ui.ViewIDAdTree
 			}
 
 		default:
