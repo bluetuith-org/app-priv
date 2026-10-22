@@ -5,11 +5,17 @@ import (
 	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui"
+	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/gdamore/tcell/v3"
 )
 
 // adNoder describes an interface to get information from nodes and update node states.
 type adNoder interface {
+	info.Content
+
+	// AdNode returns the base node data.
+	AdNode() *adNode
+
 	// HandleKeys handles a [tview.KeyMsg] and returns a message.
 	HandleKeys(p tview.KeyMsg) (ui.Router, bool)
 
@@ -22,12 +28,6 @@ type adNoder interface {
 	// RootID returns the root ID for the subnodes of an adapter or device node.
 	RootID() string
 
-	// SubnodePosition returns the position of the subnode within the parent node.
-	SubnodePosition(relpos adSubNodePos) (int, bool)
-
-	// Information returns a message to print adapter/device information.
-	Information() (string, []text.Span)
-
 	// PopulateActions populates all actions within a node of type [nodeTypeAction].
 	PopulateActions()
 
@@ -35,7 +35,7 @@ type adNoder interface {
 	Refresh()
 
 	// UpdateActionNode updates the node of type [nodeTypeAction] with the message.
-	UpdateActionNode(actionNode *adNode, updateMsg actionUpdateMsg)
+	UpdateActionNode(actionNode *acNode, updateMsg actionUpdateMsg)
 
 	// SetAdapterEventData sets the adapter event data for the node.
 	SetAdapterEventData(ev bluetooth.AdapterEventData)
@@ -45,6 +45,11 @@ type adNoder interface {
 }
 
 type emptyNoder struct{}
+
+// AdNode returns the base node data.
+func (e *emptyNoder) AdNode() *adNode {
+	return nil
+}
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
 func (e *emptyNoder) HandleKeys(tview.KeyMsg) (ui.Router, bool) {
@@ -70,14 +75,9 @@ func (e *emptyNoder) RootID() string {
 	return ""
 }
 
-// SubnodePosition returns the position of the subnode within the parent node.
-func (e *emptyNoder) SubnodePosition(adSubNodePos) (int, bool) {
-	return -1, false
-}
-
 // Information implements [adNoder].
-func (e *emptyNoder) Information() (string, []text.Span) {
-	return "", nil
+func (e *emptyNoder) Information() []text.Span {
+	return nil
 }
 
 // Refresh implements [adNoder].
@@ -85,7 +85,7 @@ func (e *emptyNoder) Refresh() {
 }
 
 // UpdateActionNode updates the node of type [nodeTypeAction] with the message.
-func (e *emptyNoder) UpdateActionNode(*adNode, actionUpdateMsg) {
+func (e *emptyNoder) UpdateActionNode(*acNode, actionUpdateMsg) {
 }
 
 // SetAdapterEventData sets the adapter event data for the node.

@@ -1,6 +1,9 @@
 package adtree
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
@@ -17,12 +20,14 @@ import (
 type deviceNode struct {
 	*adNode
 
-	parentNoder adNoder
-	device      bluetooth.DeviceData
+	alnode *alNode
+	dlnode *dlNode
+
+	device bluetooth.DeviceData
 }
 
 // newDeviceNode creates a new device node.
-func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceData) *adNode {
+func newDeviceNode(rv ui.RootView, parentNode *dlNode, device bluetooth.DeviceData) *adNode {
 	dn := &deviceNode{}
 
 	deviceNode := newAdNode(
@@ -34,10 +39,11 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 
 	dn.device = device
 	dn.adNode = deviceNode
-	dn.parentNoder = parentNode.noder
 
-	newActionsListNode(dn.adNode)
-	parentNode.AddChild(dn.Node)
+	dn.dlnode = parentNode
+	dn.alnode = newActionsListNode(dn.adNode)
+
+	parentNode.AdNode().AddChild(dn.Node)
 
 	dn.Refresh()
 	dn.PopulateActions()
@@ -45,19 +51,33 @@ func newDeviceNode(rv ui.RootView, parentNode *adNode, device bluetooth.DeviceDa
 	return deviceNode
 }
 
+// AdNode returns the base node data.
+func (d *deviceNode) AdNode() *adNode {
+	return d.adNode
+}
+
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
 func (d *deviceNode) HandleKeys(p tview.KeyMsg) (ui.Router, bool) {
-	if msg, ok := actionHandleKeyMsg(p, d.Node); ok {
+	alNode := d.alnode
+
+	if msg, ok := actionHandleKeyMsg(p, alNode); ok {
 		return msg, ok
 	}
 
-	return d.parentNoder.HandleKeys(p)
+	return d.dlnode.HandleKeys(p)
 }
 
 // Refresh refreshes the content of the node.
 func (d *deviceNode) Refresh() {
-	d.SetMarkers(d.StatusIcons())
-	d.SetContent(buildLabel(d.Icon(), getDeviceDisplayName(d.device.DeviceEventData), d.NodeStyle()))
+	d.SetMarkers(d.StatusIcons(true))
+	d.SetContent(
+		buildLabel(
+			d.Icon(), getDeviceDisplayName(
+				d.rv, d.device.DeviceEventData, false,
+			),
+			d.NodeStyle(),
+		),
+	)
 }
 
 // NodeStyle returns the style to be applied for this node's label.
@@ -83,37 +103,73 @@ func (d *deviceNode) RootID() string {
 	return d.id.String()
 }
 
-// SubnodePosition returns the position of the subnode within the parent node.
-func (d *deviceNode) SubnodePosition(relpos adSubNodePos) (int, bool) {
-	switch relpos {
-	case relPosActionsListNode:
-		return 0, true
+// Information returns a message to print adapter/device information.
+func (d *deviceNode) Information() []text.Span {
+	bgStyle := theme.Current().Global
 
-	default:
+	builder := stext.NewBuilder(bgStyle)
+
+	infoPropStyle := theme.Current().Info.PropertyName
+	infoPropValStyle := theme.Current().Info.PropertyValue
+
+	builder.ResetKVStyle(infoPropStyle, infoPropValStyle)
+
+	deviceNameStyle := theme.Current().ADTree.Device.Discovered
+	if paired, ok := d.device.Paired.Get(); ok && paired {
+		deviceNameStyle = theme.Current().ADTree.Device.Paired
 	}
 
-	return -1, false
-}
+	builder.Appendln(" Device Information ", theme.Current().Info.Title)
+	builder.Newline()
 
-// Information returns a message to print adapter/device information.
-func (d *deviceNode) Information() (string, []text.Span) {
-	return d.id.String(), nil
+	builder.AddKVStyled(
+		"Device:", infoPropStyle,
+		getDeviceDisplayName(d.rv, d.device.DeviceEventData, false), deviceNameStyle,
+	)
+	builder.AddKV("Address:", printAddress(d.rv, d.device.Address, true))
+	if alias, ok := d.device.Alias.Get(); ok && alias != "" {
+		builder.AddKV("Alias:", alias)
+	}
+
+	var assocAdapter strings.Builder
+	adapter := d.dlnode.AdapterNode().adapter
+
+	assocAdapter.WriteString(getAdapterDisplayName(d.rv, adapter, true))
+
+	builder.AddKVStyled("On Adapter:", infoPropStyle, assocAdapter.String(), theme.Current().ADTree.Adapter.Name)
+	builder.Newline()
+
+	builder.AddKV("Type:", printPlaceHolder(d.device.Type))
+	builder.AddKV("Class:", strconv.FormatUint(uint64(d.device.Class), 10))
+	builder.Newline()
+
+	builder.AddKVFunc("Status:", func(bb *stext.Builder) {
+		bb.Newline()
+		bb.AppendSpans(
+			ui.RenderMergedPill(d.StatusIcons(false), bgStyle.GetBackground())...,
+		)
+	})
+	builder.Newline()
+
+	printServiceUUIDs(builder, d.device.UUIDs)
+
+	return builder.Text()
 }
 
 // StatusIcons returns the status icon pills for this node.
-func (d *deviceNode) StatusIcons() []text.Span {
+func (d *deviceNode) StatusIcons(compact bool) []text.Span {
 	var line []text.Span
 
 	for i, state := range [4]struct {
-		Name  string
+		Name  dvStatusIndicator
 		Opt   optional.Optional[bool]
 		Style tcell.Style
 	}{
-		{" Nw ", d.device.Paired, theme.Current().ADTree.Device.NewDevicePill},
-		{" Cn ", d.device.Connected, theme.Current().ADTree.Device.ConnectedPill},
-		{" Tr ", d.device.Trusted, theme.Current().ADTree.Device.TrustedPill},
+		{dvStatusUnpaired, d.device.Paired, theme.Current().ADTree.Device.NewDevicePill},
+		{dvStatusConnected, d.device.Connected, theme.Current().ADTree.Device.ConnectedPill},
+		{dvStatusTrusted, d.device.Trusted, theme.Current().ADTree.Device.TrustedPill},
 
-		{" Bd ", d.device.Blocked, theme.Current().ADTree.Device.BlockedPill},
+		{dvStatusBlocked, d.device.Blocked, theme.Current().ADTree.Device.BlockedPill},
 	} {
 		v, ok := state.Opt.Get()
 		if !ok {
@@ -125,11 +181,11 @@ func (d *deviceNode) StatusIcons() []text.Span {
 			continue
 
 		case i == 0 && v:
-			state.Name = " P "
+			state.Name = dvStatusPaired
 			state.Style = theme.Current().ADTree.Device.PairedPill
 		}
 
-		line = append(line, stext.NewSpan(state.Name, state.Style))
+		line = append(line, stext.NewSpan(state.Name.String(compact), state.Style))
 	}
 
 	return line
@@ -137,15 +193,7 @@ func (d *deviceNode) StatusIcons() []text.Span {
 
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (d *deviceNode) PopulateActions() {
-	pos, _ := d.SubnodePosition(relPosActionsListNode)
-
-	actionsListNode := d.Children()[pos]
-	actionsListNode.SetChildren(nil)
-
-	node := actionsListNode.Data[*adNode]()
-	if node == nil {
-		return
-	}
+	node := d.alnode
 
 	if v, ok := d.device.Connected.Get(); ok {
 		newActionNode(node, ui.Kb().Device.ToggleConnection, boolToActionState(v), true, d.actionConnect)
@@ -185,16 +233,12 @@ func (d *deviceNode) PopulateActions() {
 			d.device.HaveService(bluetooth.DialupNetServiceClass)) {
 		newActionNode(node, ui.Kb().Device.NetworkOptions, actionStateNone, false, d.actionNetwork)
 	}
-
-	for _, actionNode := range actionsListNode.Children() {
-		d.UpdateActionNode(actionNode.Data[*adNode](), emptyActionUpdateMsg())
-	}
 }
 
 // UpdateActionNode updates the node of type [nodeTypeAction] with the message.
-func (d *deviceNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdateMsg) {
+func (d *deviceNode) UpdateActionNode(actionNode *acNode, updateMsg actionUpdateMsg) {
 	state := actionNode.actionState
-	updateMsg.updateState(actionNode.ID(), state)
+	updateMsg.updateState(actionNode.AdNode().ID(), state)
 
 	var enabledText, disabledText string
 
@@ -238,7 +282,7 @@ func (d *deviceNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdate
 		actionText = disabledText
 	}
 
-	actionNode.SetContent(buildLabel(actionNode.noder.Icon(), actionText, actionNode.noder.NodeStyle()))
+	actionNode.AdNode().SetContent(buildLabel(actionNode.Icon(), actionText, actionNode.NodeStyle()))
 }
 
 // SetAdapterEventData sets the adapter event data for the node.
@@ -286,3 +330,55 @@ func (d *deviceNode) actionMediaPlayer(state *adActionState) (operations.Creatio
 }
 
 var _ adNoder = (*deviceNode)(nil)
+
+type dvStatusIndicator uint8
+
+const (
+	dvStatusNone dvStatusIndicator = iota
+	dvStatusUnpaired
+	dvStatusTrusted
+	dvStatusPaired
+	dvStatusConnected
+	dvStatusBlocked
+)
+
+func (d dvStatusIndicator) String(compact bool) string {
+	switch d {
+	case dvStatusConnected:
+		if compact {
+			return " C "
+		}
+
+		return " Connected "
+
+	case dvStatusBlocked:
+		if compact {
+			return " Bl "
+		}
+
+		return " Blocked "
+
+	case dvStatusPaired:
+		if compact {
+			return " P "
+		}
+
+		return " Paired "
+
+	case dvStatusTrusted:
+		if compact {
+			return " Tr "
+		}
+
+		return " Trusted "
+
+	case dvStatusUnpaired:
+		if compact {
+			return " New "
+		}
+
+		return " Unpaired "
+	}
+
+	return ""
+}

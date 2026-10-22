@@ -61,8 +61,8 @@ func (h *viewHandler) update(id ui.ViewID, msg tview.Msg, rsp *ui.Response) {
 	}
 }
 
-func (h *viewHandler) activeID() ui.ViewID {
-	return h.views[h.activeIndex].ViewID()
+func (h *viewHandler) active() vm {
+	return h.views[h.activeIndex]
 }
 
 func (h *viewHandler) setActiveIndex(idx int) {
@@ -91,10 +91,6 @@ func (h *viewHandler) setActive(msg tview.KeyMsg) bool {
 	h.rv.SetFocused(id)
 
 	return true
-}
-
-func (h *viewHandler) activeContent(focused bool) tview.Widget {
-	return h.views[h.activeIndex].View(focused)
 }
 
 func (h *viewHandler) updateRouted(id ui.ViewID, msg tview.Msg, rsp *ui.Response) {

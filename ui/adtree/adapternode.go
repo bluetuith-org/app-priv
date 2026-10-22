@@ -12,7 +12,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
@@ -20,6 +19,9 @@ import (
 // adapterNode describes an adapter node.
 type adapterNode struct {
 	*adNode
+
+	alnode *alNode
+	dlnode *dlNode
 
 	adapter bluetooth.AdapterData
 }
@@ -38,8 +40,8 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	an.adNode = adapterNode
 	an.adapter = adapter
 
-	newActionsListNode(an.adNode)
-	newDeviceListNode(adapterNode, devices)
+	an.alnode = newActionsListNode(an.adNode)
+	an.dlnode = newDeviceListNode(an, devices)
 
 	rootNode.AddChild(adapterNode.Node)
 
@@ -49,15 +51,25 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	return adapterNode
 }
 
+// AdNode returns the base node data.
+func (a *adapterNode) AdNode() *adNode {
+	return a.adNode
+}
+
 // Refresh refreshes the content of the node.
 func (a *adapterNode) Refresh() {
-	a.SetMarkers(a.StatusIcons())
-	a.SetContent(buildLabel(a.Icon(), getAdapterDisplayName(a.adapter), a.NodeStyle()))
+	a.SetMarkers(a.StatusIcons(true))
+	a.SetContent(
+		buildLabel(
+			a.Icon(), getAdapterDisplayName(a.rv, a.adapter, false),
+			a.NodeStyle(),
+		),
+	)
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
 func (a *adapterNode) HandleKeys(p tview.KeyMsg) (ui.Router, bool) {
-	return actionHandleKeyMsg(p, a.Node)
+	return actionHandleKeyMsg(p, a.alnode)
 }
 
 // NodeStyle returns the style to be applied for this node's label.
@@ -75,51 +87,87 @@ func (a *adapterNode) RootID() string {
 	return a.id.String()
 }
 
-// SubnodePosition returns the position of the subnode within the parent node.
-func (a *adapterNode) SubnodePosition(relpos adSubNodePos) (int, bool) {
-	switch relpos {
-	case relPosActionsListNode:
-		return 0, true
-
-	case relPosDevicesListNode:
-		return 1, true
-	}
-
-	return -1, false
-}
-
 // Information returns a message to print adapter/device information.
-func (a *adapterNode) Information() (string, []text.Span) {
-	return a.id.String(), nil
+func (a *adapterNode) Information() []text.Span {
+	bgStyle := theme.Current().Global
+	builder := stext.NewBuilder(bgStyle)
+
+	infoPropStyle := theme.Current().Info.PropertyName
+	infoPropValStyle := theme.Current().Info.PropertyValue
+	adapterStyle := theme.Current().ADTree.Adapter.Name
+
+	builder.ResetKVStyle(infoPropStyle, infoPropValStyle)
+
+	builder.Appendln(" Adapter Information ", theme.Current().Info.Title)
+	builder.Newline()
+
+	builder.AddKVFunc("Name:", func(bb *stext.Builder) {
+		bb.Append(getAdapterDisplayName(a.rv, a.adapter, false), adapterStyle)
+	})
+	builder.AddKVFunc("Address:", func(bb *stext.Builder) {
+		bb.Append(printAddress(a.rv, a.adapter.Address, true), adapterStyle)
+	})
+	if a.adapter.UniqueName != "" {
+		builder.AddKV("Unique Name:", a.adapter.UniqueName)
+	}
+	builder.Newline()
+
+	builder.AddKVFunc("Status:", func(bb *stext.Builder) {
+		bb.Newline()
+		pills := ui.RenderMergedPill(a.StatusIcons(false), bgStyle.GetBackground())
+		bb.AppendSpans(pills...)
+	})
+	builder.Newline()
+
+	builder.AddKVFunc("Devices:", func(bb *stext.Builder) {
+		bb.Newline()
+
+		for _, node := range a.dlnode.AdNode().Children() {
+			dvNode := nvget[*deviceNode](node)
+
+			bb.Append(" ", bgStyle)
+			bb.Append(theme.Icons().BottomLeft.String(), infoPropValStyle)
+			bb.Append(" ", bgStyle)
+
+			bb.AppendSpans(dvNode.Content()...)
+
+			bb.Newline()
+			bb.Newline()
+		}
+	})
+
+	printServiceUUIDs(builder, a.adapter.UUIDs)
+
+	return builder.Text()
 }
 
 // StatusIcons returns the status icon pills for this node.
-func (a *adapterNode) StatusIcons() []text.Span {
+func (a *adapterNode) StatusIcons(compact bool) []text.Span {
 	var line []text.Span
 
 	if powered, ok := a.adapter.Powered.Get(); ok {
-		en, enStyle := " On ", theme.Current().ADTree.Adapter.PoweredOnPill
+		en, enStyle := adStatusPoweredOn, theme.Current().ADTree.Adapter.PoweredOnPill
 		if !powered {
-			en, enStyle = " Off ", theme.Current().ADTree.Adapter.PoweredOffPill
+			en, enStyle = adStatusPoweredOff, theme.Current().ADTree.Adapter.PoweredOffPill
 		}
 
-		line = append(line, stext.NewSpan(en, enStyle))
+		line = append(line, stext.NewSpan(en.String(compact), enStyle))
 	}
 
 	for _, state := range [3]struct {
-		Name  string
+		Name  adStatusIndicator
 		Opt   optional.Optional[bool]
 		Style tcell.Style
 	}{
-		{" Sc ", a.adapter.Discovering, theme.Current().ADTree.Adapter.ScanningPill},
-		{" Ds ", a.adapter.Discoverable, theme.Current().ADTree.Adapter.DiscoverablePill},
-		{" Pb ", a.adapter.Pairable, theme.Current().ADTree.Adapter.PairablePill},
+		{adStatusScanning, a.adapter.Discovering, theme.Current().ADTree.Adapter.ScanningPill},
+		{adStatusDiscoverable, a.adapter.Discoverable, theme.Current().ADTree.Adapter.DiscoverablePill},
+		{adStatusPairable, a.adapter.Pairable, theme.Current().ADTree.Adapter.PairablePill},
 	} {
 		if v, ok := state.Opt.Get(); !ok || !v {
 			continue
 		}
 
-		line = append(line, stext.NewSpan(state.Name, state.Style))
+		line = append(line, stext.NewSpan(state.Name.String(compact), state.Style))
 	}
 
 	return line
@@ -127,15 +175,7 @@ func (a *adapterNode) StatusIcons() []text.Span {
 
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (a *adapterNode) PopulateActions() {
-	pos, _ := a.SubnodePosition(relPosActionsListNode)
-
-	actionsListNode := a.Children()[pos]
-	actionsListNode.SetChildren(nil)
-
-	node := actionsListNode.Data[*adNode]()
-	if node == nil {
-		return
-	}
+	node := a.alnode
 
 	if v, ok := a.adapter.Powered.Get(); ok {
 		newActionNode(node, ui.Kb().Adapter.TogglePower, boolToActionState(v), true, a.actionPowered)
@@ -149,16 +189,12 @@ func (a *adapterNode) PopulateActions() {
 	if v, ok := a.adapter.Discovering.Get(); ok {
 		newActionNode(node, ui.Kb().Adapter.ToggleScan, boolToActionState(v), true, a.actionScan)
 	}
-
-	for _, actionNode := range actionsListNode.Children() {
-		a.UpdateActionNode(actionNode.Data[*adNode](), emptyActionUpdateMsg())
-	}
 }
 
 // UpdateActionNode updates the node of type [nodeTypeAction] with the message.
-func (a *adapterNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdateMsg) {
+func (a *adapterNode) UpdateActionNode(actionNode *acNode, updateMsg actionUpdateMsg) {
 	state := actionNode.actionState
-	updateMsg.updateState(actionNode.ID(), state)
+	updateMsg.updateState(actionNode.AdNode().ID(), state)
 
 	var txt string
 
@@ -193,7 +229,7 @@ func (a *adapterNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdat
 		b.WriteString(actionText)
 	})
 
-	actionNode.SetContent(buildLabel(actionNode.noder.Icon(), displayName, actionNode.noder.NodeStyle()))
+	actionNode.AdNode().SetContent(buildLabel(actionNode.Icon(), displayName, actionNode.NodeStyle()))
 }
 
 // SetAdapterEventData sets the adapter event data for the node.
@@ -244,14 +280,14 @@ type adapterStatus struct {
 func newAdapterStatus(node *adapterNode, name string, state *adActionState) *adapterStatus {
 	return &adapterStatus{
 		name:        name,
-		adapterName: getAdapterDisplayName(node.adapter),
+		adapterName: getAdapterDisplayName(node.rv, node.adapter, true),
 		icon:        node.Icon(),
 
 		currentState: state.currentState,
 	}
 }
 
-func (a *adapterStatus) Content() []text.Span {
+func (a *adapterStatus) OperationDescription() []text.Span {
 	builder := stext.NewBuilder(
 		theme.Current().Global,
 	)
@@ -260,13 +296,13 @@ func (a *adapterStatus) Content() []text.Span {
 	adapterStyle := theme.Current().ADTree.Adapter.Name
 	msgStyle := theme.Current().Operations.Message
 
-	builder.AddKVFunc("Adapter:", style, func(bb *stext.Builder) {
+	builder.AddKVStyledFunc("Adapter:", style, func(bb *stext.Builder) {
 		bb.Append(a.icon, adapterStyle)
 		bb.Space()
 		bb.Append(a.adapterName, adapterStyle)
 	})
 
-	builder.AddKVFunc("Action:", style, func(bb *stext.Builder) {
+	builder.AddKVStyledFunc("Action:", style, func(bb *stext.Builder) {
 		bb.Append(a.name, msgStyle)
 		bb.Space()
 		bb.Append(a.currentState.Format("on", "off"), msgStyle)
@@ -275,4 +311,56 @@ func (a *adapterStatus) Content() []text.Span {
 	return builder.Text()
 }
 
-var _ card.ContentProvider = (*adapterStatus)(nil)
+var _ operations.Content = (*adapterStatus)(nil)
+
+type adStatusIndicator uint8
+
+const (
+	adStatusNone adStatusIndicator = iota
+	adStatusPoweredOff
+	adStatusPoweredOn
+	adStatusScanning
+	adStatusDiscoverable
+	adStatusPairable
+)
+
+func (a adStatusIndicator) String(compact bool) string {
+	switch a {
+	case adStatusPoweredOff:
+		if compact {
+			return " Off "
+		}
+
+		return " Not Powered "
+
+	case adStatusPoweredOn:
+		if compact {
+			return " On "
+		}
+
+		return " Powered "
+
+	case adStatusScanning:
+		if compact {
+			return " Sc "
+		}
+
+		return " Scanning "
+
+	case adStatusDiscoverable:
+		if compact {
+			return " Ds "
+		}
+
+		return " Discoverable "
+
+	case adStatusPairable:
+		if compact {
+			return " Pbl "
+		}
+
+		return " Pairable "
+	}
+
+	return ""
+}

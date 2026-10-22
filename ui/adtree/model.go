@@ -91,33 +91,41 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 	case ui.R[selectionChange]:
 		m.currentNode = ms.Value
 		m.scrollState.ScrollToTarget()
-		m.resetTimer()
 		rsp.PushRouted(m.resetInformation())
 
 	case ui.R[rootNodeMsg]:
 		m.root = ms.Value.node
-		m.setCurrentNode(m.root.Node)
-		m.resetTimer()
-		rsp.PushRouted(m.resetInformation())
+		if ch := m.root.Children(); len(ch) > 0 {
+			m.setCurrentNode(ch[0])
+			rsp.PushRouted(m.resetInformation())
+		}
 
 	case ui.R[selectedMsg]:
 		m.rv.SetFocused(m.ViewID())
 
-		data := ms.Value.node.Data[*adNode]()
+		node := nget(ms.Value.node)
+		data := node.AdNode()
+
+		m.setCurrentNode(ms.Value.node)
+		rsp.PushRouted(m.resetInformation())
+
 		if data.nodeType != nodeTypeAction {
 			ms.Value.node.SetExpanded(!ms.Value.node.Expanded())
-			m.setCurrentNode(ms.Value.node)
 			return
 		}
 
-		m.setCurrentNode(ms.Value.node)
-		if actionMsg, ok := acStateToOpMsg(data.ID(), data.actionState); ok {
+		acNode, ok := node.(*acNode)
+		if !ok {
+			return
+		}
+
+		if actionMsg, ok := acStateToOpMsg(acNode); ok {
 			rsp.PushRouted(actionMsg)
 		}
 
 	case tview.KeyMsg:
-		data := m.currentNode.Data[*adNode]()
-		if rmsg, ok := data.Noder().HandleKeys(ms); ok {
+		data := nget(m.currentNode)
+		if rmsg, ok := data.HandleKeys(ms); ok {
 			rsp.PushRouted(rmsg)
 		}
 	}
@@ -219,14 +227,14 @@ func (m *Model) MarkerStyle(*ctree.Node) tcell.Style {
 
 // LabelWidth implements [ctree.Provider].
 func (m *Model) LabelWidth(node *ctree.Node) int {
-	adn := node.Data[*adNode]()
+	adn := nget(node).AdNode()
 
 	return adn.labelWidth()
 }
 
 // Spacing implements [ctree.Provider].
 func (m *Model) Spacing(node *ctree.Node) int {
-	adn := node.Data[*adNode]()
+	adn := nget(node).AdNode()
 	if adn.nodeType == nodeTypeAction {
 		return 0
 	}
@@ -237,7 +245,7 @@ func (m *Model) Spacing(node *ctree.Node) int {
 // StyledLabels returns a sequence of text and their associated styles.
 func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[text.Span, tcell.Style] {
 	return func(yield func(text.Span, tcell.Style) bool) {
-		adn := node.Data[*adNode]()
+		adn := nget(node).AdNode()
 
 		for _, span := range adn.Markers() {
 			if !yield(span, tcell.Style{}) {
@@ -285,8 +293,8 @@ func (m *Model) dbHandler() ui.Router {
 		return nil
 	}
 
-	node := currNode.Data[*adNode]()
-	rootID := node.noder.RootID()
+	node := nget(currNode)
+	rootID := node.RootID()
 	if m.rootident == rootID && !m.reset {
 		return nil
 	}
@@ -294,13 +302,7 @@ func (m *Model) dbHandler() ui.Router {
 	m.rootident = rootID
 	m.reset = false
 
-	id, inf := node.noder.Information()
-
-	return info.Msg(id, inf)
-}
-
-func (m *Model) resetTimer() {
-	m.tm.Reset(dbTime)
+	return info.Msg(node)
 }
 
 func (m *Model) resetInformation() ui.Router {
@@ -313,13 +315,14 @@ func (m *Model) resetInformation() ui.Router {
 		return nil
 	}
 
-	node := currNode.Data[*adNode]()
-	rootID := node.noder.RootID()
+	node := nget(currNode)
+	rootID := node.RootID()
 	if m.rootident == rootID {
 		return nil
 	}
 
 	m.reset = true
+	m.tm.Reset(dbTime)
 
 	return info.ResetMsg()
 }

@@ -18,8 +18,9 @@ type Configuration struct {
 
 	ADTree struct {
 		TitleBarIndicator string `themedef:"bg:#5f5ffd; attr:bold"`
-		Indicators        string `themedef:"-"`
-		Selection         string `themedef:"bg:blue; attr:bold"`
+
+		Indicators string `themedef:"-"`
+		Selection  string `themedef:"bg:blue; attr:bold"`
 
 		Adapter struct {
 			Name string `themedef:"-"`
@@ -63,6 +64,9 @@ type Configuration struct {
 		Title         string `themedef:"bg:purple"`
 		PropertyName  string `themedef:"fg:brightpurple; attr:bold"`
 		PropertyValue string `themedef:"-"`
+
+		ServiceName       string `themedef:"fg:blue"`
+		ServiceIdentifier string `themedef:"fg:grey; attr:italic"`
 	}
 
 	Operations struct {

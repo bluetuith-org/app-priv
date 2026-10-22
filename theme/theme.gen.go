@@ -26,8 +26,9 @@ type Theme struct {
 
 	ADTree struct {
 		TitleBarIndicator tcell.Style
-		Indicators        tcell.Style
-		Selection         tcell.Style
+
+		Indicators tcell.Style
+		Selection  tcell.Style
 
 		Adapter struct {
 			Name tcell.Style
@@ -71,6 +72,9 @@ type Theme struct {
 		Title         tcell.Style
 		PropertyName  tcell.Style
 		PropertyValue tcell.Style
+
+		ServiceName       tcell.Style
+		ServiceIdentifier tcell.Style
 	}
 
 	Operations struct {
@@ -137,6 +141,8 @@ func defaultConfig() *RootConfiguration {
 	r.TabsPane.FocusedTab = "fg:brightcyan;attr:bold,underline"
 	r.Info.Title = "bg:purple"
 	r.Info.PropertyName = "fg:brightpurple;attr:bold"
+	r.Info.ServiceName = "fg:blue"
+	r.Info.ServiceIdentifier = "fg:grey;attr:italic"
 	r.Operations.TitleBarIndicator = "bg:yellow;fg:black"
 	r.Operations.Selection = "fg:blue;attr:bold"
 	r.Operations.OperationNumber = "fg:brightpurple;attr:bold,italic,underline"
@@ -180,7 +186,7 @@ func iterProperties(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme) ite
 	}
 
 	return func(yield func(parseThemeInfo) bool) {
-		for i := range 54 {
+		for i := range 56 {
 			if !yield(getProperty(cfg, cmpCfg, t, i)) {
 				return
 			}
@@ -359,106 +365,116 @@ func getProperty(cfg *RootConfiguration, cmpCfg *Configuration, t *Theme, pos in
 		p.style = &t.Info.PropertyValue
 
 	case 33:
+		p.rootCfg = &cfg.Info.ServiceName
+		p.cmpCfg = cmpCfg.Info.ServiceName
+		p.style = &t.Info.ServiceName
+
+	case 34:
+		p.rootCfg = &cfg.Info.ServiceIdentifier
+		p.cmpCfg = cmpCfg.Info.ServiceIdentifier
+		p.style = &t.Info.ServiceIdentifier
+
+	case 35:
 		p.rootCfg = &cfg.Operations.TitleBarIndicator
 		p.cmpCfg = cmpCfg.Operations.TitleBarIndicator
 		p.style = &t.Operations.TitleBarIndicator
 
-	case 34:
+	case 36:
 		p.rootCfg = &cfg.Operations.Selection
 		p.cmpCfg = cmpCfg.Operations.Selection
 		p.style = &t.Operations.Selection
 
-	case 35:
+	case 37:
 		p.rootCfg = &cfg.Operations.OperationNumber
 		p.cmpCfg = cmpCfg.Operations.OperationNumber
 		p.style = &t.Operations.OperationNumber
 
-	case 36:
+	case 38:
 		p.rootCfg = &cfg.Operations.Time
 		p.cmpCfg = cmpCfg.Operations.Time
 		p.style = &t.Operations.Time
 
-	case 37:
+	case 39:
 		p.rootCfg = &cfg.Operations.PropertyName
 		p.cmpCfg = cmpCfg.Operations.PropertyName
 		p.style = &t.Operations.PropertyName
 
-	case 38:
+	case 40:
 		p.rootCfg = &cfg.Operations.Error
 		p.cmpCfg = cmpCfg.Operations.Error
 		p.style = &t.Operations.Error
 
-	case 39:
+	case 41:
 		p.rootCfg = &cfg.Operations.Completed
 		p.cmpCfg = cmpCfg.Operations.Completed
 		p.style = &t.Operations.Completed
 
-	case 40:
+	case 42:
 		p.rootCfg = &cfg.Operations.InProgress
 		p.cmpCfg = cmpCfg.Operations.InProgress
 		p.style = &t.Operations.InProgress
 
-	case 41:
+	case 43:
 		p.rootCfg = &cfg.Operations.Message
 		p.cmpCfg = cmpCfg.Operations.Message
 		p.style = &t.Operations.Message
 
-	case 42:
+	case 44:
 		p.rootCfg = &cfg.Log.FollowIndicator
 		p.cmpCfg = cmpCfg.Log.FollowIndicator
 		p.style = &t.Log.FollowIndicator
 
-	case 43:
+	case 45:
 		p.rootCfg = &cfg.Log.Selection
 		p.cmpCfg = cmpCfg.Log.Selection
 		p.style = &t.Log.Selection
 
-	case 44:
+	case 46:
 		p.rootCfg = &cfg.Log.Time
 		p.cmpCfg = cmpCfg.Log.Time
 		p.style = &t.Log.Time
 
-	case 45:
+	case 47:
 		p.rootCfg = &cfg.Log.Info
 		p.cmpCfg = cmpCfg.Log.Info
 		p.style = &t.Log.Info
 
-	case 46:
+	case 48:
 		p.rootCfg = &cfg.Log.Debug
 		p.cmpCfg = cmpCfg.Log.Debug
 		p.style = &t.Log.Debug
 
-	case 47:
+	case 49:
 		p.rootCfg = &cfg.Log.Error
 		p.cmpCfg = cmpCfg.Log.Error
 		p.style = &t.Log.Error
 
-	case 48:
+	case 50:
 		p.rootCfg = &cfg.Log.Message
 		p.cmpCfg = cmpCfg.Log.Message
 		p.style = &t.Log.Message
 
-	case 49:
+	case 51:
 		p.rootCfg = &cfg.Log.Attr
 		p.cmpCfg = cmpCfg.Log.Attr
 		p.style = &t.Log.Attr
 
-	case 50:
+	case 52:
 		p.rootCfg = &cfg.StatusBar.Style
 		p.cmpCfg = cmpCfg.StatusBar.Style
 		p.style = &t.StatusBar.Style
 
-	case 51:
+	case 53:
 		p.rootCfg = &cfg.StatusBar.Info
 		p.cmpCfg = cmpCfg.StatusBar.Info
 		p.style = &t.StatusBar.Info
 
-	case 52:
+	case 54:
 		p.rootCfg = &cfg.StatusBar.Debug
 		p.cmpCfg = cmpCfg.StatusBar.Debug
 		p.style = &t.StatusBar.Debug
 
-	case 53:
+	case 55:
 		p.rootCfg = &cfg.StatusBar.Error
 		p.cmpCfg = cmpCfg.StatusBar.Error
 		p.style = &t.StatusBar.Error

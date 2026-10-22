@@ -23,7 +23,8 @@ func newSubNode(adn *adNode, parentNoder adNoder) *subNode {
 	return &subNode{adn, parentNoder}
 }
 
-func (s *subNode) SubAdNode() *adNode {
+// AdNode returns the base node data.
+func (s *subNode) AdNode() *adNode {
 	return s.sub
 }
 
@@ -37,13 +38,8 @@ func (s *subNode) RootID() string {
 	return s.noder.RootID()
 }
 
-// SubnodePosition returns the position of the subnode within the parent node.
-func (s *subNode) SubnodePosition(adSubNodePos) (int, bool) {
-	return -1, false
-}
-
 // Information returns a message to print adapter/device information.
-func (s *subNode) Information() (string, []text.Span) {
+func (s *subNode) Information() []text.Span {
 	return s.noder.Information()
 }
 
@@ -63,7 +59,7 @@ func (s *subNode) Refresh() {
 }
 
 // UpdateActionNode updates the node of type [nodeTypeAction] with the message.
-func (s *subNode) UpdateActionNode(actionNode *adNode, updateMsg actionUpdateMsg) {
+func (s *subNode) UpdateActionNode(actionNode *acNode, updateMsg actionUpdateMsg) {
 	s.noder.UpdateActionNode(actionNode, updateMsg)
 }
 
@@ -92,7 +88,7 @@ func newActionsListNode(a *adNode) *alNode {
 	)
 
 	al.subNode = newSubNode(alAdNode, a.noder)
-	al.SubAdNode().SetContent(buildLabel(al.Icon(), "Actions", al.NodeStyle()))
+	al.AdNode().SetContent(buildLabel(al.Icon(), "Actions", al.NodeStyle()))
 
 	alAdNode.SetChildren(make([]*ctree.Node, 0, 5))
 	a.AddChild(alAdNode.Node)
@@ -112,9 +108,10 @@ func (a *alNode) Icon() string {
 
 type dlNode struct {
 	*subNode
+	anode *adapterNode
 }
 
-func newDeviceListNode(a *adNode, devices []bluetooth.DeviceData) *dlNode {
+func newDeviceListNode(a *adapterNode, devices []bluetooth.DeviceData) *dlNode {
 	dl := &dlNode{}
 
 	dlAdNode := newAdNode(
@@ -125,10 +122,11 @@ func newDeviceListNode(a *adNode, devices []bluetooth.DeviceData) *dlNode {
 	)
 
 	dl.subNode = newSubNode(dlAdNode, a.noder)
-	dl.SubAdNode().SetContent(buildLabel(dl.Icon(), "Devices", dl.NodeStyle()))
+	dl.anode = a
+	dl.AdNode().SetContent(buildLabel(dl.Icon(), "Devices", dl.NodeStyle()))
 
 	for _, device := range devices {
-		newDeviceNode(a.rv, dlAdNode, device)
+		newDeviceNode(a.rv, dl, device)
 	}
 
 	a.AddChild(dlAdNode.Node)
@@ -146,22 +144,28 @@ func (a *dlNode) Icon() string {
 	return theme.Icons().Devices.String()
 }
 
-type acNode struct {
-	*subNode
+func (a *dlNode) AdapterNode() *adapterNode {
+	return a.anode
 }
 
-func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) *acNode {
+type acNode struct {
+	*subNode
+
+	actionState *adActionState
+}
+
+func newActionNode(a *alNode, key keybindings.Keybinding, state actionStateSpec, isToggleable bool, invoker actionInvoker) *acNode {
 	ac := &acNode{}
 
 	actionNode := newAdNode(
 		nodeTypeAction,
 		false, 2,
-		a.id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
-		ac, a.rv,
+		a.AdNode().id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
+		ac, a.AdNode().rv,
 	)
 
 	ac.subNode = newSubNode(actionNode, a.noder)
-	actionNode.actionState = newAdActionState(key, state, isToggleable, invoker)
+	ac.actionState = newAdActionState(key, state, isToggleable, invoker)
 
 	muted := theme.Current().App.PlaceHolder
 	actionNode.SetMarkers(stext.NewLine(
@@ -170,7 +174,8 @@ func newActionNode(a *adNode, key keybindings.Keybinding, state actionStateSpec,
 		stext.NewSpan(")", muted),
 	))
 
-	a.AddChild(actionNode.Node)
+	a.AdNode().AddChild(actionNode.Node)
+	a.UpdateActionNode(ac, emptyActionUpdateMsg())
 
 	return ac
 }

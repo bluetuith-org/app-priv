@@ -120,7 +120,7 @@ func (c *logContent) render(width int) {
 		k, v := c.getKV(a)
 
 		builder.Space()
-		builder.Append("╰─", attrStyle)
+		builder.Append(theme.Icons().BottomLeft.String(), attrStyle)
 		builder.Space()
 
 		builder.Append(k, attrStyle)

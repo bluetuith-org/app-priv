@@ -5,7 +5,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/keybindings"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
 )
 
 // actionStateSpec specifies the current state of the action.
@@ -86,13 +85,13 @@ func newAdActionState(key keybindings.Keybinding, state actionStateSpec, isToggl
 }
 
 // actionHandleKeyMsg maps a keybinding to an action.
-func actionHandleKeyMsg(p tview.KeyMsg, node *ctree.Node) (ui.Router, bool) {
+func actionHandleKeyMsg(p tview.KeyMsg, node *alNode) (ui.Router, bool) {
 	_, result, ok := keybindings.IterMatch(p, actionKeyIterator(node))
 	if !ok {
 		return ui.EmptyRouterMsg(), false
 	}
 
-	msg, ok := acStateToOpMsg(result.id, result.state)
+	msg, ok := acStateToOpMsg(result)
 	if !ok {
 		return ui.EmptyRouterMsg(), false
 	}
@@ -100,7 +99,10 @@ func actionHandleKeyMsg(p tview.KeyMsg, node *ctree.Node) (ui.Router, bool) {
 	return msg, true
 }
 
-func acStateToOpMsg(id string, state *adActionState) (ui.Router, bool) {
+func acStateToOpMsg(acNode *acNode) (ui.Router, bool) {
+	id := acNode.AdNode().ID()
+	state := acNode.actionState
+
 	if state == nil || id == "" {
 		return ui.EmptyRouterMsg(), false
 	}
@@ -111,43 +113,22 @@ func acStateToOpMsg(id string, state *adActionState) (ui.Router, bool) {
 	return operations.MsgCreate(createInfo, opFunc), true
 }
 
-// actionKeyIterResult holds the action-key iteration result.
-type actionKeyIterResult struct {
-	state *adActionState
-	id    string
-}
-
 // actionKeyIterator returns an iterator that iterates over [nodeTypeAction] nodes.
-func actionKeyIterator(node *ctree.Node) keybindings.IterKeyMatch[actionKeyIterResult] {
-	return func(yield func(keybindings.Keybinding, actionKeyIterResult) bool) {
+func actionKeyIterator(node *alNode) keybindings.IterKeyMatch[*acNode] {
+	return func(yield func(keybindings.Keybinding, *acNode) bool) {
 		n := node
 		if n == nil {
 			return
 		}
 
-		ndat := n.Data[*adNode]()
-		pos, ok := ndat.noder.SubnodePosition(relPosActionsListNode)
-		if !ok {
-			return
-		}
-
-		ch := node.Children()
+		ch := node.AdNode().Children()
 		if len(ch) == 0 {
 			return
 		}
 
-		actionListNode := ch[pos]
-		actionNodes := actionListNode.Children()
-
-		for _, ac := range actionNodes {
-			data := ac.Data[*adNode]()
-
-			res := actionKeyIterResult{
-				id:    data.ID(),
-				state: data.actionState,
-			}
-
-			if !yield(data.actionState.key, res) {
+		for _, ac := range ch {
+			data := nvget[*acNode](ac)
+			if !yield(data.actionState.key, data) {
 				return
 			}
 		}

@@ -22,6 +22,7 @@ type Values struct {
 	NoHelpDisplay bool              `koanf:"no-help-display"`
 	ConfirmOnQuit bool              `koanf:"confirm-on-quit"`
 	AsciiIcons    bool              `koanf:"ui-ascii-icons"` //revive:disable
+	RedactAddress bool              `koanf:"ui-redact-addresses"`
 	Keybindings   map[string]string `koanf:"keybindings"`
 
 	AdapterStatesMap      map[string]string

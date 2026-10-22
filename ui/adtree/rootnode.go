@@ -43,6 +43,11 @@ func newRootNode(rv ui.RootView) *rootNode {
 	return rn
 }
 
+// AdNode returns the base node data.
+func (r *rootNode) AdNode() *adNode {
+	return r.adNode
+}
+
 // RootID returns the root ID for the subnodes of an adapter or device node.
 func (r *rootNode) RootID() string {
 	return r.id.String()
@@ -97,7 +102,7 @@ func (r *rootNode) addAdapter(adapter bluetooth.AdapterData, devices []bluetooth
 func (r *rootNode) addDevice(device bluetooth.DeviceData) {
 	dlNodeID := newAdapterNodeID(device.AdapterAddress()).appendSubNodeNib(nibDevicesList)
 
-	deviceListNode, _, ok := findTreeNodeByID(r, dlNodeID.String(), nodeTypeDevicesList)
+	deviceListNode, _, ok := findTreeNodeByID[*dlNode](r, dlNodeID.String(), nodeTypeDevicesList)
 	if !ok {
 		return
 	}
@@ -106,13 +111,13 @@ func (r *rootNode) addDevice(device bluetooth.DeviceData) {
 		rt.devicesCount++
 	})
 
-	newDeviceNode(r.rv, deviceListNode, device)
+	newDeviceNode(r.rv, deviceListNode.noder.(*dlNode), device)
 }
 
 func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove bool) {
 	adNodeID := newAdapterNodeID(adapterEvent.AdapterAddress)
 
-	adapterNode, pos, ok := findTreeNodeByID(r, adNodeID.String(), nodeTypeAdapter)
+	adapterNode, pos, ok := findTreeNodeByID[*adapterNode](r, adNodeID.String(), nodeTypeAdapter)
 	if !ok {
 		return
 	}
@@ -138,7 +143,7 @@ func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove
 func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bool) {
 	dvNodeID := newDeviceNodeID(deviceEvent.DeviceAddress)
 
-	deviceNode, pos, ok := findTreeNodeByID(r, dvNodeID.String(), nodeTypeDevice)
+	deviceNode, pos, ok := findTreeNodeByID[*deviceNode](r, dvNodeID.String(), nodeTypeDevice)
 	if !ok {
 		return
 	}
@@ -146,7 +151,8 @@ func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bo
 	if remove {
 		parentNode, ok := deviceNode.ParentNode()
 		if ok {
-			parentNode.SetChildren(slices.Delete(parentNode.Children(), pos, pos+1))
+			node := parentNode.AdNode()
+			node.SetChildren(slices.Delete(node.Children(), pos, pos+1))
 		}
 
 		r.updateStats(func(rt *rootNode) {
@@ -160,7 +166,7 @@ func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bo
 }
 
 func (r *rootNode) updateAction(updateMsg actionUpdateMsg) {
-	node, _, ok := findTreeNodeByID(r, updateMsg.id, nodeTypeAction)
+	node, _, ok := findTreeNodeByID[*acNode](r, updateMsg.id, nodeTypeAction)
 	if !ok {
 		return
 	}
@@ -170,7 +176,9 @@ func (r *rootNode) updateAction(updateMsg actionUpdateMsg) {
 
 // findTreeNodeByID walks the nodes starting from the root node, splitting "id" into individual
 // chunks until the matching node is found by its ID.
-func findTreeNodeByID(rootNode *rootNode, id string, nodeType adTreeNodeType) (*adNode, int, bool) {
+func findTreeNodeByID[v any](rootNode *rootNode, id string, nodeType adTreeNodeType) (v, int, bool) {
+	var val v
+
 	currNode := rootNode.adNode
 	currNodePos := -1
 
@@ -178,7 +186,7 @@ func findTreeNodeByID(rootNode *rootNode, id string, nodeType adTreeNodeType) (*
 		found := false
 
 		for pos, node := range currNode.Children() {
-			data := node.Data[*adNode]()
+			data := nget(node).AdNode()
 			if data.ID() == nodeID {
 				currNode = data
 				currNodePos = pos
@@ -189,11 +197,15 @@ func findTreeNodeByID(rootNode *rootNode, id string, nodeType adTreeNodeType) (*
 		}
 
 		if !found {
-			return nil, -1, false
+			return val, -1, false
 		}
 	}
 
-	return currNode, currNodePos, currNode != nil && currNode.nodeType == nodeType
+	if m, ok := currNode.Noder().(v); ok {
+		return m, currNodePos, currNode != nil && currNode.nodeType == nodeType
+	}
+
+	return val, -1, false
 }
 
 var _ adNoder = (*rootNode)(nil)

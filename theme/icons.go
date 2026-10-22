@@ -44,6 +44,8 @@ type IconSet struct {
 	Progress  IconVariant
 	Error     IconVariant
 
+	BottomLeft IconVariant
+
 	PillLeft, PillRight IconVariant
 }
 
@@ -205,6 +207,11 @@ func (i *IconSet) populateIcons(isASCII bool) *IconSet {
 			IsASCII: isASCII,
 			Unicode: "\U000025C9",
 			ASCII:   "*",
+		},
+		BottomLeft: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "╰─",
+			ASCII:   "└",
 		},
 	}
 

@@ -9,8 +9,14 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 )
 
+// Content describes the text that is printed in a single operation status card.
+type Content interface {
+	// OperationDescription returns the current operation's static description.
+	OperationDescription() []text.Span
+}
+
 type content struct {
-	card.ContentProvider
+	content Content
 
 	id     string
 	header string
@@ -22,8 +28,8 @@ type content struct {
 	cc *card.Content
 }
 
-func newContent(p card.ContentProvider) *content {
-	c := &content{ContentProvider: p}
+func newContent(p Content) *content {
+	c := &content{content: p}
 	cc := card.NewCardContent(c)
 
 	c.cc = cc
@@ -58,6 +64,10 @@ func (c *content) Headers() (left text.Span, right text.Span) {
 	return hdr, tm
 }
 
+func (c *content) Content() []text.Span {
+	return c.content.OperationDescription()
+}
+
 func (c *content) Message() (marker text.Span, msg text.Span) {
 	var msgSeg text.Span
 
@@ -73,3 +83,5 @@ func (c *content) Message() (marker text.Span, msg text.Span) {
 
 	return status, msgSeg
 }
+
+var _ card.ContentBuilder = (*content)(nil)

@@ -9,6 +9,8 @@ import (
 type Builder struct {
 	buf     SpanBuilder
 	bgStyle tcell.Style
+
+	kstyle, vstyle tcell.Style
 }
 
 // NewBuilder creates a new text builder.
@@ -16,16 +18,35 @@ func NewBuilder(bgStyle tcell.Style) *Builder {
 	return &Builder{bgStyle: bgStyle}
 }
 
-// AddKV appends a key-value pair.
-func (b *Builder) AddKV(key string, keyStyle tcell.Style, val string, valStyle tcell.Style) {
+// ResetKVStyle resets the styles for key-value pairs.
+func (b *Builder) ResetKVStyle(kstyle, vstyle tcell.Style) {
+	b.kstyle, b.vstyle = kstyle, vstyle
+}
+
+func (b *Builder) AddKV(key, val string) {
+	b.buf.Write(key, b.kstyle)
+	b.Space()
+	b.buf.Write(val, b.vstyle)
+	b.Newline()
+}
+
+func (b *Builder) AddKVFunc(key string, valFn func(bb *Builder)) {
+	b.buf.Write(key, b.kstyle)
+	b.Space()
+	valFn(b)
+	b.buf.NewLine()
+}
+
+// AddKVStyled appends a key-value pair.
+func (b *Builder) AddKVStyled(key string, keyStyle tcell.Style, val string, valStyle tcell.Style) {
 	b.buf.Write(key, keyStyle)
 	b.Space()
 	b.buf.Write(val, valStyle)
 	b.buf.NewLine()
 }
 
-// AddKVFunc appends a key-value pair to the builder using a custom function.
-func (b *Builder) AddKVFunc(key string, keyStyle tcell.Style, valFn func(bb *Builder)) {
+// AddKVStyledFunc appends a key-value pair to the builder using a custom function.
+func (b *Builder) AddKVStyledFunc(key string, keyStyle tcell.Style, valFn func(bb *Builder)) {
 	b.buf.Write(key, keyStyle)
 	b.Space()
 	valFn(b)
@@ -51,6 +72,10 @@ func (b *Builder) Appendln(val string, valStyle tcell.Style) {
 // Append appends a single value-style pair to the builder.
 func (b *Builder) Append(val string, valStyle tcell.Style) {
 	b.buf.Write(val, valStyle)
+}
+
+func (b *Builder) AppendSpans(spans ...text.Span) {
+	b.buf.WriteSpans(spans...)
 }
 
 // Text returns the built text.

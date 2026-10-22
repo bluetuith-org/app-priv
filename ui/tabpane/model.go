@@ -43,7 +43,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 	switch ms := msg.(type) {
 	case ui.R[selectedMsg]:
 		m.handler.setActiveIndex(ms.Value.index)
-		m.rv.SetFocused(m.handler.activeID())
+		m.rv.SetFocused(m.handler.active().ViewID())
 
 	default:
 		m.handler.updateAll(msg, rsp)
@@ -69,7 +69,7 @@ func (m *Model) View(focused bool) tview.Widget {
 		Keybind(m.Keybind).
 		OnSelect(m.OnSelect)
 
-	content := box.New(m.handler.activeContent(focused)).
+	content := box.New(m.handler.active().View(focused)).
 		Background(bgStyle.GetBackground()).
 		Padding(1, 0, 0, 0)
 
@@ -106,7 +106,7 @@ func (m *Model) Status() iter.Seq[[]text.Span] {
 
 // GetActiveID returns the current active tab view.
 func (m *Model) GetActiveID() ui.ViewID {
-	return m.handler.activeID()
+	return m.handler.active().ViewID()
 }
 
 // HandleRouterMsg handles the routed message.

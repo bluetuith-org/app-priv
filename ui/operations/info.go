@@ -4,7 +4,6 @@ import (
 	"github.com/ayn2op/tview"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/card"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -37,7 +36,7 @@ type CreationInfo struct {
 }
 
 // NewCreationInfo creates an initial operation context, to be scheduled for execution.
-func NewCreationInfo(desc card.ContentProvider) CreationInfo {
+func NewCreationInfo(desc Content) CreationInfo {
 	return CreationInfo{ct: newContent(desc)}
 }
 
