@@ -5,13 +5,12 @@ import (
 	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/gdamore/tcell/v3"
 )
 
 // adNoder describes an interface to get information from nodes and update node states.
 type adNoder interface {
-	info.Content
+	Information() []text.Span
 
 	// AdNode returns the base node data.
 	AdNode() *adNode

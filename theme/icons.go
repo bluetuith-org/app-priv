@@ -34,6 +34,7 @@ type IconSet struct {
 	Info       IconVariant
 	Operations IconVariant
 	Log        IconVariant
+	Close      IconVariant
 
 	ArrowLeft     IconVariant
 	ArrowRight    IconVariant
@@ -212,6 +213,11 @@ func (i *IconSet) populateIcons(isASCII bool) *IconSet {
 			IsASCII: isASCII,
 			Unicode: "╰─",
 			ASCII:   "└",
+		},
+		Close: IconVariant{
+			IsASCII: isASCII,
+			Unicode: "\U00002717",
+			ASCII:   "[X]",
 		},
 	}
 

@@ -62,16 +62,13 @@ type Keybindings struct {
 	ADTree struct {
 		ExpandOrSelect Keybinding
 		TabPane        Keybinding
+		Info           Keybinding
 	}
 
 	TabPane struct {
 		Next     Keybinding
 		Previous Keybinding
 		ADTree   Keybinding
-	}
-
-	Information struct {
-		Show Keybinding
 	}
 
 	Operations struct {
@@ -141,10 +138,10 @@ const (
 	KeyFilebrowserToggleHiddenFiles
 	KeyADTreeExpandOrSelect
 	KeyADTreeTabPane
+	KeyADTreeInfo
 	KeyTabPaneNext
 	KeyTabPanePrevious
 	KeyTabPaneADTree
-	KeyInformationShow
 	KeyOperationsShow
 	KeyOperationsCancel
 	KeyOperationsClearAll
@@ -273,6 +270,9 @@ func defaultConfig() *Keybindings {
 	k.ADTree.TabPane = newKeybinding(
 		KeyADTreeTabPane, newTcellKey(tcell.Key(9), "", tcell.ModNone), "tab",
 	)
+	k.ADTree.Info = newKeybinding(
+		KeyADTreeInfo, newTcellKey(tcell.Key(256), "I", tcell.ModNone), "I",
+	)
 	k.TabPane.Next = newKeybinding(
 		KeyTabPaneNext, newTcellKey(tcell.Key(9), "", tcell.ModNone), "tab",
 	)
@@ -281,9 +281,6 @@ func defaultConfig() *Keybindings {
 	)
 	k.TabPane.ADTree = newKeybinding(
 		KeyTabPaneADTree, newTcellKey(tcell.Key(27), "", tcell.ModNone), "esc",
-	)
-	k.Information.Show = newKeybinding(
-		KeyInformationShow, newTcellKey(tcell.Key(256), "I", tcell.ModNone), "I",
 	)
 	k.Operations.Show = newKeybinding(
 		KeyOperationsShow, newTcellKey(tcell.Key(256), "O", tcell.ModNone), "O",
@@ -501,20 +498,20 @@ func getProperty(kb *Keybindings, cfg *Configuration, pos int) parseKeybindingIn
 		p.cmpCfg = cfg.ADTree.TabPane
 
 	case 35:
+		p.kb = &kb.ADTree.Info
+		p.cmpCfg = cfg.ADTree.Info
+
+	case 36:
 		p.kb = &kb.TabPane.Next
 		p.cmpCfg = cfg.TabPane.Next
 
-	case 36:
+	case 37:
 		p.kb = &kb.TabPane.Previous
 		p.cmpCfg = cfg.TabPane.Previous
 
-	case 37:
+	case 38:
 		p.kb = &kb.TabPane.ADTree
 		p.cmpCfg = cfg.TabPane.ADTree
-
-	case 38:
-		p.kb = &kb.Information.Show
-		p.cmpCfg = cfg.Information.Show
 
 	case 39:
 		p.kb = &kb.Operations.Show

@@ -56,16 +56,13 @@ type Configuration struct {
 	ADTree struct {
 		ExpandOrSelect string `keydef:"right"`
 		TabPane        string `keydef:"tab"`
+		Info           string `keydef:"I"`
 	}
 
 	TabPane struct {
 		Next     string `keydef:"tab"`
 		Previous string `keydef:"shift+tab"`
 		ADTree   string `keydef:"esc"`
-	}
-
-	Information struct {
-		Show string `keydef:"I"`
 	}
 
 	Operations struct {

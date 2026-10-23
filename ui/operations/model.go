@@ -23,7 +23,6 @@ import (
 // Model represents the operations view.
 type Model struct {
 	scrollState viewport.ScrollState
-	scrollBar   scrollbar.Widget
 
 	count int
 
@@ -38,11 +37,10 @@ type Model struct {
 // New returns a new operations view.
 func New(rv ui.RootView) *Model {
 	return &Model{
-		cursor:    0,
-		target:    0,
-		scrollBar: scrollbar.New(),
-		run:       make(map[string]*RunningInfo),
-		rv:        rv,
+		cursor: 0,
+		target: 0,
+		run:    make(map[string]*RunningInfo),
+		rv:     rv,
 	}
 }
 
@@ -95,6 +93,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 // View draws this model onto the screen.
 func (m *Model) View(focused bool) tview.Widget {
 	content := newListContent(m.ord, m.cursor, focused)
+	scroll := scrollbar.New().Style(theme.Current().Global)
 
 	ls := list.New(m.cursor, len(m.ord), content.Items).
 		Focused(focused).
@@ -104,7 +103,7 @@ func (m *Model) View(focused bool) tview.Widget {
 
 	vp := viewport.New(ls, m.scrollState).
 		Target(ls.Target(m.target)).
-		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
+		ScrollBar(scroll, viewport.ScrollBarVisibilityAutomatic).
 		Axes(layout.Axes{Width: true, Height: true}).
 		Focused(focused).
 		Keybind(m.ViewportKeybinds).

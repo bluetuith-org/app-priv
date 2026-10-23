@@ -14,7 +14,6 @@ const (
 	ViewIDNone ViewID = iota
 	ViewIDAdTree
 	ViewIDTabs
-	ViewIDInfo
 	ViewIDOperations
 	ViewIDLog
 	ViewIDTransfers
@@ -37,9 +36,6 @@ func (v ViewID) String() string {
 
 	case ViewIDTabs:
 		return "Tabs"
-
-	case ViewIDInfo:
-		return "Info"
 
 	case ViewIDOperations:
 		return "Operations"

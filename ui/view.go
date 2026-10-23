@@ -45,9 +45,6 @@ type Model interface {
 type RootView interface {
 	AppBinder
 
-	// Focused returns the currently focused view.
-	Focused() ViewID
-
 	// SetFocused stores the currently focused view.
 	SetFocused(id ViewID)
 

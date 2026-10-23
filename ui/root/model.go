@@ -11,6 +11,7 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/adtree"
 	"github.com/bluetuith-org/bluetuith/ui/tabpane"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/popup"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )
@@ -24,6 +25,8 @@ type Model struct {
 	adTreeModel *adtree.Model
 	tabsModel   *tabpane.Model
 
+	pm *popup.Manager
+
 	focused ui.ViewID
 	ev      *evState
 }
@@ -34,6 +37,7 @@ func New(binder ui.AppBinder) *Model {
 		AppBinder:     binder,
 		headerContent: fmt.Sprintf("bluetuith %s (%s)", binder.Configuration().Version, binder.Configuration().Revision),
 
+		pm: popup.NewManager(),
 		ev: newEvState(binder.Screen()),
 	}
 
@@ -125,7 +129,13 @@ func (m *Model) View() tview.Widget {
 		status,
 	)
 
-	return box.New(hflex).Background(theme.Current().Global.GetBackground())
+	bx := box.New(hflex).Background(theme.Current().Global.GetBackground())
+
+	if m.pm.HasPopups() {
+		return popup.New(bx, m.pm)
+	}
+
+	return bx
 }
 
 // Focused returns the currently focused view.
@@ -151,6 +161,10 @@ func (m *Model) SendMsg(msg tcell.Event) {
 func (m *Model) updateModel(msg tview.Msg, rsp *ui.Response) {
 	switch ms := msg.(type) {
 	case tview.KeyMsg:
+		if m.pm.HandleKey(ms, rsp) {
+			return
+		}
+
 		if m.tabsModel.SetViewKeybind(ms) {
 			return
 		}
@@ -173,13 +187,15 @@ func (m *Model) updateModel(msg tview.Msg, rsp *ui.Response) {
 			m.routeMessageToView(m.Focused(), ms, rsp)
 		}
 
+	case popup.Router:
+		m.pm.HandleMsg(ms, rsp)
+
 	case ui.Router:
 		if ms == nil || !ms.IsValid() {
 			return
 		}
 
 		m.routeMessageToView(ms.ViewID(), ms, rsp)
-		return
 
 	default:
 		m.updateAllViews(msg, rsp)

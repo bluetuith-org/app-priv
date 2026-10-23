@@ -22,7 +22,6 @@ type Model struct {
 	lastIndex      int
 
 	scrollState viewport.ScrollState
-	scrollBar   scrollbar.Widget
 
 	follow bool
 }
@@ -33,11 +32,10 @@ func New(rv ui.RootView) *Model {
 	ui.AddLogHandler(h)
 
 	return &Model{
-		cursor:    0,
-		target:    0,
-		h:         h,
-		scrollBar: scrollbar.New(),
-		follow:    true,
+		cursor: 0,
+		target: 0,
+		h:      h,
+		follow: true,
 	}
 }
 
@@ -82,11 +80,13 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 
 // View draws this model onto the screen.
 func (m *Model) View(focused bool) tview.Widget {
+	scroll := scrollbar.New().Style(theme.Current().Global)
+
 	ls := newWidget(m.h, m.cursor, focused && !m.follow)
 
 	vp := viewport.New(ls, m.scrollState).
 		Target(ls.Target(m.target)).
-		ScrollBar(m.scrollBar, viewport.ScrollBarVisibilityAutomatic).
+		ScrollBar(scroll, viewport.ScrollBarVisibilityAutomatic).
 		Axes(layout.Axes{Width: true, Height: true}).
 		Focused(focused).
 		Keybind(m.ViewportKeybinds).

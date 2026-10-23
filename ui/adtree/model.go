@@ -2,7 +2,6 @@ package adtree
 
 import (
 	"iter"
-	"time"
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
@@ -11,12 +10,10 @@ import (
 	"github.com/ayn2op/tview/viewport"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/popup"
 	"github.com/gdamore/tcell/v3"
 )
-
-const dbTime = 500 * time.Millisecond
 
 // Model represents an adapter-device tree.
 type Model struct {
@@ -27,10 +24,6 @@ type Model struct {
 
 	graphicsSet tview.BorderSet
 	markers     ctree.Markers
-
-	tm        *time.Timer
-	reset     bool
-	rootident string
 
 	rv ui.RootView
 }
@@ -51,9 +44,6 @@ func New(rv ui.RootView) *Model {
 		Leaf:      " ",
 	}
 
-	tm := time.NewTimer(dbTime)
-	tm.Reset(dbTime)
-
 	m := &Model{
 		root:        root,
 		currentNode: root.Node,
@@ -61,12 +51,8 @@ func New(rv ui.RootView) *Model {
 		graphicsSet: graphicsSet,
 		markers:     markers,
 
-		tm: tm,
-
 		rv: rv,
 	}
-
-	go m.dbTimer()
 
 	return m
 }
@@ -79,9 +65,6 @@ func (m *Model) Init() tview.Cmd {
 // Update receives messages when this model has focus.
 func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 	switch ms := msg.(type) {
-	case ui.R[dbEvent]:
-		rsp.PushRouted(m.dbHandler())
-
 	case ui.R[scrollMsg]:
 		m.scrollState = viewport.ScrollState(ms.Value.change)
 		if ms.Value.msg != nil {
@@ -91,13 +74,11 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 	case ui.R[selectionChange]:
 		m.currentNode = ms.Value
 		m.scrollState.ScrollToTarget()
-		rsp.PushRouted(m.resetInformation())
 
 	case ui.R[rootNodeMsg]:
 		m.root = ms.Value.node
 		if ch := m.root.Children(); len(ch) > 0 {
 			m.setCurrentNode(ch[0])
-			rsp.PushRouted(m.resetInformation())
 		}
 
 	case ui.R[selectedMsg]:
@@ -107,7 +88,6 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 		data := node.AdNode()
 
 		m.setCurrentNode(ms.Value.node)
-		rsp.PushRouted(m.resetInformation())
 
 		if data.nodeType != nodeTypeAction {
 			ms.Value.node.SetExpanded(!ms.Value.node.Expanded())
@@ -124,7 +104,27 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 		}
 
 	case tview.KeyMsg:
-		data := nget(m.currentNode)
+		node := m.currentNode
+		if node == nil {
+			return
+		}
+
+		if ui.Kb().ADTree.Info.Matches(ms) {
+			noder := nget(node)
+
+			id := noder.RootID()
+			info := noder.Information()
+			if info == nil {
+				return
+			}
+
+			pop := popup.NewScrollableText(id, info)
+			rsp.PushMsg(popup.CreateMsg(pop))
+
+			return
+		}
+
+		data := nget(node)
 		if rmsg, ok := data.HandleKeys(ms); ok {
 			rsp.PushRouted(rmsg)
 		}
@@ -287,61 +287,8 @@ func (m *Model) populate() tview.Msg {
 	return ui.ViewIDAdTree.R(rootNodeMsg{root})
 }
 
-func (m *Model) dbHandler() ui.Router {
-	currNode := m.currentNode
-	if currNode == nil {
-		return nil
-	}
-
-	node := nget(currNode)
-	rootID := node.RootID()
-	if m.rootident == rootID && !m.reset {
-		return nil
-	}
-
-	m.rootident = rootID
-	m.reset = false
-
-	return info.Msg(node)
-}
-
-func (m *Model) resetInformation() ui.Router {
-	if m.reset {
-		return nil
-	}
-
-	currNode := m.currentNode
-	if currNode == nil {
-		return nil
-	}
-
-	node := nget(currNode)
-	rootID := node.RootID()
-	if m.rootident == rootID {
-		return nil
-	}
-
-	m.reset = true
-	m.tm.Reset(dbTime)
-
-	return info.ResetMsg()
-}
-
 func (m *Model) setCurrentNode(n *ctree.Node) {
 	m.currentNode = n
-}
-
-func (m *Model) dbTimer() {
-	for {
-		select {
-		case _, ok := <-m.tm.C:
-			if !ok {
-				return
-			}
-
-			m.rv.SendMsg(m.ViewID().R(dbEvent{}))
-		}
-	}
 }
 
 type (
@@ -361,8 +308,6 @@ type (
 	rootNodeMsg struct {
 		node *rootNode
 	}
-
-	dbEvent struct{}
 )
 
 var (

@@ -16,6 +16,10 @@ type Configuration struct {
 		CurrentViewName string `themedef:"bg:brightblack; attr:italic"`
 	}
 
+	Popups struct {
+		CloseIcon string `themedef:"bg:red"`
+	}
+
 	ADTree struct {
 		TitleBarIndicator string `themedef:"bg:#5f5ffd; attr:bold"`
 

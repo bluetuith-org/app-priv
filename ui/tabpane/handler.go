@@ -3,7 +3,6 @@ package tabpane
 import (
 	"github.com/ayn2op/tview"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/info"
 	"github.com/bluetuith-org/bluetuith/ui/logs"
 	"github.com/bluetuith-org/bluetuith/ui/operations"
 )
@@ -11,15 +10,10 @@ import (
 type viewHandler struct {
 	activeIndex int
 
-	views  []vm
+	views  []ui.TabSection
 	labels []string
 
 	rv ui.RootView
-}
-
-type vm interface {
-	ui.Model
-	ui.TabSection
 }
 
 func newHandler(rv ui.RootView) *viewHandler {
@@ -29,12 +23,11 @@ func newHandler(rv ui.RootView) *viewHandler {
 
 	h.addModel(operations.New(rv))
 	h.addModel(logs.New(rv))
-	h.addModel(info.New(rv))
 
 	return h
 }
 
-func (h *viewHandler) addModel[T vm](v T) {
+func (h *viewHandler) addModel(v ui.TabSection) {
 	h.views = append(h.views, v)
 
 	icon, title := v.Icon(), v.Title()
@@ -61,7 +54,7 @@ func (h *viewHandler) update(id ui.ViewID, msg tview.Msg, rsp *ui.Response) {
 	}
 }
 
-func (h *viewHandler) active() vm {
+func (h *viewHandler) active() ui.TabSection {
 	return h.views[h.activeIndex]
 }
 

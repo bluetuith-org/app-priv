@@ -9,6 +9,7 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/fatih/structtag v1.2.0
 	github.com/gdamore/tcell/v3 v3.6.0
+	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/hjson v1.1.0
 	github.com/knadh/koanf/providers/cliflagv2 v1.0.2
 	github.com/knadh/koanf/providers/file v1.2.1
@@ -33,7 +34,6 @@ require (
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/hjson/hjson-go/v4 v4.6.0 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
