@@ -109,8 +109,9 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 			return
 		}
 
+		noder := nget(node)
+
 		if ui.Kb().ADTree.Info.Matches(ms) {
-			noder := nget(node)
 
 			id := noder.RootID()
 			info := noder.Information()
@@ -124,8 +125,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 			return
 		}
 
-		data := nget(node)
-		if rmsg, ok := data.HandleKeys(ms); ok {
+		if rmsg, ok := noder.HandleKeys(ms); ok {
 			rsp.PushRouted(rmsg)
 		}
 	}
