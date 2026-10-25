@@ -3,12 +3,12 @@ module github.com/bluetuith-org/bluetuith
 go 1.27.1
 
 require (
-	github.com/ayn2op/tview v0.0.0-20261023224934-865f47a23bab
+	github.com/ayn2op/tview v0.0.0-20261025020023-cd3c5a5a8d26
 	github.com/bluetuith-org/bluetooth-classic v0.0.8
 	github.com/dave/dst v0.28.0
 	github.com/fatih/color v1.19.0
 	github.com/fatih/structtag v1.2.0
-	github.com/gdamore/tcell/v3 v3.6.0
+	github.com/gdamore/tcell/v3 v3.6.1-0.20261024233502-62aecba7acc7
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/hjson v1.1.0
 	github.com/knadh/koanf/providers/cliflagv2 v1.0.2
@@ -45,7 +45,7 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	golang.org/x/mod v0.41.0 // indirect

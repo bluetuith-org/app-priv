@@ -20,15 +20,14 @@ import (
 type Model struct {
 	ui.AppBinder
 
-	headerContent string
-
 	adTreeModel *adtree.Model
 	tabsModel   *tabpane.Model
 
 	pm *popup.Manager
+	ev *evState
 
-	focused ui.ViewID
-	ev      *evState
+	headerContent string
+	focused       ui.ViewID
 }
 
 // New returns a new root model.
@@ -185,6 +184,11 @@ func (m *Model) updateModel(msg tview.Msg, rsp *ui.Response) {
 
 		default:
 			m.routeMessageToView(m.Focused(), ms, rsp)
+		}
+
+	case tview.MouseMsg:
+		if ms.Action == tview.MouseMove {
+			return
 		}
 
 	case popup.Router:

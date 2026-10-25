@@ -82,7 +82,6 @@ func (m *ScrollableText) View(focused bool) tview.Widget {
 
 	closeButton := button.New(closeIcon).
 		Style(bgStyle).
-		FocusedStyle(theme.Current().Popups.CloseIcon).
 		Focused(true).
 		OnClick(m.removeMsg)
 

@@ -297,35 +297,35 @@ func (d *deviceNode) SetDeviceEventData(ev bluetooth.DeviceEventData) {
 	d.PopulateActions()
 }
 
-func (d *deviceNode) actionConnect(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionConnect(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (d *deviceNode) actionPair(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionPair(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (d *deviceNode) actionTrust(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionTrust(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (d *deviceNode) actionBlock(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionBlock(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (d *deviceNode) actionSend(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionSend(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (d *deviceNode) actionNetwork(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionNetwork(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (d *deviceNode) actionAudioProfiles(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionAudioProfiles(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (d *deviceNode) actionMediaPlayer(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (d *deviceNode) actionMediaPlayer(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 

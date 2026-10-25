@@ -19,7 +19,7 @@ func Kb() *keybindings.Keybindings {
 // RenderMergedPill renders a merged pill with multiple segments.
 func RenderMergedPill(line []text.Span, bgColor color.Color) []text.Span {
 	if len(line) == 0 {
-		return []text.Span{}
+		return line
 	}
 
 	firstSeg, lastSeg := line[0], line[len(line)-1]

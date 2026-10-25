@@ -262,11 +262,11 @@ func (a *adapterNode) actionDiscoverable(state *adActionState) (operations.Creat
 	}
 }
 
-func (a *adapterNode) actionPairable(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (a *adapterNode) actionPairable(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
-func (a *adapterNode) actionScan(state *adActionState) (operations.CreationInfo, operations.Invoker) {
+func (a *adapterNode) actionScan(_ *adActionState) (operations.CreationInfo, operations.Invoker) {
 	return operations.CreationInfo{}, nil
 }
 
