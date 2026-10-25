@@ -1,6 +1,7 @@
 package adtree
 
 import (
+	"log/slog"
 	"slices"
 	"strconv"
 
@@ -89,7 +90,17 @@ func (r *rootNode) updateStats(fn func(rt *rootNode)) {
 	r.title[r.dcPos].Text = strconv.Itoa(r.devicesCount)
 }
 
-func (r *rootNode) addAdapter(adapter bluetooth.AdapterData, devices []bluetooth.DeviceData) {
+func (r *rootNode) addAdapter(adapter bluetooth.AdapterData) {
+	devices, err := r.rv.Session().Adapter(adapter.AdapterAddress).Devices()
+	if err != nil {
+		slog.Error("An error occurred while getting device information from the adapter",
+			"internal error", err,
+			"adapter", getAdapterDisplayName(r.rv, adapter, true),
+		)
+
+		return
+	}
+
 	dvCount := len(devices)
 	r.updateStats(func(rt *rootNode) {
 		rt.adapterCount++
@@ -111,7 +122,7 @@ func (r *rootNode) addDevice(device bluetooth.DeviceData) {
 		rt.devicesCount++
 	})
 
-	newDeviceNode(r.rv, deviceListNode.noder.(*dlNode), device)
+	newDeviceNode(r.rv, deviceListNode, device)
 }
 
 func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove bool) {

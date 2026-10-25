@@ -176,6 +176,7 @@ func (a *adapterNode) StatusIcons(compact bool) []text.Span {
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (a *adapterNode) PopulateActions() {
 	node := a.alnode
+	node.AdNode().ClearChildren()
 
 	if v, ok := a.adapter.Powered.Get(); ok {
 		newActionNode(node, ui.Kb().Adapter.TogglePower, boolToActionState(v), true, a.actionPowered)

@@ -2,12 +2,14 @@ package adtree
 
 import (
 	"iter"
+	"log/slog"
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/layout"
 	"github.com/ayn2op/tview/text"
 	"github.com/ayn2op/tview/viewport"
+	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
@@ -64,6 +66,10 @@ func (m *Model) Init() tview.Cmd {
 
 // Update receives messages when this model has focus.
 func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
+	if m.handleEvents(msg, rsp) {
+		return
+	}
+
 	switch ms := msg.(type) {
 	case ui.R[scrollMsg]:
 		m.scrollState = viewport.ScrollState(ms.Value.change)
@@ -271,24 +277,101 @@ func (m *Model) populate() tview.Msg {
 
 	adapters, err := m.rv.Session().Adapters()
 	if err != nil {
-		// TODO: Log error messages
+		slog.Error("An error occurred while fetching the list of adapters", "internal error", err)
 		return nil
 	}
 
 	for _, adapter := range adapters {
-		devices, err := m.rv.Session().Adapter(adapter.AdapterAddress).Devices()
-		if err != nil {
-			continue
-		}
-
-		root.addAdapter(adapter, devices)
+		root.addAdapter(adapter)
 	}
+
+	go m.adapterEvents()
+	go m.deviceEvents()
 
 	return ui.ViewIDAdTree.R(rootNodeMsg{root})
 }
 
 func (m *Model) setCurrentNode(n *ctree.Node) {
 	m.currentNode = n
+}
+
+func (m *Model) handleEvents(msg tview.Msg, _ *ui.Response) bool {
+	switch ms := msg.(type) {
+	case ui.R[adMsg[bluetooth.AdapterData]]:
+		m.root.addAdapter(ms.Value.data)
+
+	case ui.R[adMsg[bluetooth.AdapterEventData]]:
+		m.root.updateAdapter(ms.Value.data, ms.Value.action == bluetooth.EventActionRemoved)
+
+	case ui.R[adMsg[bluetooth.DeviceData]]:
+		m.root.addDevice(ms.Value.data)
+
+	case ui.R[adMsg[bluetooth.DeviceEventData]]:
+		m.root.updateDevice(ms.Value.data, ms.Value.action == bluetooth.EventActionRemoved)
+
+	default:
+		return false
+	}
+
+	return true
+}
+
+func (m *Model) adapterEvents() {
+	sub, ok := bluetooth.AdapterEvents().Subscribe()
+	if !ok {
+		slog.Error("Tree: cannot subscribe to adapter events: unknown error")
+		return
+	}
+
+	slog.Info("Listening for adapter events...")
+
+	for {
+		select {
+		case <-sub.Done:
+			return
+
+		case added := <-sub.AddedEvents:
+			slog.Info("Adapter added", "data", added)
+			m.rv.SendMsg(newAdMsg(added, bluetooth.EventActionAdded))
+
+		case updated := <-sub.UpdatedEvents:
+			slog.Info("Adapter updated", "data", updated.Discoverable.Value())
+			m.rv.SendMsg(newAdMsg(updated, bluetooth.EventActionUpdated))
+
+		case removed := <-sub.RemovedEvents:
+			slog.Info("Adapter removed", "data", removed)
+			m.rv.SendMsg(newAdMsg(removed, bluetooth.EventActionRemoved))
+		}
+	}
+}
+
+func (m *Model) deviceEvents() {
+	sub, ok := bluetooth.DeviceEvents().Subscribe()
+	if !ok {
+		slog.Error("Tree: cannot subscribe to device events: unknown error")
+		return
+	}
+
+	slog.Info("Listening for device events...")
+
+	for {
+		select {
+		case <-sub.Done:
+			return
+
+		case added := <-sub.AddedEvents:
+			slog.Info("Device added", "data", added)
+			m.rv.SendMsg(newAdMsg(added, bluetooth.EventActionAdded))
+
+		case updated := <-sub.UpdatedEvents:
+			slog.Info("Device updated", "data", updated)
+			m.rv.SendMsg(newAdMsg(updated, bluetooth.EventActionUpdated))
+
+		case removed := <-sub.RemovedEvents:
+			slog.Info("Device removed", "data", removed)
+			m.rv.SendMsg(newAdMsg(removed, bluetooth.EventActionRemoved))
+		}
+	}
 }
 
 type (
@@ -309,6 +392,20 @@ type (
 		node *rootNode
 	}
 )
+
+type adEvent interface {
+	bluetooth.AdapterData | bluetooth.AdapterEventData |
+		bluetooth.DeviceData | bluetooth.DeviceEventData
+}
+
+type adMsg[T adEvent] struct {
+	action bluetooth.EventAction
+	data   T
+}
+
+func newAdMsg[T adEvent](data T, action bluetooth.EventAction) ui.Router {
+	return ui.ViewIDAdTree.R(adMsg[T]{action, data})
+}
 
 var (
 	_ ui.Model       = (*Model)(nil)

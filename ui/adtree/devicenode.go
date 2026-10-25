@@ -194,6 +194,7 @@ func (d *deviceNode) StatusIcons(compact bool) []text.Span {
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (d *deviceNode) PopulateActions() {
 	node := d.alnode
+	node.AdNode().ClearChildren()
 
 	if v, ok := d.device.Connected.Get(); ok {
 		newActionNode(node, ui.Kb().Device.ToggleConnection, boolToActionState(v), true, d.actionConnect)
