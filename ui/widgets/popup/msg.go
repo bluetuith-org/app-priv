@@ -34,7 +34,7 @@ func NewRouterMsg[T any](id string, v T) *RouterMsg[T] {
 }
 
 // CreateMsg returns a message to create a new popup.
-func CreateMsg(popup Popup) *RouterMsg[popupModifyMsg] {
+func CreateMsg(popup Overlay) *RouterMsg[popupModifyMsg] {
 	return NewRouterMsg(popup.PopupID(), popupModifyMsg{popup})
 }
 
@@ -64,7 +64,7 @@ func newDeleteMsg() *RouterMsg[popupDeleteMsg] {
 
 type (
 	popupModifyMsg struct {
-		popup Popup
+		popup Overlay
 	}
 
 	popupDeleteMsg struct{}

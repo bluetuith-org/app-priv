@@ -125,7 +125,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 				return
 			}
 
-			pop := popup.NewScrollableText(id, info)
+			pop := popup.NewTextView(id, info)
 			rsp.PushMsg(popup.CreateMsg(pop))
 
 			return

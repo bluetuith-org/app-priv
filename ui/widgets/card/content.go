@@ -23,8 +23,6 @@ type Content struct {
 	width int
 }
 
-var _ tview.Widget = (*Content)(nil)
-
 // NewCardContent returns new [Content].
 func NewCardContent(cb ContentBuilder) *Content {
 	c := &Content{cb: cb}
@@ -172,3 +170,5 @@ func (c *Content) refreshMsg(width int) {
 func (c *Content) height() int {
 	return 3 + len(c.content) + len(c.message)
 }
+
+var _ tview.Widget = (*Content)(nil)

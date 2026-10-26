@@ -11,7 +11,7 @@ import (
 
 // Manager describes a popup manager.
 type Manager struct {
-	popups []Popup
+	popups []Overlay
 }
 
 // NewManager returns a new popup manager.
@@ -40,7 +40,7 @@ func (p *Manager) HandleMsg(msg Router, rsp *ui.Response) bool {
 		p.removeByID(ms.id)
 
 	case R[popupModifyMsg]:
-		p.add(ms.Value.popup)
+		p.push(ms.Value.popup)
 
 	default:
 		if !msg.IsValid() {
@@ -84,7 +84,7 @@ func (p *Manager) Popups() iter.Seq2[tview.Widget, bool] {
 	}
 }
 
-func (p *Manager) add(popup Popup) {
+func (p *Manager) push(popup Overlay) {
 	idx := -1
 	pid := popup.PopupID()
 
