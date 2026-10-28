@@ -8,6 +8,22 @@ import (
 	"github.com/gdamore/tcell/v3"
 )
 
+// ContentBuilder describes a provider which builds and returns
+// headers, the text body and the message content for the card.
+type ContentBuilder interface {
+	// Headers returns the content to be printed
+	// in the title area of the card.
+	Headers() (left text.Span, right text.Span)
+
+	// Message returns the content to be printed
+	// right after the content is printed.
+	Message() (marker text.Span, msg text.Span)
+
+	// Content returns the static content to be printed
+	// in the centre of the card.
+	Content() []text.Span
+}
+
 // Content describes a card content layout.
 type Content struct {
 	headerRight, headerLeft text.Span

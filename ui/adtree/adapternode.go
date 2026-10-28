@@ -250,7 +250,7 @@ func (a *adapterNode) SetDeviceEventData(bluetooth.DeviceEventData) {
 }
 
 func (a *adapterNode) actionPowered(state *adActionState) (operations.CreationInfo, operations.Invoker) {
-	return operations.NewCreationInfo(newAdapterStatus(a, "Turning adapter", state)), func(ov *operations.RunningInfo) tview.Msg {
+	return operations.NewCreationInfo(a.opDescription("Turning adapter", state)), func(ov *operations.RunningInfo) tview.Msg {
 		ov.Info("Powering on...")
 		time.Sleep(2 * time.Second)
 
@@ -259,7 +259,7 @@ func (a *adapterNode) actionPowered(state *adActionState) (operations.CreationIn
 }
 
 func (a *adapterNode) actionDiscoverable(state *adActionState) (operations.CreationInfo, operations.Invoker) {
-	return operations.NewCreationInfo(newAdapterStatus(a, "Setting adapter's discoverable", state)), func(ov *operations.RunningInfo) tview.Msg {
+	return operations.NewCreationInfo(a.opDescription("Setting adapter's discoverable", state)), func(ov *operations.RunningInfo) tview.Msg {
 		ov.Info("Starting Disc")
 		time.Sleep(2 * time.Second)
 
@@ -275,24 +275,12 @@ func (a *adapterNode) actionScan(_ *adActionState) (operations.CreationInfo, ope
 	return operations.CreationInfo{}, nil
 }
 
-var _ adNoder = (*adapterNode)(nil)
+func (a *adapterNode) opDescription(name string, state *adActionState) []text.Span {
+	icon := a.Icon()
+	adapterName := getAdapterDisplayName(a.rv, a.adapter, true)
 
-type adapterStatus struct {
-	name, icon, adapterName string
-	currentState            actionStateSpec
-}
+	currentState := state.currentState
 
-func newAdapterStatus(node *adapterNode, name string, state *adActionState) *adapterStatus {
-	return &adapterStatus{
-		name:        name,
-		adapterName: getAdapterDisplayName(node.rv, node.adapter, true),
-		icon:        node.Icon(),
-
-		currentState: state.currentState,
-	}
-}
-
-func (a *adapterStatus) OperationDescription() []text.Span {
 	builder := stext.NewBuilder(
 		theme.Current().Global,
 	)
@@ -302,21 +290,21 @@ func (a *adapterStatus) OperationDescription() []text.Span {
 	msgStyle := theme.Current().Operations.Message
 
 	builder.AddKVStyledFunc("Adapter:", style, func(bb *stext.Builder) {
-		bb.Append(a.icon, adapterStyle)
+		bb.Append(icon, adapterStyle)
 		bb.Space()
-		bb.Append(a.adapterName, adapterStyle)
+		bb.Append(adapterName, adapterStyle)
 	})
 
 	builder.AddKVStyledFunc("Action:", style, func(bb *stext.Builder) {
-		bb.Append(a.name, msgStyle)
+		bb.Append(name, msgStyle)
 		bb.Space()
-		bb.Append(a.currentState.Format("on", "off"), msgStyle)
+		bb.Append(currentState.Format("on", "off"), msgStyle)
 	})
 
 	return builder.Text()
 }
 
-var _ operations.Content = (*adapterStatus)(nil)
+var _ adNoder = (*adapterNode)(nil)
 
 type adStatusIndicator uint8
 

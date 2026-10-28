@@ -9,14 +9,8 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 )
 
-// Content describes the text that is printed in a single operation status card.
-type Content interface {
-	// OperationDescription returns the current operation's static description.
-	OperationDescription() []text.Span
-}
-
 type content struct {
-	content Content
+	content []text.Span
 
 	id     string
 	header string
@@ -28,7 +22,7 @@ type content struct {
 	cc *card.Content
 }
 
-func newContent(p Content) *content {
+func newContent(p []text.Span) *content {
 	c := &content{content: p}
 	cc := card.NewCardContent(c)
 
@@ -57,6 +51,8 @@ func (c *content) fromUpdateMsg(msg opUpdateMsg) {
 	c.cc.RefreshMessage()
 }
 
+// Headers returns the content to be printed
+// in the title area of the card.
 func (c *content) Headers() (left text.Span, right text.Span) {
 	hdr := stext.NewSpan(c.header, theme.Current().Operations.OperationNumber)
 	tm := stext.NewSpan(time.Now().Format("02/01/2006 15:04:05"), theme.Current().Operations.Time)
@@ -64,10 +60,14 @@ func (c *content) Headers() (left text.Span, right text.Span) {
 	return hdr, tm
 }
 
+// Content returns the static content to be printed
+// in the centre of the card.
 func (c *content) Content() []text.Span {
-	return c.content.OperationDescription()
+	return c.content
 }
 
+// Message returns the content to be printed
+// right after the content is printed.
 func (c *content) Message() (marker text.Span, msg text.Span) {
 	var msgSeg text.Span
 

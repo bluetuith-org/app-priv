@@ -2,6 +2,7 @@ package operations
 
 import (
 	"github.com/ayn2op/tview"
+	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/gdamore/tcell/v3"
@@ -36,7 +37,7 @@ type CreationInfo struct {
 }
 
 // NewCreationInfo creates an initial operation context, to be scheduled for execution.
-func NewCreationInfo(desc Content) CreationInfo {
+func NewCreationInfo(desc []text.Span) CreationInfo {
 	return CreationInfo{ct: newContent(desc)}
 }
 
