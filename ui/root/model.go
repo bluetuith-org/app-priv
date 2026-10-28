@@ -10,8 +10,8 @@ import (
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/adtree"
+	"github.com/bluetuith-org/bluetuith/ui/popup"
 	"github.com/bluetuith-org/bluetuith/ui/tabpane"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/popup"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 	"github.com/gdamore/tcell/v3"
 )

@@ -13,7 +13,7 @@ import (
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/popup"
+	"github.com/bluetuith-org/bluetuith/ui/popup"
 	"github.com/gdamore/tcell/v3"
 )
 
