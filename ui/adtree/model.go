@@ -12,8 +12,8 @@ import (
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
-	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
 	"github.com/bluetuith-org/bluetuith/ui/popup"
+	"github.com/bluetuith-org/bluetuith/ui/widgets/ctree"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -118,8 +118,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 		noder := nget(node)
 
 		if ui.Kb().ADTree.Info.Matches(ms) {
-
-			id := noder.RootID()
+			id := noder.AdNode().ID()
 			info := noder.Information()
 			if info == nil {
 				return

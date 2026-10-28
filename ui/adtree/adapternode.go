@@ -40,7 +40,7 @@ func newAdapterNode(rv ui.RootView, rootNode *rootNode, adapter bluetooth.Adapte
 	an.adNode = adapterNode
 	an.adapter = adapter
 
-	an.alnode = newActionsListNode(an.adNode)
+	an.alnode = newActionsListNode(an.adNode, an)
 	an.dlnode = newDeviceListNode(an, devices)
 
 	rootNode.AddChild(adapterNode.Node)
@@ -176,7 +176,7 @@ func (a *adapterNode) StatusIcons(compact bool) []text.Span {
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (a *adapterNode) PopulateActions() {
 	node := a.alnode
-	node.AdNode().ClearChildren()
+	node.ClearActions()
 
 	if v, ok := a.adapter.Powered.Get(); ok {
 		newActionNode(node, ui.Kb().Adapter.TogglePower, boolToActionState(v), true, a.actionPowered)
@@ -189,6 +189,10 @@ func (a *adapterNode) PopulateActions() {
 	}
 	if v, ok := a.adapter.Discovering.Get(); ok {
 		newActionNode(node, ui.Kb().Adapter.ToggleScan, boolToActionState(v), true, a.actionScan)
+	}
+
+	for _, ac := range node.Actions() {
+		a.UpdateActionNode(ac, emptyActionUpdateMsg())
 	}
 }
 

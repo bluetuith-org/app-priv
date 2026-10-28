@@ -7,6 +7,9 @@ import (
 	"github.com/ayn2op/tview/box"
 	"github.com/ayn2op/tview/column"
 	"github.com/ayn2op/tview/row"
+	"github.com/bluetuith-org/bluetooth-classic/api/appfeatures"
+	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
+	"github.com/bluetuith-org/bluetuith/config"
 	"github.com/bluetuith-org/bluetuith/theme"
 	"github.com/bluetuith-org/bluetuith/ui"
 	"github.com/bluetuith-org/bluetuith/ui/adtree"
@@ -18,8 +21,6 @@ import (
 
 // Model holds and renders a set of views for the application.
 type Model struct {
-	ui.AppBinder
-
 	adTreeModel *adtree.Model
 	tabsModel   *tabpane.Model
 
@@ -28,23 +29,46 @@ type Model struct {
 
 	headerContent string
 	focused       ui.ViewID
+
+	screen tcell.Screen
+
+	rcfg *Config
 }
 
 // New returns a new root model.
-func New(binder ui.AppBinder) *Model {
-	m := &Model{
-		AppBinder:     binder,
-		headerContent: fmt.Sprintf("bluetuith %s (%s)", binder.Configuration().Version, binder.Configuration().Revision),
+func New() *Model {
+	m := &Model{}
 
-		pm: popup.NewManager(),
-		ev: newEvState(binder.Screen()),
+	return m
+}
+
+// Run runs the application.
+func (m *Model) Run(rootcfg *Config) error {
+	screen, err := tcell.NewScreen()
+	if err != nil {
+		return err
 	}
+
+	if err := screen.Init(); err != nil {
+		return err
+	}
+
+	screen.EnableMouse()
+	m.screen = screen
+
+	m.headerContent = fmt.Sprintf("bluetuith %s (%s)", rootcfg.cfg.Version, rootcfg.cfg.Revision)
+	m.pm = popup.NewManager()
+
+	m.ev = newEvState(m.screen)
+	m.rcfg = rootcfg
 
 	m.adTreeModel = adtree.New(m)
 	m.tabsModel = tabpane.New(m)
 	m.focused = ui.ViewIDAdTree
 
-	return m
+	app := tview.NewApplication(m, tview.WithScreen(screen))
+
+	return app.Run()
 }
 
 // Init returns a command to run when the model starts, or nil.
@@ -135,6 +159,31 @@ func (m *Model) View() tview.Widget {
 	}
 
 	return bx
+}
+
+// Session returns the current session.
+func (m *Model) Session() bluetooth.Session {
+	return m.rcfg.session
+}
+
+// Features returns the current features of the session.
+func (m *Model) Features() *appfeatures.FeatureSet {
+	return m.rcfg.features
+}
+
+// Configuration returns the app's configuration.
+func (m *Model) Configuration() *config.Config {
+	return m.rcfg.cfg
+}
+
+// Screen returns the screen for the application.
+func (m *Model) Screen() tcell.Screen {
+	return m.screen
+}
+
+// Authorizer returns the authorizer for bluetooth-related permission prompts.
+func (m *Model) Authorizer() bluetooth.SessionAuthorizer {
+	return nil
 }
 
 // Focused returns the currently focused view.

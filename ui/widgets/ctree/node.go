@@ -68,11 +68,9 @@ func (n *Node) Walk(callback func(node, parent *Node) bool) *Node {
 	return n
 }
 
-// Data returns this node's reference object.
-//
-//revive:disable
-func (n *Node) Data[T any]() T {
-	return n.reference.(T)
+// Reference returns this node's reference.
+func (n *Node) Reference() any {
+	return n.reference
 }
 
 // Parent returns this node's parent node.

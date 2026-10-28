@@ -10,21 +10,6 @@ import (
 	"github.com/gdamore/tcell/v3"
 )
 
-// AppBinder represents an interface to interact with the root application itself.
-type AppBinder interface {
-	// Session returns the current session.
-	Session() bluetooth.Session
-
-	// Features returns the current features of the session.
-	Features() *appfeatures.FeatureSet
-
-	// Configuration returns the app's configuration.
-	Configuration() *config.Config
-
-	// Screen returns the screen for the application.
-	Screen() tcell.Screen
-}
-
 // Model represents a UI model.
 type Model interface {
 	// ViewID returns the view's ID.
@@ -43,8 +28,6 @@ type Model interface {
 // RootView represents the root view. All views must inherit this interface,
 // to call app-related functions and route messages to components.
 type RootView interface {
-	AppBinder
-
 	// SetFocused stores the currently focused view.
 	SetFocused(id ViewID)
 
@@ -53,6 +36,21 @@ type RootView interface {
 
 	// SendMsg sends a message to the program.
 	SendMsg(msg tcell.Event)
+
+	// Session returns the current session.
+	Session() bluetooth.Session
+
+	// Features returns the current features of the session.
+	Features() *appfeatures.FeatureSet
+
+	// Configuration returns the app's configuration.
+	Configuration() *config.Config
+
+	// Screen returns the screen for the application.
+	Screen() tcell.Screen
+
+	// Authorizer returns the authorizer for bluetooth-related permission prompts.
+	Authorizer() bluetooth.SessionAuthorizer
 }
 
 // TabSection defines a section of the tabs widget where

@@ -11,7 +11,7 @@ import (
 	scfg "github.com/bluetuith-org/bluetooth-classic/api/config"
 	"github.com/bluetuith-org/bluetooth-classic/session"
 	"github.com/bluetuith-org/bluetuith/config"
-	"github.com/bluetuith-org/bluetuith/ui/app"
+	"github.com/bluetuith-org/bluetuith/ui/root"
 	"github.com/knadh/koanf/v2"
 	"github.com/urfave/cli/v2"
 )
@@ -177,7 +177,7 @@ func newApp() *cli.App {
 
 			sessionCfg := newSessionCfg(cliCtx)
 
-			tui, s := app.NewApplication(), session.NewSession()
+			tui, s := root.New(), session.NewSession()
 			featureSet, _, err := s.Start(tui.Authorizer(), sessionCfg)
 			if err != nil {
 				return err
@@ -189,7 +189,9 @@ func newApp() *cli.App {
 			}
 			printUnsupportedFeatures(cfg, featureSet)
 
-			return tui.Start(s, featureSet, cfg)
+			rcfg := root.NewConfig(s, featureSet, cfg)
+
+			return tui.Run(rcfg)
 		},
 		ExitErrHandler: func(_ *cli.Context, err error) {
 			if err == nil {

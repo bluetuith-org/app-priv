@@ -148,7 +148,7 @@ func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove
 		return
 	}
 
-	adapterNode.noder.SetAdapterEventData(adapterEvent)
+	adapterNode.SetAdapterEventData(adapterEvent)
 }
 
 func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bool) {
@@ -173,16 +173,7 @@ func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bo
 		return
 	}
 
-	deviceNode.noder.SetDeviceEventData(deviceEvent)
-}
-
-func (r *rootNode) updateAction(updateMsg actionUpdateMsg) {
-	node, _, ok := findTreeNodeByID[*acNode](r, updateMsg.id, nodeTypeAction)
-	if !ok {
-		return
-	}
-
-	node.noder.UpdateActionNode(node, updateMsg)
+	deviceNode.SetDeviceEventData(deviceEvent)
 }
 
 // findTreeNodeByID walks the nodes starting from the root node, splitting "id" into individual
@@ -212,7 +203,7 @@ func findTreeNodeByID[v any](rootNode *rootNode, id string, nodeType adTreeNodeT
 		}
 	}
 
-	if m, ok := currNode.Noder().(v); ok {
+	if m, ok := currNode.Node.Reference().(v); ok {
 		return m, currNodePos, currNode != nil && currNode.nodeType == nodeType
 	}
 

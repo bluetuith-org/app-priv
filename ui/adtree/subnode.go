@@ -15,7 +15,7 @@ import (
 )
 
 type subNode struct {
-	sub   *adNode
+	*adNode
 	noder adNoder
 }
 
@@ -25,7 +25,7 @@ func newSubNode(adn *adNode, parentNoder adNoder) *subNode {
 
 // AdNode returns the base node data.
 func (s *subNode) AdNode() *adNode {
-	return s.sub
+	return s.adNode
 }
 
 // HandleKeys handles a [tview.KeyMsg] and returns a message.
@@ -33,51 +33,25 @@ func (s *subNode) HandleKeys(p tview.KeyMsg) (ui.Router, bool) {
 	return s.noder.HandleKeys(p)
 }
 
-// RootID returns the root ID for the subnodes of an adapter or device node.
-func (s *subNode) RootID() string {
-	return s.noder.RootID()
-}
-
 // Information returns a message to print adapter/device information.
 func (s *subNode) Information() []text.Span {
 	return s.noder.Information()
 }
 
-// PopulateActions populates all actions within a node of type [nodeTypeAction].
-func (s *subNode) PopulateActions() {
-	s.noder.PopulateActions()
-}
-
-// Refresh refreshes the content of the node.
-func (s *subNode) Refresh() {
-	style := s.sub.noder.NodeStyle()
-	c := s.sub.Content()
+func (s *subNode) refreshNode(style tcell.Style) {
+	c := s.Content()
 
 	for i := range c {
 		c[i].Style = style
 	}
 }
 
-// UpdateActionNode updates the node of type [nodeTypeAction] with the message.
-func (s *subNode) UpdateActionNode(actionNode *acNode, updateMsg actionUpdateMsg) {
-	s.noder.UpdateActionNode(actionNode, updateMsg)
-}
-
-// SetAdapterEventData sets the adapter event data for the node.
-func (s *subNode) SetAdapterEventData(ev bluetooth.AdapterEventData) {
-	s.noder.SetAdapterEventData(ev)
-}
-
-// SetDeviceEventData sets the device event data for the node.
-func (s *subNode) SetDeviceEventData(ev bluetooth.DeviceEventData) {
-	s.noder.SetDeviceEventData(ev)
-}
-
 type alNode struct {
 	*subNode
+	actions []*acNode
 }
 
-func newActionsListNode(a *adNode) *alNode {
+func newActionsListNode(a *adNode, parentNoder adNoder) *alNode {
 	al := &alNode{}
 
 	alAdNode := newAdNode(
@@ -87,7 +61,7 @@ func newActionsListNode(a *adNode) *alNode {
 		al, a.rv,
 	)
 
-	al.subNode = newSubNode(alAdNode, a.noder)
+	al.subNode = newSubNode(alAdNode, parentNoder)
 	al.AdNode().SetContent(buildLabel(al.Icon(), "Actions", al.NodeStyle()))
 
 	alAdNode.SetChildren(make([]*ctree.Node, 0, 5))
@@ -106,6 +80,28 @@ func (a *alNode) Icon() string {
 	return theme.Icons().Actions.String()
 }
 
+// AddAction adds an action item to the list.
+func (a *alNode) AddAction(ac *acNode) {
+	a.AdNode().AddChild(ac.AdNode().Node)
+	a.actions = append(a.actions, ac)
+}
+
+// ClearActions clears all the actions from the list.
+func (a *alNode) ClearActions() {
+	a.AdNode().ClearChildren()
+	a.actions = nil
+}
+
+// Actions returns the currently stored actions.
+func (a *alNode) Actions() []*acNode {
+	return a.actions
+}
+
+// Refresh refreshes the content of the node.
+func (a *alNode) Refresh() {
+	a.subNode.refreshNode(a.NodeStyle())
+}
+
 type dlNode struct {
 	*subNode
 	anode *adapterNode
@@ -121,7 +117,7 @@ func newDeviceListNode(a *adapterNode, devices []bluetooth.DeviceData) *dlNode {
 		dl, a.rv,
 	)
 
-	dl.subNode = newSubNode(dlAdNode, a.noder)
+	dl.subNode = newSubNode(dlAdNode, a)
 	dl.anode = a
 	dl.AdNode().SetContent(buildLabel(dl.Icon(), "Devices", dl.NodeStyle()))
 
@@ -144,8 +140,14 @@ func (a *dlNode) Icon() string {
 	return theme.Icons().Devices.String()
 }
 
+// AdapterNode returns the adapter node.
 func (a *dlNode) AdapterNode() *adapterNode {
 	return a.anode
+}
+
+// Refresh refreshes the content of the node.
+func (a *dlNode) Refresh() {
+	a.subNode.refreshNode(a.NodeStyle())
 }
 
 type acNode struct {
@@ -174,10 +176,14 @@ func newActionNode(a *alNode, key keybindings.Keybinding, state actionStateSpec,
 		stext.NewSpan(")", muted),
 	))
 
-	a.AdNode().AddChild(actionNode.Node)
-	a.UpdateActionNode(ac, emptyActionUpdateMsg())
+	a.AddAction(ac)
 
 	return ac
+}
+
+// Refresh refreshes the content of the node.
+func (a *acNode) Refresh() {
+	a.subNode.refreshNode(a.NodeStyle())
 }
 
 // NodeStyle returns the style to be applied for this node's label.

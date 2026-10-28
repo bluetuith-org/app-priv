@@ -41,7 +41,7 @@ func newDeviceNode(rv ui.RootView, parentNode *dlNode, device bluetooth.DeviceDa
 	dn.adNode = deviceNode
 
 	dn.dlnode = parentNode
-	dn.alnode = newActionsListNode(dn.adNode)
+	dn.alnode = newActionsListNode(dn.adNode, dn)
 
 	parentNode.AdNode().AddChild(dn.Node)
 
@@ -194,7 +194,7 @@ func (d *deviceNode) StatusIcons(compact bool) []text.Span {
 // PopulateActions populates all actions within a node of type [nodeTypeAction].
 func (d *deviceNode) PopulateActions() {
 	node := d.alnode
-	node.AdNode().ClearChildren()
+	node.ClearActions()
 
 	if v, ok := d.device.Connected.Get(); ok {
 		newActionNode(node, ui.Kb().Device.ToggleConnection, boolToActionState(v), true, d.actionConnect)
@@ -233,6 +233,10 @@ func (d *deviceNode) PopulateActions() {
 		(d.device.HaveService(bluetooth.PanuServiceClass) ||
 			d.device.HaveService(bluetooth.DialupNetServiceClass)) {
 		newActionNode(node, ui.Kb().Device.NetworkOptions, actionStateNone, false, d.actionNetwork)
+	}
+
+	for _, ac := range node.Actions() {
+		d.UpdateActionNode(ac, emptyActionUpdateMsg())
 	}
 }
 
