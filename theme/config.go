@@ -18,6 +18,7 @@ type Configuration struct {
 
 	Popups struct {
 		CloseIcon string `themedef:"bg:red"`
+		Title     string `themedef:"bg:brightblack; attr: italic"`
 	}
 
 	ADTree struct {

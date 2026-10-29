@@ -11,7 +11,7 @@ import (
 
 // Manager describes a popup manager.
 type Manager struct {
-	popups []Overlay
+	popups []*Container
 }
 
 // NewManager returns a new popup manager.
@@ -84,7 +84,7 @@ func (p *Manager) Popups() iter.Seq2[tview.Widget, bool] {
 	}
 }
 
-func (p *Manager) push(popup Overlay) {
+func (p *Manager) push(popup *Container) {
 	idx := -1
 	pid := popup.PopupID()
 

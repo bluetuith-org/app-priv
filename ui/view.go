@@ -12,9 +12,6 @@ import (
 
 // Model represents a UI model.
 type Model interface {
-	// ViewID returns the view's ID.
-	ViewID() ViewID
-
 	// Init returns a command to run when the model starts, or nil.
 	Init() tview.Cmd
 
@@ -46,9 +43,6 @@ type RootView interface {
 	// Configuration returns the app's configuration.
 	Configuration() *config.Config
 
-	// Screen returns the screen for the application.
-	Screen() tcell.Screen
-
 	// Authorizer returns the authorizer for bluetooth-related permission prompts.
 	Authorizer() bluetooth.SessionAuthorizer
 }
@@ -57,6 +51,9 @@ type RootView interface {
 // the selected view is shown.
 type TabSection interface {
 	Model
+
+	// ViewID returns the view's ID.
+	ViewID() ViewID
 
 	// Title returns the title of the tab section.
 	Title() string

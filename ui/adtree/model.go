@@ -116,9 +116,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 				return
 			}
 
-			pop := popup.NewTextView(id, info)
-			rsp.PushMsg(popup.CreateMsg(pop))
-
+			rsp.PushMsg(m.infoPopup(id, info))
 			return
 		}
 
@@ -126,6 +124,13 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 			rsp.PushRouted(rmsg)
 		}
 	}
+}
+
+func (m *Model) infoPopup(id string, info []text.Span) popup.Router {
+	tv := popup.NewTextView(id, info)
+	tv.SetTitle(theme.Icons().Info.String(), "Information")
+
+	return popup.CreateMsg(tv)
 }
 
 // View draws this model onto the screen.

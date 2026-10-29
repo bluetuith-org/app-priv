@@ -20,12 +20,9 @@ type TextView struct {
 
 // NewTextView returns a new scrollable text view popup.
 func NewTextView(id string, content []text.Span) *Container {
-	return NewContainer(&TextView{id: id, content: content})
-}
-
-// ViewID returns the view's ID.
-func (m *TextView) ViewID() ui.ViewID {
-	return ui.ViewIDNone
+	return NewContainer(id, &TextView{id: id, content: content}).
+		SetDimensions(layout.Fixed(60), layout.Shrink.Max(40)).
+		SetCloseButton()
 }
 
 // Init returns a command to run when the model starts, or nil.
@@ -36,7 +33,7 @@ func (m *TextView) Init() tview.Cmd {
 // Update receives messages when this model has focus.
 func (m *TextView) Update(msg tview.Msg, rsp *ui.Response) {
 	switch ms := msg.(type) {
-	case R[infoScrollMsg]:
+	case R[scrollMsg]:
 		m.scrollState = ms.Value.change
 		if ms.Value.msg != nil {
 			m.Update(ms.Value.msg, rsp)
@@ -63,22 +60,6 @@ func (m *TextView) View(focused bool) tview.Widget {
 		OnChildMsg(m.OnViewportChildMsg)
 
 	return vp
-}
-
-// PopupID returns the unique ID for the popup,
-// for messages to be routed to.
-func (m *TextView) PopupID() string {
-	return m.id
-}
-
-// Width returns the width to be occupied by the popup.
-func (m *TextView) Width() layout.Length {
-	return layout.Fixed(60)
-}
-
-// Height returns the height to be occupied by the popup.
-func (m *TextView) Height() layout.Length {
-	return layout.Shrink.Max(40)
 }
 
 // ViewportKeybinds implements keybindings for the viewport.
@@ -108,15 +89,15 @@ func (m *TextView) ViewportKeybinds(msg tview.KeyMsg) viewport.Action {
 
 // OnViewportChange processes a change in the viewport and returns a message.
 func (m *TextView) OnViewportChange(c *viewport.ScrollState) tview.Msg {
-	return NewRouterMsg(m.id, infoScrollMsg{change: *c})
+	return NewRouterMsg(m.id, scrollMsg{change: *c})
 }
 
 // OnViewportChildMsg processes a message that was passed to its underlying view in the viewport and returns a message.
 func (m *TextView) OnViewportChildMsg(c *viewport.ScrollState, msg tview.Msg) tview.Msg {
-	return NewRouterMsg(m.id, infoScrollMsg{change: *c, msg: msg})
+	return NewRouterMsg(m.id, scrollMsg{change: *c, msg: msg})
 }
 
-type infoScrollMsg struct {
+type scrollMsg struct {
 	change viewport.ScrollState
 	msg    tview.Msg
 }

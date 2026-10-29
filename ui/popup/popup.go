@@ -8,21 +8,6 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui"
 )
 
-// Overlay defines a popup that is displayed over the main view.
-type Overlay interface {
-	ui.Model
-
-	// PopupID returns the unique ID for the popup,
-	// for messages to be routed to.
-	PopupID() string
-
-	// Width returns the width to be occupied by the popup.
-	Width() layout.Length
-
-	// Height returns the height to be occupied by the popup.
-	Height() layout.Length
-}
-
 // Widget describes a view which draws popups over the main view.
 type Widget struct {
 	stk stack.Widget
