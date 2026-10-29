@@ -31,10 +31,9 @@ func newDeviceNode(rv ui.RootView, parentNode *dlNode, device bluetooth.DeviceDa
 	dn := &deviceNode{}
 
 	deviceNode := newAdNode(
-		nodeTypeDevice,
-		true, 2,
 		newDeviceNodeID(device.DeviceAddress),
 		dn, rv,
+		true, 2,
 	)
 
 	dn.device = device

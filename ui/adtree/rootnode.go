@@ -29,10 +29,9 @@ func newRootNode(rv ui.RootView) *rootNode {
 	rn := &rootNode{}
 
 	rootAdNode := newAdNode(
-		nodeTypeRoot,
-		true, 2,
 		newRootNodeID(),
 		rn, rv,
+		true, 2,
 	)
 
 	rootAdNode.SetSelectable(false)
@@ -113,7 +112,7 @@ func (r *rootNode) addAdapter(adapter bluetooth.AdapterData) {
 func (r *rootNode) addDevice(device bluetooth.DeviceData) {
 	dlNodeID := newAdapterNodeID(device.AdapterAddress()).appendSubNodeNib(nibDevicesList)
 
-	deviceListNode, _, ok := findTreeNodeByID[*dlNode](r, dlNodeID.String(), nodeTypeDevicesList)
+	deviceListNode, _, ok := findTreeNodeByID[*dlNode](r, dlNodeID.String())
 	if !ok {
 		return
 	}
@@ -128,7 +127,7 @@ func (r *rootNode) addDevice(device bluetooth.DeviceData) {
 func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove bool) {
 	adNodeID := newAdapterNodeID(adapterEvent.AdapterAddress)
 
-	adapterNode, pos, ok := findTreeNodeByID[*adapterNode](r, adNodeID.String(), nodeTypeAdapter)
+	adapterNode, pos, ok := findTreeNodeByID[*adapterNode](r, adNodeID.String())
 	if !ok {
 		return
 	}
@@ -154,7 +153,7 @@ func (r *rootNode) updateAdapter(adapterEvent bluetooth.AdapterEventData, remove
 func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bool) {
 	dvNodeID := newDeviceNodeID(deviceEvent.DeviceAddress)
 
-	deviceNode, pos, ok := findTreeNodeByID[*deviceNode](r, dvNodeID.String(), nodeTypeDevice)
+	deviceNode, pos, ok := findTreeNodeByID[*deviceNode](r, dvNodeID.String())
 	if !ok {
 		return
 	}
@@ -178,8 +177,8 @@ func (r *rootNode) updateDevice(deviceEvent bluetooth.DeviceEventData, remove bo
 
 // findTreeNodeByID walks the nodes starting from the root node, splitting "id" into individual
 // chunks until the matching node is found by its ID.
-func findTreeNodeByID[v any](rootNode *rootNode, id string, nodeType adTreeNodeType) (v, int, bool) {
-	var val v
+func findTreeNodeByID[V any](rootNode *rootNode, id string) (V, int, bool) {
+	var val V
 
 	currNode := rootNode.adNode
 	currNodePos := -1
@@ -203,8 +202,8 @@ func findTreeNodeByID[v any](rootNode *rootNode, id string, nodeType adTreeNodeT
 		}
 	}
 
-	if m, ok := currNode.Node.Reference().(v); ok {
-		return m, currNodePos, currNode != nil && currNode.nodeType == nodeType
+	if m, ok := currNode.Node.Reference().(V); ok {
+		return m, currNodePos, currNode != nil
 	}
 
 	return val, -1, false

@@ -8,6 +8,7 @@ import (
 
 // adNoder describes an interface to get information from nodes and update node states.
 type adNoder interface {
+	// Information returns the adapter/device information associated with the node.
 	Information() []text.Span
 
 	// AdNode returns the base node data.

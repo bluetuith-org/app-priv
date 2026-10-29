@@ -55,10 +55,9 @@ func newActionsListNode(a *adNode, parentNoder adNoder) *alNode {
 	al := &alNode{}
 
 	alAdNode := newAdNode(
-		nodeTypeActionsList,
-		false, 2,
 		a.id.appendSubNodeNib(nibActionsList),
 		al, a.rv,
+		false, 2,
 	)
 
 	al.subNode = newSubNode(alAdNode, parentNoder)
@@ -111,10 +110,9 @@ func newDeviceListNode(a *adapterNode, devices []bluetooth.DeviceData) *dlNode {
 	dl := &dlNode{}
 
 	dlAdNode := newAdNode(
-		nodeTypeDevicesList,
-		true, 2,
 		a.id.appendSubNodeNib(nibDevicesList),
 		dl, a.rv,
+		true, 2,
 	)
 
 	dl.subNode = newSubNode(dlAdNode, a)
@@ -160,10 +158,9 @@ func newActionNode(a *alNode, key keybindings.Keybinding, state actionStateSpec,
 	ac := &acNode{}
 
 	actionNode := newAdNode(
-		nodeTypeAction,
-		false, 2,
 		a.AdNode().id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
 		ac, a.AdNode().rv,
+		false, 2,
 	)
 
 	ac.subNode = newSubNode(actionNode, a.noder)

@@ -89,23 +89,15 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 
 	case ui.R[selectedMsg]:
 		m.rv.SetFocused(m.ViewID())
-
-		node := nget(ms.Value.node)
-		data := node.AdNode()
-
 		m.setCurrentNode(ms.Value.node)
 
-		if data.nodeType != nodeTypeAction {
+		acnode, ok := ncheck[*acNode](ms.Value.node)
+		if !ok {
 			ms.Value.node.SetExpanded(!ms.Value.node.Expanded())
 			return
 		}
 
-		acNode, ok := node.(*acNode)
-		if !ok {
-			return
-		}
-
-		if actionMsg, ok := acStateToOpMsg(acNode); ok {
+		if actionMsg, ok := acStateToOpMsg(acnode); ok {
 			rsp.PushRouted(actionMsg)
 		}
 
@@ -239,8 +231,7 @@ func (m *Model) LabelWidth(node *ctree.Node) int {
 
 // Spacing implements [ctree.Provider].
 func (m *Model) Spacing(node *ctree.Node) int {
-	adn := nget(node).AdNode()
-	if adn.nodeType == nodeTypeAction {
+	if _, ok := ncheck[*acNode](node); ok {
 		return 0
 	}
 
@@ -272,6 +263,11 @@ func (m *Model) StyledLabels(node *ctree.Node, selected bool) iter.Seq2[text.Spa
 }
 
 func (m *Model) populate() tview.Msg {
+	defer func() {
+		go m.adapterEvents()
+		go m.deviceEvents()
+	}()
+
 	root := newRootNode(m.rv)
 
 	adapters, err := m.rv.Session().Adapters()
@@ -283,9 +279,6 @@ func (m *Model) populate() tview.Msg {
 	for _, adapter := range adapters {
 		root.addAdapter(adapter)
 	}
-
-	go m.adapterEvents()
-	go m.deviceEvents()
 
 	return ui.ViewIDAdTree.R(rootNodeMsg{root})
 }
@@ -330,15 +323,12 @@ func (m *Model) adapterEvents() {
 			return
 
 		case added := <-sub.AddedEvents:
-			slog.Info("Adapter added", "data", added)
 			m.rv.SendMsg(newAdMsg(added, bluetooth.EventActionAdded))
 
 		case updated := <-sub.UpdatedEvents:
-			slog.Info("Adapter updated", "data", updated.Discoverable.Value())
 			m.rv.SendMsg(newAdMsg(updated, bluetooth.EventActionUpdated))
 
 		case removed := <-sub.RemovedEvents:
-			slog.Info("Adapter removed", "data", removed)
 			m.rv.SendMsg(newAdMsg(removed, bluetooth.EventActionRemoved))
 		}
 	}
@@ -359,15 +349,12 @@ func (m *Model) deviceEvents() {
 			return
 
 		case added := <-sub.AddedEvents:
-			slog.Info("Device added", "data", added)
 			m.rv.SendMsg(newAdMsg(added, bluetooth.EventActionAdded))
 
 		case updated := <-sub.UpdatedEvents:
-			slog.Info("Device updated", "data", updated)
 			m.rv.SendMsg(newAdMsg(updated, bluetooth.EventActionUpdated))
 
 		case removed := <-sub.RemovedEvents:
-			slog.Info("Device removed", "data", removed)
 			m.rv.SendMsg(newAdMsg(removed, bluetooth.EventActionRemoved))
 		}
 	}

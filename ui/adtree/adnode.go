@@ -8,26 +8,12 @@ import (
 	"github.com/bluetuith-org/bluetuith/ui/widgets/stext"
 )
 
-// adTreeNodeType specifies the type of the tree node.
-type adTreeNodeType uint8
-
-// The different types of tree nodes.
-const (
-	nodeTypeRoot adTreeNodeType = iota
-	nodeTypeAdapter
-	nodeTypeDevice
-	nodeTypeDevicesList
-	nodeTypeAction
-	nodeTypeActionsList
-)
-
 // adNode describes a node in an adapter-device tree.
 // noder must not be nil.
 type adNode struct {
 	*ctree.Node
 
-	id       nodeID
-	nodeType adTreeNodeType
+	id nodeID
 
 	markers []text.Span
 	mwidth  int
@@ -38,14 +24,13 @@ type adNode struct {
 	rv ui.RootView
 }
 
-func newAdNode(ntype adTreeNodeType, expanded bool, indent int, id nodeID, noder adNoder, rv ui.RootView) *adNode {
+func newAdNode(id nodeID, noder adNoder, rv ui.RootView, expanded bool, indent int) *adNode {
 	data := &adNode{}
 
 	node := ctree.NewNode(noder).SetIndent(indent).SetExpanded(expanded)
 	data.Node = node
 
 	data.id = id
-	data.nodeType = ntype
 	data.rv = rv
 
 	return data

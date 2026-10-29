@@ -25,6 +25,11 @@ func nvget[v any](n *ctree.Node) v {
 	return n.Reference().(v)
 }
 
+func ncheck[v any](n *ctree.Node) (val v, ok bool) {
+	val, ok = n.Reference().(v)
+	return
+}
+
 func printPlaceHolder(v string) string {
 	if v == "" {
 		return "<None>"
