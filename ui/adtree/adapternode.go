@@ -81,11 +81,6 @@ func (a *adapterNode) Icon() string {
 	return theme.Icons().Adapter.String()
 }
 
-// RootID returns the root ID for the subnodes of an adapter or device node.
-func (a *adapterNode) RootID() string {
-	return a.id.String()
-}
-
 // Information returns a message to print adapter/device information.
 func (a *adapterNode) Information() []text.Span {
 	bgStyle := theme.Current().Global

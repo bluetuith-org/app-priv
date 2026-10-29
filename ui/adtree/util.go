@@ -30,6 +30,15 @@ func ncheck[v any](n *ctree.Node) (val v, ok bool) {
 	return
 }
 
+func useStringBuffer(size int, fn func(b *strings.Builder)) string {
+	var sb strings.Builder
+	sb.Grow(size)
+
+	fn(&sb)
+
+	return sb.String()
+}
+
 func printPlaceHolder(v string) string {
 	if v == "" {
 		return "<None>"

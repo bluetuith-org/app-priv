@@ -3,6 +3,7 @@ package adtree
 import (
 	"iter"
 	"log/slog"
+	"strconv"
 
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/box"
@@ -97,7 +98,7 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 			return
 		}
 
-		if actionMsg, ok := acStateToOpMsg(acnode); ok {
+		if actionMsg, ok := createOperationMsg(acnode); ok {
 			rsp.PushRouted(actionMsg)
 		}
 
@@ -126,8 +127,8 @@ func (m *Model) Update(msg tview.Msg, rsp *ui.Response) {
 	}
 }
 
-func (m *Model) infoPopup(id string, info []text.Span) popup.Router {
-	tv := popup.NewTextView(id, info)
+func (m *Model) infoPopup(id nodeID, info []text.Span) popup.Router {
+	tv := popup.NewTextView(strconv.FormatUint(id.ToUint64(), 10), info)
 	tv.SetTitle(theme.Icons().Info.String(), "Information")
 
 	return popup.CreateMsg(tv)
@@ -320,8 +321,6 @@ func (m *Model) adapterEvents() {
 		return
 	}
 
-	slog.Info("Listening for adapter events...")
-
 	for {
 		select {
 		case <-sub.Done:
@@ -345,8 +344,6 @@ func (m *Model) deviceEvents() {
 		slog.Error("Tree: cannot subscribe to device events: unknown error")
 		return
 	}
-
-	slog.Info("Listening for device events...")
 
 	for {
 		select {

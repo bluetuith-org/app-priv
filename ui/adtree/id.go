@@ -1,154 +1,101 @@
 package adtree
 
 import (
-	"iter"
-	"strings"
+	"encoding/binary"
 
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
-)
-
-// nodeIDNib is the prefix prepended to a node's identifier.
-type nodeIDNib = string
-
-// The different types of node ID nibs.
-const (
-	nibDevicesList nodeIDNib = "dl"
-	nibActionsList nodeIDNib = "al"
-	nibAction      nodeIDNib = "ac"
-	nibAdapter     nodeIDNib = "ad"
-	nibDevice      nodeIDNib = "dv"
-)
-
-const (
-	lenNibPlusColon = 3
-	lenBdAddr       = 12
-	lenNodeIDTotal  = lenNibPlusColon + lenBdAddr
+	"github.com/bluetuith-org/bluetuith/keybindings"
 )
 
 // nodeID holds the identifier information for a node.
-type nodeID struct {
-	id string
+type nodeID uint64
 
-	nodeNib nodeIDNib
+// IsValid checks if the node ID is valid.
+func (n nodeID) IsValid() bool {
+	return n != 0
+}
+
+// ToUint64 converts the node ID to a uint64 value.
+func (n nodeID) ToUint64() uint64 {
+	return uint64(n)
+}
+
+// nibNodeID holds the nib that is added to the node ID.
+type nibNodeID uint8
+
+// The different types of node ID nibs.
+const (
+	nibRoot nibNodeID = iota
+	nibDevicesList
+	nibActionsList
+	nibAction
+)
+
+// Add adds a node ID with the nib and returns the result.
+func (n nibNodeID) Add(id nodeID) nodeID {
+	return nodeID(n) + id
+}
+
+// AddIdentifiers adds a node ID and a set of identifiers with the nib
+// and returns the result.
+func (n nibNodeID) AddIdentifiers(id nodeID, nums ...uint64) nodeID {
+	i := n.Add(id)
+	for _, nm := range nums {
+		i += nodeID(nm)
+	}
+
+	return i
 }
 
 // newRootNodeID returns a node ID for the root node.
 func newRootNodeID() nodeID {
-	return nodeID{id: "root", nodeNib: ""}
+	return nodeID(nibRoot)
 }
 
 // newAdapterNodeID returns a node ID from an adapter address.
 func newAdapterNodeID(address bluetooth.AdapterAddress) nodeID {
-	n := nodeID{
-		nodeNib: nibAdapter,
-		id: useStringBuffer(lenNodeIDTotal, func(b *strings.Builder) {
-			b.WriteString(nibAdapter)
-			b.WriteString(":")
-			appendMacAddress(b, address.Address)
-		}),
-	}
+	return macAddress(address.Address)
+}
 
-	return n
+func queryAdapter(address bluetooth.AdapterAddress) []nodeID {
+	return []nodeID{macAddress(address.Address)}
 }
 
 // newDeviceNodeID returns a node ID from a device address.
-func newDeviceNodeID(address bluetooth.DeviceAddress) nodeID {
-	return nodeID{
-		nodeNib: nibDevice,
-		id: useStringBuffer((lenNodeIDTotal*2)+2+len(nibDevicesList), func(b *strings.Builder) {
-			b.WriteString(nibAdapter)
-			b.WriteString(":")
-			appendMacAddress(b, address.AssociatedAdapter)
+func newDeviceNodeID(dlnode *dlNode, address bluetooth.DeviceAddress) nodeID {
+	dv := macAddress(address.Address)
 
-			b.WriteString("/")
-			b.WriteString(nibDevicesList)
-			b.WriteString("/")
-
-			b.WriteString(nibDevice)
-			b.WriteString(":")
-			appendMacAddress(b, address.Address)
-		}),
-	}
+	return dlnode.id + dv
 }
 
-// appendSubNodeNib appends a nib to the current ID.
-func (n nodeID) appendSubNodeNib(nib nodeIDNib) nodeID {
-	return n.appendSubNodeTextNib(nib, "")
+func queryDevice(address bluetooth.DeviceAddress) []nodeID {
+	ids := queryDlist(bluetooth.NewAdapterAddress(address.AssociatedAdapter))
+	ids = append(ids, ids[len(ids)-1]+macAddress(address.Address))
+
+	return ids
 }
 
-// appendSubNodeTextNib appends a nib-value pair to the current ID.
-func (n nodeID) appendSubNodeTextNib(nib nodeIDNib, text string) nodeID {
-	length := len(n.id) + lenNibPlusColon + len(text)
-
-	n.id = useStringBuffer(length, func(b *strings.Builder) {
-		b.WriteString(n.id)
-		b.WriteString("/")
-		b.WriteString(nib)
-
-		if text != "" {
-			b.WriteString(":")
-			b.WriteString(text)
-		}
-	})
-
-	return n
+func newDlNodeID(adapternode *adapterNode) nodeID {
+	return nibDevicesList.Add(adapternode.id)
 }
 
-// String returns the string representation of the node ID.
-func (n nodeID) String() string {
-	return n.id
+func queryDlist(address bluetooth.AdapterAddress) []nodeID {
+	ad := macAddress(address.Address)
+	return []nodeID{ad, nibDevicesList.Add(ad)}
 }
 
-// iterNodeID splits a full identifier for a node into individual parts.
-func iterNodeID(id string) iter.Seq[string] {
-	return func(yield func(string) bool) {
-		currIdx := 0
-
-		for currIdx < len(id) {
-			idx := strings.Index(id[currIdx:], "/")
-			if idx < 0 {
-				break
-			}
-
-			currIdx += idx + 1
-			nodeID := id[:currIdx-1]
-
-			if !yield(nodeID) {
-				return
-			}
-		}
-
-		if !yield(id) {
-			return
-		}
-	}
+func newAlNodeID(id nodeID) nodeID {
+	return nibActionsList.Add(id)
 }
 
-// appendMacAddress appends a MAC address to the string buffer.
-func appendMacAddress(b *strings.Builder, mac bluetooth.MacAddress) {
-	for i := 5; i >= 0; i-- {
-		c := mac[i]
-		nibble := c >> 4
-		if nibble <= 9 {
-			b.WriteByte(nibble + '0')
-		} else {
-			b.WriteByte(nibble + 'A' - 10)
-		}
-
-		nibble = c & 0x0f
-		if nibble <= 9 {
-			b.WriteByte(nibble + '0')
-		} else {
-			b.WriteByte(nibble + 'A' - 10)
-		}
-	}
+func newAcNodeID(alnode *alNode, kn keybindings.KeyID) nodeID {
+	return nibAction.AddIdentifiers(alnode.id, uint64(kn))
 }
 
-func useStringBuffer(size int, fn func(b *strings.Builder)) string {
-	var sb strings.Builder
-	sb.Grow(size)
+func macAddress(mac bluetooth.MacAddress) nodeID {
+	var b [8]byte
 
-	fn(&sb)
+	copy(b[2:], mac[:])
 
-	return sb.String()
+	return nodeID(binary.BigEndian.Uint64(b[:]))
 }

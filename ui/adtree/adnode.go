@@ -37,8 +37,8 @@ func newAdNode(id nodeID, noder adNoder, rv ui.RootView, expanded bool, indent i
 }
 
 // ID returns the identifier for this node.
-func (a *adNode) ID() string {
-	return a.id.String()
+func (a *adNode) ID() nodeID {
+	return a.id
 }
 
 // Content returns the name of the node.

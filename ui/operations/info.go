@@ -42,12 +42,8 @@ func NewCreationInfo(desc []text.Span) CreationInfo {
 }
 
 // UpdateID updates the ID of the operation being created.
-func (o *CreationInfo) UpdateID(id string) {
+func (o *CreationInfo) UpdateID(id uint64) {
 	o.ct.setID(id)
-}
-
-func (o *CreationInfo) getID() string {
-	return o.ct.id
 }
 
 func (o *CreationInfo) updateHeader(header string) *CreationInfo {

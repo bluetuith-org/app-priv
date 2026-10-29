@@ -12,7 +12,7 @@ import (
 type content struct {
 	content []text.Span
 
-	id     string
+	id     uint64
 	header string
 
 	stage operationStage
@@ -31,7 +31,7 @@ func newContent(p []text.Span) *content {
 	return c
 }
 
-func (c *content) setID(id string) {
+func (c *content) setID(id uint64) {
 	c.id = id
 }
 

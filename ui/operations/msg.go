@@ -17,15 +17,16 @@ func MsgCreate(creationInfo CreationInfo, action Invoker) ui.Router {
 }
 
 type opUpdateMsg struct {
-	id, message string
-	err         error
-	stage       operationStage
+	id      uint64
+	message string
+	err     error
+	stage   operationStage
 }
 
-func msgOpUpdate(id, msg string, stage operationStage) ui.Router {
+func msgOpUpdate(id uint64, msg string, stage operationStage) ui.Router {
 	return ui.ViewIDOperations.R(opUpdateMsg{id, msg, nil, stage})
 }
 
-func msgOpUpdateErr(id, msg string, err error) ui.Router {
+func msgOpUpdateErr(id uint64, msg string, err error) ui.Router {
 	return ui.ViewIDOperations.R(opUpdateMsg{id, msg, err, operationError})
 }

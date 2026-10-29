@@ -28,7 +28,7 @@ type Model struct {
 
 	cursor, target int
 
-	run map[string]*RunningInfo
+	run map[uint64]*RunningInfo
 	ord []*RunningInfo
 
 	rv ui.RootView
@@ -39,7 +39,7 @@ func New(rv ui.RootView) *Model {
 	return &Model{
 		cursor: 0,
 		target: 0,
-		run:    make(map[string]*RunningInfo),
+		run:    make(map[uint64]*RunningInfo),
 		rv:     rv,
 	}
 }
@@ -205,11 +205,11 @@ func (m *Model) setCursor(index int) {
 }
 
 func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error) {
-	if msg.getID() == "" {
+	if msg.ct.id == 0 {
 		return nil, nil, fmt.Errorf("%w: msg ID empty on create", errOpInternal)
 	}
 
-	runInfo, ok := m.run[msg.getID()]
+	runInfo, ok := m.run[msg.ct.id]
 	if ok && runInfo.stage == operationInProgress {
 		return nil, nil, errOpAlreadyInProgress
 	}
@@ -225,7 +225,7 @@ func (m *Model) createNewOperation(msg CreateMsg) (*RunningInfo, Invoker, error)
 }
 
 func (m *Model) processUpdateMsg(msg opUpdateMsg) bool {
-	if msg.id == "" {
+	if msg.id == 0 {
 		return false
 	}
 
@@ -242,12 +242,12 @@ func (m *Model) processUpdateMsg(msg opUpdateMsg) bool {
 	return true
 }
 
-func (m *Model) deleteOperation(id string) {
+func (m *Model) deleteOperation(id uint64) {
 	delete(m.run, id)
 }
 
 func (m *Model) clearOperations() {
-	maps.DeleteFunc(m.run, func(_ string, v *RunningInfo) bool {
+	maps.DeleteFunc(m.run, func(_ uint64, v *RunningInfo) bool {
 		return v.stage != operationInProgress
 	})
 

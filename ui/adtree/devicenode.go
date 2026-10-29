@@ -31,7 +31,7 @@ func newDeviceNode(rv ui.RootView, parentNode *dlNode, device bluetooth.DeviceDa
 	dn := &deviceNode{}
 
 	deviceNode := newAdNode(
-		newDeviceNodeID(device.DeviceAddress),
+		newDeviceNodeID(parentNode, device.DeviceAddress),
 		dn, rv,
 		true, 2,
 	)
@@ -95,11 +95,6 @@ func (d *deviceNode) NodeStyle() tcell.Style {
 // Icon returns the Icon associated with this node.
 func (d *deviceNode) Icon() string {
 	return theme.DeviceClassToIcon(theme.Icons(), d.device.Class).String()
-}
-
-// RootID returns the root ID for the subnodes of an adapter or device node.
-func (d *deviceNode) RootID() string {
-	return d.id.String()
 }
 
 // Information returns a message to print adapter/device information.

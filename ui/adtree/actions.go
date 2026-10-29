@@ -43,7 +43,7 @@ func (a actionStateSpec) Format(on, off string) string {
 
 // actionUpdateMsg holds an update to the action state matched by the action's ID.
 type actionUpdateMsg struct {
-	id        string
+	id        nodeID
 	stateSpec actionStateSpec
 }
 
@@ -53,7 +53,7 @@ func emptyActionUpdateMsg() actionUpdateMsg {
 }
 
 // updateState updates the action's state from this update message.
-func (a *actionUpdateMsg) updateState(stateID string, ad *adActionState) bool {
+func (a *actionUpdateMsg) updateState(stateID nodeID, ad *adActionState) bool {
 	if !a.isValid(stateID) {
 		return false
 	}
@@ -63,8 +63,8 @@ func (a *actionUpdateMsg) updateState(stateID string, ad *adActionState) bool {
 }
 
 // isValid checks if the message is valid.
-func (a *actionUpdateMsg) isValid(stateID string) bool {
-	return a.id != "" && a.id == stateID
+func (a *actionUpdateMsg) isValid(stateID nodeID) bool {
+	return stateID.IsValid() && a.id == stateID
 }
 
 // adActionState holds the state of an executed action.
@@ -91,7 +91,7 @@ func actionHandleKeyMsg(p tview.KeyMsg, node *alNode) (ui.Router, bool) {
 		return ui.EmptyRouterMsg(), false
 	}
 
-	msg, ok := acStateToOpMsg(result)
+	msg, ok := createOperationMsg(result)
 	if !ok {
 		return ui.EmptyRouterMsg(), false
 	}
@@ -99,16 +99,16 @@ func actionHandleKeyMsg(p tview.KeyMsg, node *alNode) (ui.Router, bool) {
 	return msg, true
 }
 
-func acStateToOpMsg(acNode *acNode) (ui.Router, bool) {
+func createOperationMsg(acNode *acNode) (ui.Router, bool) {
 	id := acNode.AdNode().ID()
 	state := acNode.actionState
 
-	if state == nil || id == "" {
+	if state == nil || !id.IsValid() {
 		return ui.EmptyRouterMsg(), false
 	}
 
 	createInfo, opFunc := state.invokeAction(state)
-	createInfo.UpdateID(id)
+	createInfo.UpdateID(id.ToUint64())
 
 	return operations.MsgCreate(createInfo, opFunc), true
 }

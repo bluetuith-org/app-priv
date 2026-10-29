@@ -1,8 +1,6 @@
 package adtree
 
 import (
-	"strconv"
-
 	"github.com/ayn2op/tview"
 	"github.com/ayn2op/tview/text"
 	"github.com/bluetuith-org/bluetooth-classic/api/bluetooth"
@@ -55,13 +53,13 @@ func newActionsListNode(a *adNode, parentNoder adNoder) *alNode {
 	al := &alNode{}
 
 	alAdNode := newAdNode(
-		a.id.appendSubNodeNib(nibActionsList),
+		newAlNodeID(a.id),
 		al, a.rv,
 		false, 2,
 	)
 
 	al.subNode = newSubNode(alAdNode, parentNoder)
-	al.AdNode().SetContent(buildLabel(al.Icon(), "Actions", al.NodeStyle()))
+	al.SetContent(buildLabel(al.Icon(), "Actions", al.NodeStyle()))
 
 	alAdNode.SetChildren(make([]*ctree.Node, 0, 5))
 	a.AddChild(alAdNode.Node)
@@ -81,13 +79,13 @@ func (a *alNode) Icon() string {
 
 // AddAction adds an action item to the list.
 func (a *alNode) AddAction(ac *acNode) {
-	a.AdNode().AddChild(ac.AdNode().Node)
+	a.AddChild(ac.AdNode().Node)
 	a.actions = append(a.actions, ac)
 }
 
 // ClearActions clears all the actions from the list.
 func (a *alNode) ClearActions() {
-	a.AdNode().ClearChildren()
+	a.ClearChildren()
 	a.actions = nil
 }
 
@@ -110,15 +108,15 @@ func newDeviceListNode(a *adapterNode, devices []bluetooth.DeviceData) *dlNode {
 	dl := &dlNode{}
 
 	dlAdNode := newAdNode(
-		a.id.appendSubNodeNib(nibDevicesList),
+		newDlNodeID(a),
 		dl, a.rv,
 		true, 2,
 	)
 
 	dl.subNode = newSubNode(dlAdNode, a)
 	dl.anode = a
-	dl.AdNode().SetContent(buildLabel(dl.Icon(), "Devices", dl.NodeStyle()))
 
+	dl.SetContent(buildLabel(dl.Icon(), "Devices", dl.NodeStyle()))
 	for _, device := range devices {
 		newDeviceNode(a.rv, dl, device)
 	}
@@ -158,7 +156,7 @@ func newActionNode(a *alNode, key keybindings.Keybinding, state actionStateSpec,
 	ac := &acNode{}
 
 	actionNode := newAdNode(
-		a.AdNode().id.appendSubNodeTextNib(nibAction, strconv.Itoa(int(key.ID))),
+		newAcNodeID(a, key.ID),
 		ac, a.AdNode().rv,
 		false, 2,
 	)
